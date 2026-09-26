@@ -19,14 +19,15 @@ st.set_page_config(
 # Custom Corporate NOC Styling with Background Image
 # Custom Corporate NOC Styling with Telecom Tower Background
 # Custom Corporate NOC Styling with High Contrast & Clear Text
+# Custom Corporate NOC Styling with High Contrast & Clear White Text
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
 
-    /* Telecom Background with Balanced Dark Contrast */
+    /* Telecom Background with Dark Overlay */
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.88)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
@@ -35,67 +36,73 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* বাওঁফালৰ Sidebar-ৰ লিখা আৰু আইকনবোৰ স্পষ্ট ডাৰ্ক ৰঙৰ কৰা হৈছে */
+    /* মূল ডেশ্ববৰ্ডৰ সকলো হেডিং উজ্জ্বল বগা আৰু স্পষ্ট কৰা হ'ল */
+    h1, h2, h3, h4, h5, h6,
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
+    [data-testid="stHeader"] *,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3 {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    /* সাধাৰণ টেক্সট আৰু কেপশ্যন বগা কৰা হ'ল */
+    .stMarkdown p, .stMarkdown span, .stCaption, [data-testid="stCaptionContainer"] {
+        color: #f1f5f9 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Metric Values (1,663, 81.6%, 248) উজ্জ্বল বগা */
+    [data-testid="stMetricValue"] * {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+    [data-testid="stMetricLabel"] * {
+        color: #cbd5e1 !important;
+        font-weight: 600 !important;
+    }
+
+    /* বাওঁফালৰ Sidebar সম্পূৰ্ণ বগা বেকগ্ৰাউণ্ড আৰু ক'লা স্পষ্ট আখৰ */
     section[data-testid="stSidebar"] {
         background-color: #ffffff !important;
     }
     section[data-testid="stSidebar"] * {
         color: #0f172a !important;
     }
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3 {
+        color: #0f172a !important;
+        text-shadow: none !important;
+    }
     section[data-testid="stSidebar"] .stMarkdown p,
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] span {
         color: #1e293b !important;
-        font-weight: 500;
-    }
-
-    /* মূল ডেশ্ববৰ্ডৰ শীৰ্ষক আৰু উপ-শীৰ্ষক স্পষ্ট বগা ৰং */
-    .main h1, .main h2, .main h3, .main h4 {
-        color: #ffffff !important;
-        font-weight: 700;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    }
-    .main p, .main span {
-        color: #e2e8f0;
-    }
-
-    /* Metric Cards (1,663, 81.6%, 248) উজ্জ্বল বগা কৰি স্পষ্ট কৰা হ'ল */
-    [data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 2rem !important;
-    }
-    [data-testid="stMetricLabel"] {
-        color: #cbd5e1 !important;
         font-weight: 600 !important;
     }
-    [data-testid="stMetricDelta"] {
-        font-weight: 600;
+
+    /* ইনপুট ফিল্ড আৰু লেবেল স্পষ্ট কৰা */
+    .stTextInput label, .stSelectbox label, .stDateInput label {
+        color: #ffffff !important;
+        font-weight: 600 !important;
     }
 
-    /* কাৰ্ড আৰু কন্টেইনাৰবোৰ বগা কাঁচৰ দৰে স্পষ্ট কৰা */
+    /* File Uploader */
+    [data-testid="stFileUploadDropzone"] * {
+        color: #0f172a !important;
+    }
+
+    /* কাৰ্ড আৰু ইনফো বক্স */
     .metric-card {
         background: rgba(255, 255, 255, 0.95);
         padding: 1.25rem;
         border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(226, 232, 240, 0.8);
     }
-
-    /* Status Badges */
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-    }
-    .badge-ok { background-color: #dcfce7; color: #15803d !important; border: 1px solid #bbf7d0; }
-    .badge-warn { background-color: #fef9c3; color: #854d0e !important; border: 1px solid #fef08a; }
-    .badge-crit { background-color: #fee2e2; color: #b91c1c !important; border: 1px solid #fecaca; }
-
-    /* Auto boxes */
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
@@ -106,35 +113,6 @@ st.markdown("""
     }
     .auto-docket-box * {
         color: #0f172a !important;
-    }
-
-    .fuel-alert-box {
-        background-color: rgba(255, 251, 235, 0.98);
-        border: 1px solid #fde68a;
-        padding: 14px 18px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        color: #0f172a !important;
-    }
-    .fuel-alert-box * {
-        color: #0f172a !important;
-    }
-
-    .closure-success-box {
-        background-color: rgba(240, 253, 244, 0.98);
-        border: 1px solid #86efac;
-        padding: 14px 18px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        color: #166534 !important;
-    }
-    .closure-success-box * {
-        color: #166534 !important;
-    }
-
-    /* File uploader text color fix */
-    [data-testid="stFileUploadDropzone"] * {
-        color: #1e293b !important;
     }
 </style>
 """, unsafe_allow_html=True)
