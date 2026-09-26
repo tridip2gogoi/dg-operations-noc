@@ -20,6 +20,7 @@ st.set_page_config(
 # Custom Corporate NOC Styling with Telecom Tower Background
 # Custom Corporate NOC Styling with High Contrast & Clear Text
 # Custom Corporate NOC Styling with High Contrast & Clear White Text
+# Custom Corporate NOC Styling with High Visibility Tabs & Clear Contrast
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -27,7 +28,7 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
-    /* Telecom Background with Dark Overlay */
+    /* Telecom Background with Dark Contrast Overlay */
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.88)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
@@ -36,7 +37,34 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* মূল ডেশ্ববৰ্ডৰ সকলো হেডিং উজ্জ্বল বগা আৰু স্পষ্ট কৰা হ'ল */
+    /* ⚡ TABS VISIBILITY FIX: সকলো টেবৰ লিখা উজ্জ্বল বগা আৰু স্পষ্ট কৰা হ'ল */
+    button[data-baseweb="tab"] {
+        background-color: rgba(30, 41, 59, 0.7) !important;
+        border-radius: 8px 8px 0px 0px !important;
+        padding: 8px 16px !important;
+        margin-right: 4px !important;
+    }
+    button[data-baseweb="tab"] div p,
+    button[data-baseweb="tab"] p,
+    button[data-baseweb="tab"] span {
+        color: #cbd5e1 !important; /* Inactive Tab text: উজ্জ্বল চিলভাৰ বগা */
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+
+    /* Active (চিলেক্ট কৰা) টেবৰ লিখা আৰু আণ্ডাৰলাইন */
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background-color: rgba(59, 130, 246, 0.25) !important;
+        border-bottom: 3px solid #38bdf8 !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] div p,
+    button[data-baseweb="tab"][aria-selected="true"] p,
+    button[data-baseweb="tab"][aria-selected="true"] span {
+        color: #ffffff !important; /* Active Tab text: উজ্জ্বল বগা */
+        font-weight: 800 !important;
+    }
+
+    /* মূল ডেশ্ববৰ্ডৰ সকলো হেডিং উজ্জ্বল বগা */
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
     [data-testid="stHeader"] *,
@@ -48,7 +76,7 @@ st.markdown("""
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
     }
 
-    /* সাধাৰণ টেক্সট আৰু কেপশ্যন বগা কৰা হ'ল */
+    /* সাধাৰণ টেক্সট আৰু কেপশ্যন বগা */
     .stMarkdown p, .stMarkdown span, .stCaption, [data-testid="stCaptionContainer"] {
         color: #f1f5f9 !important;
         font-weight: 500 !important;
@@ -64,7 +92,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* বাওঁফালৰ Sidebar সম্পূৰ্ণ বগা বেকগ্ৰাউণ্ড আৰু ক'লা স্পষ্ট আখৰ */
+    /* বাওঁফালৰ Sidebar সম্পূৰ্ণ বগা বেকগ্ৰাউণ্ড আৰু স্পষ্ট ডাৰ্ক আখৰ */
     section[data-testid="stSidebar"] {
         background-color: #ffffff !important;
     }
