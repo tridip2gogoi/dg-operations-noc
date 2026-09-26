@@ -17,13 +17,77 @@ st.set_page_config(
 
 # Custom Corporate NOC Styling
 # Custom Corporate NOC Styling with Background Image
-.stApp {
+# Custom Corporate NOC Styling with Telecom Tower Background
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Telecom Tower Background Image with Dark Contrast Overlay */
+    .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
+
+    .metric-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+
+    h1, h2, h3, p, label, .stMarkdown {
+        color: #f8fafc;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .badge-ok { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-warn { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
+    .badge-crit { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+    .auto-docket-box {
+        background-color: rgba(239, 246, 255, 0.95);
+        border: 1px solid #93c5fd;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        color: #0f172a;
+    }
+    .fuel-alert-box {
+        background-color: rgba(255, 251, 235, 0.95);
+        border: 1px solid #fde68a;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        color: #0f172a;
+    }
+    .closure-success-box {
+        background-color: rgba(240, 253, 244, 0.95);
+        border: 1px solid #86efac;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        color: #166534;
+    }
+
+    div[data-testid="stSidebarNav"] {
+        padding-top: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio_24th_Sep'26.xlsx"
 
