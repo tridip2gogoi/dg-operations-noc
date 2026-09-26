@@ -9,7 +9,7 @@ from io import BytesIO
 import urllib.parse
 import numpy as np
 
-# --- পেজ কনফিগাৰেচন ---
+# --- PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="NE Circle Telecom DG Ops Center | Enterprise NOC",
     layout="wide",
@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- কাষ্টম টেলিকম NOC বেকগ্ৰাউণ্ড আৰু হাই-কন্ট্ৰাষ্ট CSS ষ্টাইলিং ---
+# --- CUSTOM CORPORATE NOC STYLING (TELECOM BACKGROUND & HIGH CONTRAST) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -25,7 +25,7 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
-    /* টেলিকম টাৱাৰৰ HD বেকগ্ৰাউণ্ড আৰু ডাৰ্ক অভাৰলে যাতে লিখাবোৰ চকুৰ বাবে স্পষ্ট হয় */
+    /* Telecom Tower HD Background with Dark Contrast Overlay */
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.88)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
@@ -34,15 +34,15 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* লগ-ইন কাৰ্ড ষ্টাইল */
+    /* Clean Login Card (No Exposed Credentials) */
     .login-container {
         background: rgba(255, 255, 255, 0.96);
         padding: 2.5rem 2rem;
         border-radius: 16px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
         border: 1px solid rgba(226, 232, 240, 0.8);
-        max-width: 480px;
-        margin: 2rem auto;
+        max-width: 460px;
+        margin: 3.5rem auto;
     }
     .login-header {
         text-align: center;
@@ -60,7 +60,7 @@ st.markdown("""
         font-size: 0.9rem !important;
     }
 
-    /* টেবসমূহ স্পষ্টকৈ দৃশ্যমান হোৱাৰ ব্যৱস্থা */
+    /* Tabs Visibility Enhancements */
     button[data-baseweb="tab"] {
         background-color: rgba(30, 41, 59, 0.75) !important;
         border-radius: 8px 8px 0px 0px !important;
@@ -85,7 +85,7 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    /* মূল ডেশ্ববৰ্ডৰ সকলো হেডিং উজ্জ্বল বগা */
+    /* Headings - High Contrast White */
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
     [data-testid="stHeader"] *,
@@ -101,7 +101,7 @@ st.markdown("""
         font-weight: 500 !important;
     }
 
-    /* মেট্ৰিক ভেল্যু */
+    /* Metric Values */
     [data-testid="stMetricValue"] * {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -111,7 +111,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* ছাইডবাৰ ডিজাইন */
+    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #ffffff !important;
     }
@@ -139,7 +139,7 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ষ্টেটাছ বেজ */
+    /* Status Badges */
     .status-badge {
         padding: 4px 10px;
         border-radius: 9999px;
@@ -152,7 +152,7 @@ st.markdown("""
     .badge-warn { background-color: #fef9c3; color: #854d0e !important; border: 1px solid #fef08a; }
     .badge-crit { background-color: #fee2e2; color: #b91c1c !important; border: 1px solid #fecaca; }
 
-    /* কাৰ্ড আৰু তথ্য বাকচ */
+    /* Containers */
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
@@ -206,19 +206,13 @@ def to_date_obj(val, fallback=None):
     except Exception:
         return fallback or date.today()
 
-# --- ৰ'ল ভিত্তিক ব্যৱহাৰকাৰী প্ৰমাণীকৰণ (RBAC) ---
+# --- DUAL-ROLE AUTHENTICATION (SUPER ADMIN & VIEWER) ---
 USER_ROLES = {
     "admin": {
         "password_hash": hashlib.sha256("admin@123".encode()).hexdigest(),
         "role": "Super Admin / Operations Head",
         "name": "Circle Operations Head",
         "access": ["all"]
-    },
-    "trt": {
-        "password_hash": hashlib.sha256("trt@123".encode()).hexdigest(),
-        "role": "TRT / Field Operations Lead",
-        "name": "North East Field TRT",
-        "access": ["edit_only"]
     },
     "viewer": {
         "password_hash": hashlib.sha256("viewer@123".encode()).hexdigest(),
@@ -440,7 +434,7 @@ def execute_tt_close_shift_to_y_ab(site_id, closure_remarks, closure_date_str, d
     return updated
 
 # =========================================================
-# 🔒 লগ-ইন প্ৰমাণীকৰণ গেটৱে'
+# 🔒 SECURE LOGIN AUTHENTICATION GATEWAY
 # =========================================================
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -453,14 +447,14 @@ if not st.session_state.authenticated:
         <div class="login-container">
             <div class="login-header">
                 <h2>⚡ Telecom NOC Portal</h2>
-                <p>North East Circle | Role-Based Authentication Gateway</p>
+                <p>North East Circle Operations Gateway</p>
             </div>
         """, unsafe_allow_html=True)
         
         with st.form("admin_login_form"):
-            input_user = st.text_input("Username", placeholder="admin / trt / viewer")
+            input_user = st.text_input("Username", placeholder="Enter username")
             input_pass = st.text_input("Password", type="password", placeholder="••••••••")
-            submit_login = st.form_submit_button("Authenticate & Enter NOC Portal", use_container_width=True, type="primary")
+            submit_login = st.form_submit_button("Authenticate & Enter Portal", use_container_width=True, type="primary")
 
             if submit_login:
                 user_record = verify_login(input_user.strip().lower(), input_pass)
@@ -468,24 +462,17 @@ if not st.session_state.authenticated:
                     st.session_state.authenticated = True
                     st.session_state.user_info = user_record
                     st.session_state.username = input_user.strip().lower()
-                    st.success(f"Access Granted as {user_record['role']}! Loading...")
+                    st.success("Access Granted! Loading Console...")
                     st.rerun()
                 else:
                     st.error("Authentication Failed: Invalid Credentials")
 
-        st.markdown("""
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 12px; color: #475569;">
-            <b>Access Credentials:</b><br>
-            • <b>Operations Head:</b> <code>admin</code> / <code>admin@123</code><br>
-            • <b>TRT Field Engineer:</b> <code>trt</code> / <code>trt@123</code><br>
-            • <b>NOC Viewer (Read-only):</b> <code>viewer</code> / <code>viewer@123</code>
-        </div>
-        """, unsafe_allow_html=True)
+        # স্ক্ৰীনত কোনো ধৰণৰ ক্ৰিডেনচিয়েল বা ইউজাৰৰ নাম প্ৰদৰ্শন কৰা হোৱা নাই
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # =========================================================
-# 🛡️ প্ৰমাণীকৃত অপাৰেচন কেন্দ্ৰ
+# 🛡️ AUTHENTICATED WORKSPACE & OPERATIONS
 # =========================================================
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
@@ -791,7 +778,6 @@ elif page == "📲 WhatsApp & SMS Dispatcher":
     st.markdown("## 📲 WhatsApp & SMS Instant Escalation Dispatcher")
     st.caption("যিবোৰ ছাইটৰ বয়স ৭ দিনতকৈ বেছি হৈছে (Aging > 7 Days) বা ইন্ধন চেন্সৰ বিকল (Fuel Sensor faulty) হৈছে, সেইবোৰ ছাইট চিনাক্ত কৰি Field Supervisor/TRT-লৈ ১-ক্লিক সতৰ্কবাৰ্তা প্ৰেৰণ।")
 
-    # Aging > 7 Days অথবা Fuel Sensor faulty ফিল্টাৰ
     target_escalations = df_status[(df_status['Aging_Num'] > 7) | (df_status['Fuel Sensor Status'] == 'Fuel Sensor faulty')].copy()
     
     if target_escalations.empty:
@@ -882,7 +868,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     st.caption(f"Authenticated Role: **{admin_role}** | Modifying telemetry and resolving active tickets.")
 
-    # 🔒 VIEWER একাউণ্টৰ বাবে এডিট সম্পূৰ্ণ বন্ধ (Read-only)
+    # 🔒 VIEWER একাউণ্টৰ বাবে সকলো এডিট বন্ধ (Read-only)
     if "read_only" in user_perms:
         st.warning("🔒 Viewer Account: আপোনাৰ একাউণ্ট কেৱল পৰ্যবেক্ষণৰ বাবে (Read-only)। ছাইটৰ ডেটা এডিট কৰা, ফল্ট ৰিছেট কৰা বা TT বন্ধ কৰাৰ অনুমতি নিষ্ক্ৰিয় কৰা হৈছে।")
         st.dataframe(df_status.head(50), use_container_width=True)
@@ -914,10 +900,9 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     allowed_actions = [
                         "📝 Modify Telemetry / Docket Fields",
                         "🧹 Remove Active Fault Data & Reset to Automation Ok",
-                        "✅ Close TT / Incident (Auto-Shift Y to AB)"
+                        "✅ Close TT / Incident (Auto-Shift Y to AB)",
+                        "🗑️ Remove / Delete Site Record from Master Tracker"
                     ]
-                    if "all" in user_perms:
-                        allowed_actions.append("🗑️ Remove / Delete Site Record from Master Tracker")
 
                     action_mode = st.radio("Select Action for this Site:", allowed_actions, horizontal=True)
 
