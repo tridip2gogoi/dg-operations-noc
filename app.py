@@ -18,6 +18,7 @@ st.set_page_config(
 )
 
 # Custom Corporate NOC Styling with High Contrast, Telecom Background & Custom Login UI
+# Custom Corporate NOC Styling with High Visibility Tabs & Clear Contrast
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -25,6 +26,7 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
+    /* Telecom Background with Dark Contrast Overlay */
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.88)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
@@ -33,31 +35,7 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    .login-container {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 2.5rem 2rem;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-        max-width: 480px;
-        margin: 2rem auto;
-    }
-    .login-header {
-        text-align: center;
-        margin-bottom: 1.5rem;
-    }
-    .login-header h2 {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-        font-size: 1.6rem !important;
-        margin-bottom: 0.25rem !important;
-        text-shadow: none !important;
-    }
-    .login-header p {
-        color: #64748b !important;
-        font-size: 0.9rem !important;
-    }
-
+    /* ⚡ TABS VISIBILITY FIX: সকলো টেবৰ লিখা উজ্জ্বল বগা আৰু স্পষ্ট কৰা হ'ল */
     button[data-baseweb="tab"] {
         background-color: rgba(30, 41, 59, 0.7) !important;
         border-radius: 8px 8px 0px 0px !important;
@@ -67,10 +45,12 @@ st.markdown("""
     button[data-baseweb="tab"] div p,
     button[data-baseweb="tab"] p,
     button[data-baseweb="tab"] span {
-        color: #cbd5e1 !important;
+        color: #cbd5e1 !important; /* Inactive Tab text: উজ্জ্বল চিলভাৰ বগা */
         font-weight: 600 !important;
         font-size: 14px !important;
     }
+
+    /* Active (চিলেক্ট কৰা) টেবৰ লিখা আৰু আণ্ডাৰলাইন */
     button[data-baseweb="tab"][aria-selected="true"] {
         background-color: rgba(59, 130, 246, 0.25) !important;
         border-bottom: 3px solid #38bdf8 !important;
@@ -78,10 +58,11 @@ st.markdown("""
     button[data-baseweb="tab"][aria-selected="true"] div p,
     button[data-baseweb="tab"][aria-selected="true"] p,
     button[data-baseweb="tab"][aria-selected="true"] span {
-        color: #ffffff !important;
+        color: #ffffff !important; /* Active Tab text: উজ্জ্বল বগা */
         font-weight: 800 !important;
     }
 
+    /* মূল ডেশ্ববৰ্ডৰ সকলো হেডিং উজ্জ্বল বগা */
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
     [data-testid="stHeader"] *,
@@ -92,11 +73,14 @@ st.markdown("""
         font-weight: 800 !important;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
     }
+
+    /* সাধাৰণ টেক্সট আৰু কেপশ্যন বগা */
     .stMarkdown p, .stMarkdown span, .stCaption, [data-testid="stCaptionContainer"] {
         color: #f1f5f9 !important;
         font-weight: 500 !important;
     }
 
+    /* Metric Values (1,663, 81.6%, 248) উজ্জ্বল বগা */
     [data-testid="stMetricValue"] * {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -106,6 +90,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
+    /* বাওঁফালৰ Sidebar সম্পূৰ্ণ বগা বেকগ্ৰাউণ্ড আৰু স্পষ্ট ডাৰ্ক আখৰ */
     section[data-testid="stSidebar"] {
         background-color: #ffffff !important;
     }
@@ -125,26 +110,25 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
+    /* ইনপুট ফিল্ড আৰু লেবেল স্পষ্ট কৰা */
     .stTextInput label, .stSelectbox label, .stDateInput label {
         color: #ffffff !important;
         font-weight: 600 !important;
     }
+
+    /* File Uploader */
     [data-testid="stFileUploadDropzone"] * {
         color: #0f172a !important;
     }
 
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-weight: 600;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
+    /* কাৰ্ড আৰু ইনফো বক্স */
+    .metric-card {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(226, 232, 240, 0.8);
     }
-    .badge-ok { background-color: #dcfce7; color: #15803d !important; border: 1px solid #bbf7d0; }
-    .badge-warn { background-color: #fef9c3; color: #854d0e !important; border: 1px solid #fef08a; }
-    .badge-crit { background-color: #fee2e2; color: #b91c1c !important; border: 1px solid #fecaca; }
-
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
@@ -153,13 +137,8 @@ st.markdown("""
         margin-bottom: 15px;
         color: #0f172a !important;
     }
-    .auto-docket-box * { color: #0f172a !important; }
-    .metric-card {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 1.25rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(226, 232, 240, 0.8);
+    .auto-docket-box * {
+        color: #0f172a !important;
     }
 </style>
 """, unsafe_allow_html=True)
