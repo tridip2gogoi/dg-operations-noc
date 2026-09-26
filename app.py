@@ -18,6 +18,7 @@ st.set_page_config(
 # Custom Corporate NOC Styling
 # Custom Corporate NOC Styling with Background Image
 # Custom Corporate NOC Styling with Telecom Tower Background
+# Custom Corporate NOC Styling with High Contrast & Clear Text
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -25,27 +26,63 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
-    /* Telecom Tower Background Image with Dark Contrast Overlay */
+    /* Telecom Background with Balanced Dark Contrast */
     .stApp {
-        background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), 
+        background: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.88)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
 
+    /* বাওঁফালৰ Sidebar-ৰ লিখা আৰু আইকনবোৰ স্পষ্ট ডাৰ্ক ৰঙৰ কৰা হৈছে */
+    section[data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #0f172a !important;
+    }
+    section[data-testid="stSidebar"] .stMarkdown p,
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] span {
+        color: #1e293b !important;
+        font-weight: 500;
+    }
+
+    /* মূল ডেশ্ববৰ্ডৰ শীৰ্ষক আৰু উপ-শীৰ্ষক স্পষ্ট বগা ৰং */
+    .main h1, .main h2, .main h3, .main h4 {
+        color: #ffffff !important;
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .main p, .main span {
+        color: #e2e8f0;
+    }
+
+    /* Metric Cards (1,663, 81.6%, 248) উজ্জ্বল বগা কৰি স্পষ্ট কৰা হ'ল */
+    [data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 2rem !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #cbd5e1 !important;
+        font-weight: 600 !important;
+    }
+    [data-testid="stMetricDelta"] {
+        font-weight: 600;
+    }
+
+    /* কাৰ্ড আৰু কন্টেইনাৰবোৰ বগা কাঁচৰ দৰে স্পষ্ট কৰা */
     .metric-card {
         background: rgba(255, 255, 255, 0.95);
         padding: 1.25rem;
         border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
         border: 1px solid rgba(226, 232, 240, 0.8);
     }
 
-    h1, h2, h3, p, label, .stMarkdown {
-        color: #f8fafc;
-    }
-
+    /* Status Badges */
     .status-badge {
         padding: 4px 10px;
         border-radius: 9999px;
@@ -54,37 +91,50 @@ st.markdown("""
         letter-spacing: 0.05em;
         text-transform: uppercase;
     }
-    .badge-ok { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-    .badge-warn { background-color: #fef9c3; color: #854d0e; border: 1px solid #fef08a; }
-    .badge-crit { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-ok { background-color: #dcfce7; color: #15803d !important; border: 1px solid #bbf7d0; }
+    .badge-warn { background-color: #fef9c3; color: #854d0e !important; border: 1px solid #fef08a; }
+    .badge-crit { background-color: #fee2e2; color: #b91c1c !important; border: 1px solid #fecaca; }
 
+    /* Auto boxes */
     .auto-docket-box {
-        background-color: rgba(239, 246, 255, 0.95);
+        background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
         padding: 14px 18px;
         border-radius: 10px;
         margin-bottom: 15px;
-        color: #0f172a;
+        color: #0f172a !important;
     }
+    .auto-docket-box * {
+        color: #0f172a !important;
+    }
+
     .fuel-alert-box {
-        background-color: rgba(255, 251, 235, 0.95);
+        background-color: rgba(255, 251, 235, 0.98);
         border: 1px solid #fde68a;
         padding: 14px 18px;
         border-radius: 10px;
         margin-bottom: 15px;
-        color: #0f172a;
+        color: #0f172a !important;
     }
+    .fuel-alert-box * {
+        color: #0f172a !important;
+    }
+
     .closure-success-box {
-        background-color: rgba(240, 253, 244, 0.95);
+        background-color: rgba(240, 253, 244, 0.98);
         border: 1px solid #86efac;
         padding: 14px 18px;
         border-radius: 10px;
         margin-bottom: 15px;
-        color: #166534;
+        color: #166534 !important;
+    }
+    .closure-success-box * {
+        color: #166534 !important;
     }
 
-    div[data-testid="stSidebarNav"] {
-        padding-top: 10px;
+    /* File uploader text color fix */
+    [data-testid="stFileUploadDropzone"] * {
+        color: #1e293b !important;
     }
 </style>
 """, unsafe_allow_html=True)
