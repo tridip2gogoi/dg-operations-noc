@@ -192,7 +192,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
-DEFAULT_CM_TRACKER = "CM Tracker Jio_24th_Sep'26.xlsx"
+DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
 BUCKET_LIST = [
     "GCU", "Fuel Sensor", "DG Breakdown", "DG battery", "IPMS",
