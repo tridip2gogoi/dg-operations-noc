@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate NOC Styling with High Visibility Tabs, Radios & Clear Contrast
+# Custom Corporate NOC Styling with High Contrast Tabs, Radios & Clear White Cards
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -51,27 +51,28 @@ st.markdown("""
         margin-right: 8px;
     }
 
-    /* ⚡ TABS VISIBILITY FIX */
+    /* ⚡ TABS ULTRA-HIGH CONTRAST VISIBILITY FIX */
+    div[data-testid="stTabs"] button[role="tab"],
     button[data-baseweb="tab"] {
-        background-color: rgba(30, 41, 59, 0.7) !important;
+        background-color: rgba(30, 41, 59, 0.95) !important;
         border-radius: 8px 8px 0px 0px !important;
-        padding: 8px 16px !important;
-        margin-right: 4px !important;
+        padding: 10px 20px !important;
+        margin-right: 6px !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
     }
-    button[data-baseweb="tab"] div p,
-    button[data-baseweb="tab"] p,
-    button[data-baseweb="tab"] span {
-        color: #cbd5e1 !important;
-        font-weight: 600 !important;
+    div[data-testid="stTabs"] button[role="tab"] *,
+    button[data-baseweb="tab"] * {
+        color: #ffffff !important;
+        font-weight: 700 !important;
         font-size: 14px !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
     }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
     button[data-baseweb="tab"][aria-selected="true"] {
-        background-color: rgba(59, 130, 246, 0.25) !important;
+        background-color: #0284c7 !important;
         border-bottom: 3px solid #38bdf8 !important;
     }
-    button[data-baseweb="tab"][aria-selected="true"] div p,
-    button[data-baseweb="tab"][aria-selected="true"] p,
-    button[data-baseweb="tab"][aria-selected="true"] span {
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] * {
         color: #ffffff !important;
         font-weight: 800 !important;
     }
@@ -274,7 +275,7 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
             sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
-            # ⚡ ১. খালী ৰো আৰু ভূৱা ছাইট আঁতৰোৱা (Eliminating Phantom Blank Rows)
+            # ⚡ ১. খালী ৰো আৰু অস্তিত্বহীন ছাইট আঁতৰোৱা (Eliminating Phantom Blank Rows)
             if 'SAIP ID' in df_status.columns:
                 df_status = df_status[df_status['SAIP ID'].notna()]
                 df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
