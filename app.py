@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Black Collar Badges
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Strict Black Collar Text Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -146,37 +146,22 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ ABSOLUTE WHITE CARD TEXT & BLACK COLLAR FIX */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    /* ⚡ STRICT WHITE CARD & CONTAINER BLACK COLLAR TEXT FIX */
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    div[data-testid="element-container"] div[style*="background-color: #ffffff"],
+    div[style*="background: #ffffff"] {
         background-color: #ffffff !important;
         border-radius: 12px !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
         border: 1px solid #cbd5e1 !important;
         padding: 18px !important;
     }
+    
     div[data-testid="stVerticalBlockBorderWrapper"] *,
-    div[data-testid="stVerticalBlockBorderWrapper"] p,
-    div[data-testid="stVerticalBlockBorderWrapper"] span,
-    div[data-testid="stVerticalBlockBorderWrapper"] label,
-    div[data-testid="stVerticalBlockBorderWrapper"] h1,
-    div[data-testid="stVerticalBlockBorderWrapper"] h2,
-    div[data-testid="stVerticalBlockBorderWrapper"] h3,
-    div[data-testid="stVerticalBlockBorderWrapper"] h4,
-    div[data-testid="stVerticalBlockBorderWrapper"] h5,
-    div[data-testid="stVerticalBlockBorderWrapper"] h6 {
+    div[style*="background: #ffffff"] *,
+    div[style*="background-color: #ffffff"] * {
         color: #0f172a !important;
         text-shadow: none !important;
-        -webkit-font-smoothing: antialiased;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] *,
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] div {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] *,
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] div {
-        color: #475569 !important;
-        font-weight: 600 !important;
     }
 
     /* ⚡ PROFESSIONAL BLACK COLLAR BADGES */
@@ -1159,7 +1144,7 @@ elif page == "🔍 AI Site Diagnostics":
                             cap_data.get("Col_V_Present_Docket_No", ""),
                             clean_date_str(cap_data.get("Col_W_Present_Docket_raise_Date", "")),
                             str(cap_data.get("Col_X_Aging_Days", "")),
-                            cap_data.get("Col_Y_Timeline", "")
+                            str(cap_data.get("Col_Y_Timeline", ""))
                         ]
                     })
                     st.dataframe(rec_table, use_container_width=True, hide_index=True)
