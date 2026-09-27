@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate NOC Styling with High Contrast White Cards & 100% Visible White Tabs
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -24,7 +24,7 @@ st.markdown("""
     }
 
     .stApp {
-        background: linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.88)), 
+        background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
@@ -151,7 +151,7 @@ st.markdown("""
         border-radius: 12px !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15) !important;
         border: 1px solid #e2e8f0 !important;
-        padding: 14px !important;
+        padding: 16px !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] p,
     div[data-testid="stVerticalBlockBorderWrapper"] span,
@@ -553,7 +553,7 @@ if page == "📊 Executive Control Center":
         
         with c1:
             with st.container(border=True):
-                st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>Circle JC Wise Automation Health</div>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>Circle JC Wise Automation Health</h4>", unsafe_allow_html=True)
                 if "JC" in df_status.columns and "DG Automation Status" in df_status.columns:
                     fig_bar = px.histogram(
                         df_status, x="JC", color="DG Automation Status", barmode="group",
@@ -571,7 +571,7 @@ if page == "📊 Executive Control Center":
 
         with c2:
             with st.container(border=True):
-                st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>DG Make Fleet Allocation</div>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>DG Make Fleet Allocation</h4>", unsafe_allow_html=True)
                 if "DG Make" in df_status.columns:
                     valid_makes = df_status[df_status['DG Make'].notna() & (df_status['DG Make'].astype(str).str.strip() != '')]
                     fig_donut = px.pie(valid_makes, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
@@ -668,7 +668,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     
     with col1:
         with st.container(border=True):
-            st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Status Summary ({selected_fleet_jc})</div>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>Status Summary ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
             if 'DG Automation Status' in filtered_status.columns:
                 stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
                 stat_summary.columns = ['Status Category', 'Site Count']
@@ -676,7 +676,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with col2:
         with st.container(border=True):
-            st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Bucket Distribution ({selected_fleet_jc})</div>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>Bucket Distribution ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
             if not valid_bucket.empty:
                 b_summary = valid_bucket['Bucket'].value_counts().reset_index()
                 b_summary.columns = ['Root-Cause Bucket', 'Incidents']
@@ -744,7 +744,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 st.warning("JC column not found in dataset.")
 
 # ---------------------------------------------------------
-# 4. FUEL SENSOR TELEMETRY (JC-WISE & MAKE/KVA BREAKDOWN)
+# 4. FUEL SENSOR TELEMETRY
 # ---------------------------------------------------------
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
@@ -758,29 +758,25 @@ elif page == "⛽ Fuel Sensor Telemetry":
         c4.metric("Primary Fault Rating", df_fuel['KVA'].mode()[0] if 'KVA' in df_fuel.columns else "N/A")
 
         st.markdown("---")
-        
-        # ⚡ 1. JC-Wise Faulty Sensors Breakdown Matrix
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>📊 JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
             if 'JC' in df_fuel.columns and 'DG MAKE' in df_fuel.columns:
                 jc_fault_matrix = pd.crosstab(df_fuel['JC'], df_fuel['DG MAKE'], margins=True, margins_name="Total")
                 st.dataframe(jc_fault_matrix, use_container_width=True)
 
-        # ⚡ 2. DG Make wise with KVA Matrix
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>⚡ DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>⚡ DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
             if 'DG MAKE' in df_fuel.columns and 'KVA' in df_fuel.columns:
                 make_kva_matrix = pd.crosstab(df_fuel['DG MAKE'], df_fuel['KVA'], margins=True, margins_name="Total")
                 st.dataframe(make_kva_matrix, use_container_width=True)
 
-        # ⚡ 3. Active Fault Site Registry Table
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>📋 Active Fault Site Registry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Active Fault Site Registry</h4>", unsafe_allow_html=True)
             disp_fuel_cols = ['SITE ID', 'JC', 'DG MAKE', 'KVA', 'DOCKET NUMBER', 'COMPLAINT LOGGIN DATE', 'NATURE OF COMPLAINT', 'STATUS']
             valid_disp_fuel = [c for c in disp_fuel_cols if c in df_fuel.columns]
             st.dataframe(df_fuel[valid_disp_fuel], use_container_width=True)
     else:
-        st.info("No active fuel sensor faults detected in the current tracker.")
+        st.info("No active fuel sensor faults detected.")
 
 # ---------------------------------------------------------
 # 5. CRITICAL AGING ESCALATIONS
@@ -815,7 +811,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab1:
             with st.container(border=True):
-                st.markdown(f"### ILA-AG1 Registry Summary ({len(df_ila):,} Records)")
+                st.markdown(f"<h3 style='margin:0 0 10px 0;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
                 edited_ila_data = st.data_editor(df_ila, use_container_width=True, height=450)
                 
                 if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
@@ -836,7 +832,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab2:
             with st.container(border=True):
-                st.markdown("### Single Site Quick Editor, Fault Clearance & Record Removal")
+                st.markdown("<h3 style='margin:0 0 10px 0;'>Single Site Quick Editor, Fault Clearance & Record Removal</h3>", unsafe_allow_html=True)
                 target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:").strip().upper()
                 
                 if target_sap_id and 'Sap ID' in df_ila.columns:
@@ -898,7 +894,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab3:
             with st.container(border=True):
-                st.markdown("### Add New Case / Site Entry")
+                st.markdown("<h3 style='margin:0 0 10px 0;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
                 with st.form("new_ila_case_form"):
                     nc1, nc2 = st.columns(2)
                     with nc1:
@@ -973,19 +969,181 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                 st.dataframe(df_status.head(100), use_container_width=True)
 
 # ---------------------------------------------------------
-# 8. AI SITE DIAGNOSTICS
+# 8. AI SITE DIAGNOSTICS (PROFESSIONAL ENTERPRISE EDITION)
 # ---------------------------------------------------------
 elif page == "🔍 AI Site Diagnostics":
     st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
+    st.caption("Circle-wide deep diagnostics, equipment specs, telemetry mapping, and field intervention radar.")
+
     with st.container(border=True):
-        sq = st.text_input("Enter SAIP ID to Diagnose:", placeholder="e.g. 9011, BARA, DNGI...").strip().upper()
-    if sq and not df_status.empty and 'SAIP ID' in df_status.columns:
-        match = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)]
-        if not match.empty:
-            r = match.iloc[0]
+        st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>🎯 Targeted Site Telemetry Search</h4>", unsafe_allow_html=True)
+        s_col1, s_col2 = st.columns([3.5, 1])
+        with s_col1:
+            sq = st.text_input(
+                "Search Network Site:",
+                placeholder="Enter SAIP ID (e.g. 9011, BARA, DNGI, 9020, G003)...",
+                label_visibility="collapsed"
+            ).strip().upper()
+        with s_col2:
+            clear_btn = st.button("🔄 Reset Search", use_container_width=True)
+            if clear_btn:
+                sq = ""
+
+    if not sq:
+        with st.container(border=True):
+            st.markdown("<h3 style='margin:0 0 12px 0; color: #0f172a;'>⚡ Circle Network Overview & Diagnostics Radar</h3>", unsafe_allow_html=True)
+            tot_s = len(df_status) if not df_status.empty else 0
+            auto_s = len(df_status[df_status['DG Automation Status'] == 'Automation Ok']) if not df_status.empty else 0
+            man_s = len(df_status[df_status['DG Automation Status'] == 'Manual Mode']) if not df_status.empty else 0
+            bd_s = len(df_status[df_status['DG Automation Status'] == 'DG Breakdown']) if not df_status.empty else 0
+            
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Total Circle Base", f"{tot_s:,}")
+            c2.metric("Automation Healthy", f"{auto_s:,}", f"{round((auto_s/tot_s)*100, 1) if tot_s else 0}%")
+            c3.metric("Manual Mode Alerts", f"{man_s:,}", delta_color="inverse")
+            c4.metric("Active Breakdowns", f"{bd_s:,}", delta_color="inverse")
+            
+            st.markdown("<hr style='margin: 14px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 14px; font-weight: 600; color: #475569;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
+
+    else:
+        matches = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)] if not df_status.empty else pd.DataFrame()
+
+        if matches.empty:
+            st.error(f"❌ No network records found matching `{sq}` in the Master Automation Tracker.")
+        else:
+            if len(matches) > 1:
+                with st.container(border=True):
+                    st.markdown("<p style='font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #0f172a;'>Multiple Sites Found:</p>", unsafe_allow_html=True)
+                    selected_site = st.selectbox("Select Target SAIP ID:", matches['SAIP ID'].tolist(), label_visibility="collapsed")
+                    site_row = matches[matches['SAIP ID'] == selected_site].iloc[0]
+            else:
+                site_row = matches.iloc[0]
+                selected_site = site_row['SAIP ID']
+
+            cap_data = ai_capture_o_to_ab(selected_site, df_open_cm, df_status, None)
+            status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
+            badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
+
+            st.markdown(f"""
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <h2 style="margin: 0; color: #0f172a !important; font-weight: 800; font-size: 24px; text-shadow: none !important;">⚡ {selected_site}</h2>
+                        <div style="margin-top: 4px; color: #475569 !important; font-size: 14px; font-weight: 600;">
+                            Circle Territory: <b style="color: #0284c7;">{site_row.get('JC', 'N/A')}</b> | State: <b>{site_row.get('State', 'N/A')}</b> | Site Type: <b>{site_row.get('Site Type', 'N/A')}</b> | 5G Facility: <b>{site_row.get('5G facality', 'N/A')}</b>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <span class="status-badge {badge_class}">{status_val}</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
             with st.container(border=True):
-                st.markdown(f"### ⚡ Site: {r['SAIP ID']} | Status: {r.get('DG Automation Status', 'N/A')}")
-                k1, k2, k3 = st.columns(3)
-                k1.metric("DG Make", f"{r.get('DG Make', 'N/A')}")
-                k2.metric("Bucket", f"{r.get('Bucket', 'None')}")
-                k3.metric("Aging", f"{r.get('Aging (Day\'s)', 0)} Days")
+                k1, k2, k3, k4 = st.columns(4)
+                aging_val = site_row.get("Aging (Day's)", 0)
+                fs_val = str(site_row.get("Fuel Sensor Status", "Ok"))
+                k1.metric("DG Manufacturer", f"{site_row.get('DG Make', 'N/A')}", f"{site_row.get('DG Rating', 'N/A')}")
+                k2.metric("Active Problem Bucket", f"{site_row.get('Bucket', 'None')}", "Root-Cause")
+                k3.metric("Incident Aging", f"{int(aging_val) if pd.notna(aging_val) else 0} Days", "Delay Bracket")
+                k4.metric("Fuel Telemetry", fs_val, "Sensor Health", delta_color="normal" if fs_val == "Ok" else "inverse")
+
+            bucket_val = str(site_row.get('Bucket', '')).strip()
+            rem_val = str(site_row.get('Present Remarks', 'No active remarks logged.')).strip()
+
+            if status_val == "Automation Ok":
+                ai_inference = "✅ **Site Automation Normal:** Telemetry signals indicate the DG automation loop is active with no blocking dockets."
+                sop_action = "Routine preventive maintenance only. Verify monthly battery health."
+            elif "Breakdown" in status_val or bucket_val == "DG Breakdown":
+                ai_inference = f"🚨 **Critical Breakdown Alarm:** Engine inoperative. Reported defect: `{rem_val}`."
+                sop_action = "Immediate SE dispatch required. Escalate to DG OEM vendor for emergency field restoration."
+            elif bucket_val == "GCU":
+                ai_inference = f"⚡ **GCU / Controller Fault Detected:** Controller signal offline or improper pulse. Logged remarks: `{rem_val}`."
+                sop_action = "Inspect RS485 communication bus and replace controller unit if unrecoverable."
+            elif bucket_val == "Fuel Sensor":
+                ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
+                sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
+            elif bucket_val == "OEM Spare parts":
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
+            else:
+                ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
+                sop_action = "Verify site access and contact the local supervisor for direct diagnosis."
+
+            st.markdown(f"""
+            <div class="auto-docket-box" style="margin-top: 14px;">
+                <b style="color: #1e3a8a;">🧠 AI Diagnostic Inference:</b> {ai_inference}<br>
+                <b style="color: #1e3a8a;">🎯 Recommended Operational Action (SOP):</b> {sop_action}
+            </div>
+            """, unsafe_allow_html=True)
+
+            diag_t1, diag_t2, diag_t3 = st.tabs([
+                "📋 Technical Asset Specifications",
+                "⚡ Active Dockets & Pipeline Reconciliation",
+                "⏳ Resolution History & Previous Dockets (Col Y to AB)"
+            ])
+
+            with diag_t1:
+                with st.container(border=True):
+                    c_s1, c_s2 = st.columns(2)
+                    with c_s1:
+                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/A')}`")
+                        st.markdown(f"**DG Rating:** `{site_row.get('DG Rating', 'N/A')}`")
+                        st.markdown(f"**OEM Vendor:** `{site_row.get('OEM Vendor', 'N/A')}`")
+                        st.markdown(f"**EB Grid Connection:** `{site_row.get('EB/Non EB', 'N/A')}`")
+                        st.markdown(f"**Battery Backup (Min):** `{site_row.get('F.Battery Backup (Min)', 'N/A')}`")
+                    with c_s2:
+                        st.markdown(f"**Supervisor Name:** `{site_row.get('Supervisor Name', 'N/A')}`")
+                        st.markdown(f"**TRT Personnel:** `{site_row.get('TRT Name', 'N/A')}`")
+                        st.markdown(f"**Contact Number:** `{site_row.get('Contact No.', 'N/A')}`")
+                        st.markdown(f"**Dependent Sites:** `{site_row.get('Dependent Site', 'None')}`")
+                        st.markdown(f"**Last Closed Date:** `{clean_date_str(site_row.get('Last Closed date', 'N/A'))}`")
+
+            with diag_t2:
+                with st.container(border=True):
+                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Live Master Tracker vs CM Open Docket Comparison</p>", unsafe_allow_html=True)
+                    rec_table = pd.DataFrame({
+                        "Field": [
+                            "Col O: Fuel Sensor Status", "Col P: Docket No", "Col Q: Open Date",
+                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Problem Bucket",
+                            "Col V: Present Docket No", "Col W: Present Docket Raise Date",
+                            "Col X: Aging (Days)", "Col Y: Timeline"
+                        ],
+                        "Master Tracker (Live)": [
+                            str(site_row.get("Fuel Sensor Status", "")),
+                            str(site_row.get("Docket no.", "")),
+                            clean_date_str(site_row.get("Open Date", "")),
+                            str(site_row.get("DG Automation Status", "")),
+                            str(site_row.get("Present Remarks", "")),
+                            str(site_row.get("Bucket", "")),
+                            str(site_row.get("Present Docket No.", "")),
+                            clean_date_str(site_row.get("Present Docket raise Date", "")),
+                            str(site_row.get("Aging (Day's)", "")),
+                            str(site_row.get("Timeline", ""))
+                        ],
+                        "CM Tracker (Open Incidents)": [
+                            cap_data.get("Col_O_Fuel_Sensor_Status", ""),
+                            cap_data.get("Col_P_Docket_no", ""),
+                            clean_date_str(cap_data.get("Col_Q_Open_Date", "")),
+                            cap_data.get("Col_S_DG_Automation_Status", ""),
+                            cap_data.get("Col_T_Present_Remarks", ""),
+                            cap_data.get("Col_U_Bucket", ""),
+                            cap_data.get("Col_V_Present_Docket_No", ""),
+                            clean_date_str(cap_data.get("Col_W_Present_Docket_raise_Date", "")),
+                            str(cap_data.get("Col_X_Aging_Days", "")),
+                            cap_data.get("Col_Y_Timeline", "")
+                        ]
+                    })
+                    st.dataframe(rec_table, use_container_width=True, hide_index=True)
+
+            with diag_t3:
+                with st.container(border=True):
+                    h1, h2, h3 = st.columns(3)
+                    h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
+                    h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
+                    h3.metric("Last Closure Date (Col R)", clean_date_str(site_row.get('Last Closed date', 'None')))
+                    st.markdown("<hr style='margin: 10px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
+                    st.markdown(f"**Previous Resolution Remarks (Col Z):**")
+                    st.info(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
