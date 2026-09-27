@@ -548,6 +548,14 @@ if "loaded_file_key" not in st.session_state or st.session_state.loaded_file_key
     st.session_state.fuel_tracker_df = df_fuel_raw.copy()
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
+# ⚡ SESSION STATE SAFETY CHECK TO PREVENT AttributeError
+if "master_tracker_df" not in st.session_state:
+    st.session_state.master_tracker_df = df_status_raw.copy()
+if "fuel_tracker_df" not in st.session_state:
+    st.session_state.fuel_tracker_df = df_fuel_raw.copy()
+if "ila_tracker_df" not in st.session_state:
+    st.session_state.ila_tracker_df = df_ila_raw.copy()
+
 df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
 df_ila = st.session_state.ila_tracker_df
@@ -821,7 +829,7 @@ elif page == "⏳ Critical Aging Escalation Monitor":
             st.dataframe(crit_df.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
 
 # ---------------------------------------------------------
-# 6. ILA-AG1 OPERATIONS TRACKER (NEW MODULE)
+# 6. ILA-AG1 OPERATIONS TRACKER
 # ---------------------------------------------------------
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
