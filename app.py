@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate NOC Styling with High Contrast White Cards & Clear Tabs
+# Custom Corporate NOC Styling with High Contrast White Cards & 100% Visible White Tabs
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -51,39 +51,37 @@ st.markdown("""
         margin-right: 8px;
     }
 
-    /* ⚡ TABS 100% VISIBILITY FIX - BOLD WHITE CARDS */
+    /* ⚡ TABS 100% VISIBILITY & WHITE LETTER FIX */
     div[data-testid="stTabs"] {
-        background: rgba(15, 23, 42, 0.6);
-        padding: 8px 8px 0px 8px;
+        background: rgba(15, 23, 42, 0.75);
+        padding: 10px 10px 0px 10px;
         border-radius: 12px 12px 0 0;
+        border: 1px solid rgba(255, 255, 255, 0.15);
     }
     div[data-testid="stTabs"] button[role="tab"] {
-        background-color: #ffffff !important;
+        background-color: rgba(30, 41, 59, 0.9) !important;
         border-radius: 8px 8px 0px 0px !important;
         padding: 10px 22px !important;
-        margin-right: 8px !important;
-        border: 1px solid #cbd5e1 !important;
-        opacity: 0.9;
+        margin-right: 6px !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
     }
     div[data-testid="stTabs"] button[role="tab"] p,
     div[data-testid="stTabs"] button[role="tab"] span,
     div[data-testid="stTabs"] button[role="tab"] div {
-        color: #0f172a !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 14px !important;
-        text-shadow: none !important;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
     }
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
         background-color: #0284c7 !important;
-        border: 1px solid #38bdf8 !important;
-        opacity: 1;
+        border-bottom: 3px solid #38bdf8 !important;
     }
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] div {
         color: #ffffff !important;
         font-weight: 900 !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
     }
 
     /* Headings */
@@ -178,6 +176,19 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] * {
         color: #64748b !important;
     }
+
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    .badge-ok { background-color: #dcfce7; color: #15803d !important; border: 1px solid #bbf7d0; }
+    .badge-warn { background-color: #fef9c3; color: #854d0e !important; border: 1px solid #fef08a; }
+    .badge-crit { background-color: #fee2e2; color: #b91c1c !important; border: 1px solid #fecaca; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -244,7 +255,7 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
-# --- DATA PIPELINE LOADER ---
+# --- DATA PIPELINE LOADER (EMPTY & NON-DG ROWS FILTERED) ---
 @st.cache_data
 def load_all_trackers(dg_file, cm_file, cr_file=None):
     df_status = pd.DataFrame()
