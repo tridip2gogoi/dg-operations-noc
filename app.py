@@ -161,6 +161,15 @@ st.markdown("""
     .closure-success-box * {
         color: #166534 !important;
     }
+
+    /* Native container white card styling */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #ffffff !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15) !important;
+        border: 1px solid #e2e8f0 !important;
+        padding: 12px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -557,47 +566,39 @@ if page == "📊 Executive Control Center":
         
         # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health (White Background Card)
         with c1:
-            st.markdown("""
-            <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 10px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px;">
-                <div style="margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;">Circle JC Wise Automation Health</div>
-            """, unsafe_allow_html=True)
-            
-            fig_bar = px.histogram(
-                df_status, x="JC", color="DG Automation Status", barmode="group",
-                color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
-            )
-            fig_bar.update_layout(
-                height=350,
-                margin=dict(l=10, r=10, t=10, b=10),
-                plot_bgcolor="#ffffff",
-                paper_bgcolor="#ffffff",
-                font=dict(color="#0f172a", family="Inter, sans-serif"),
-                xaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
-                yaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
-                legend=dict(font=dict(color="#0f172a"), bgcolor="rgba(255,255,255,0.9)")
-            )
-            st.plotly_chart(fig_bar, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>Circle JC Wise Automation Health</div>", unsafe_allow_html=True)
+                fig_bar = px.histogram(
+                    df_status, x="JC", color="DG Automation Status", barmode="group",
+                    color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
+                )
+                fig_bar.update_layout(
+                    height=350,
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    plot_bgcolor="#ffffff",
+                    paper_bgcolor="#ffffff",
+                    font=dict(color="#0f172a", family="Inter, sans-serif"),
+                    xaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
+                    yaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
+                    legend=dict(font=dict(color="#0f172a"), bgcolor="rgba(255,255,255,0.9)")
+                )
+                st.plotly_chart(fig_bar, use_container_width=True)
 
         # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (White Background Card)
         with c2:
-            st.markdown("""
-            <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 10px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px;">
-                <div style="margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;">DG Make Fleet Allocation</div>
-            """, unsafe_allow_html=True)
-            
-            if "DG Make" in df_status.columns:
-                fig_donut = px.pie(df_status, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
-                fig_donut.update_layout(
-                    height=350,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    paper_bgcolor="#ffffff",
-                    plot_bgcolor="#ffffff",
-                    font=dict(color="#0f172a", family="Inter, sans-serif"),
-                    legend=dict(font=dict(color="#0f172a"))
-                )
-                st.plotly_chart(fig_donut, use_container_width=True)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>DG Make Fleet Allocation</div>", unsafe_allow_html=True)
+                if "DG Make" in df_status.columns:
+                    fig_donut = px.pie(df_status, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
+                    fig_donut.update_layout(
+                        height=350,
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        paper_bgcolor="#ffffff",
+                        plot_bgcolor="#ffffff",
+                        font=dict(color="#0f172a", family="Inter, sans-serif"),
+                        legend=dict(font=dict(color="#0f172a"))
+                    )
+                    st.plotly_chart(fig_donut, use_container_width=True)
 
 # ---------------------------------------------------------
 # 2. O TO AB AUTOMATED SYNC ENGINE
@@ -680,56 +681,50 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     col1, col2 = st.columns([1, 2])
     
-    # ⚡ কন্টেইনাৰ ১: Status Summary (বগা কাৰ্ড)
+    # ⚡ কন্টেইনাৰ ১: Status Summary
     with col1:
-        st.markdown(f"""
-        <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 12px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px; min-height: 410px;">
-            <div style="margin: 0 0 12px 0; color: #0f172a; font-size: 18px; font-weight: 800;">Status Summary ({selected_fleet_jc})</div>
-        """, unsafe_allow_html=True)
-        stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
-        stat_summary.columns = ['Status Category', 'Site Count']
-        st.dataframe(stat_summary, use_container_width=True, hide_index=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    # ⚡ কন্টেইনাৰ ২: Bucket Distribution (বগা কাৰ্ড আৰু ডাৰ্ক টেক্সট)
+        with st.container(border=True):
+            st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Status Summary ({selected_fleet_jc})</div>", unsafe_allow_html=True)
+            stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
+            stat_summary.columns = ['Status Category', 'Site Count']
+            st.dataframe(stat_summary, use_container_width=True, hide_index=True)
+
+    # ⚡ কন্টেইনাৰ ২: Bucket Distribution
     with col2:
-        st.markdown(f"""
-        <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 10px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px; min-height: 410px;">
-            <div style="margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;">Bucket Distribution ({selected_fleet_jc})</div>
-        """, unsafe_allow_html=True)
-        if not valid_bucket.empty:
-            b_summary = valid_bucket['Bucket'].value_counts().reset_index()
-            b_summary.columns = ['Root-Cause Bucket', 'Incidents']
-            fig_b = px.bar(
-                b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents",
-                color="Incidents", color_continuous_scale="Blues"
-            )
-            fig_b.update_layout(
-                height=340,
-                margin=dict(l=10, r=10, t=10, b=10),
-                plot_bgcolor="#ffffff",
-                paper_bgcolor="#ffffff",
-                font=dict(color="#0f172a", family="Inter, sans-serif"),
-                xaxis=dict(
-                    showgrid=True, gridcolor="#f1f5f9", 
-                    tickfont=dict(color="#0f172a", size=11),
-                    title=dict(font=dict(color="#0f172a", weight="bold"))
-                ),
-                yaxis=dict(
-                    showgrid=True, gridcolor="#f1f5f9", 
-                    tickfont=dict(color="#0f172a"),
-                    title=dict(font=dict(color="#0f172a", weight="bold"))
-                ),
-                coloraxis_colorbar=dict(
-                    title=dict(text="Incidents", font=dict(color="#0f172a")),
-                    tickfont=dict(color="#0f172a")
+        with st.container(border=True):
+            st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Bucket Distribution ({selected_fleet_jc})</div>", unsafe_allow_html=True)
+            if not valid_bucket.empty:
+                b_summary = valid_bucket['Bucket'].value_counts().reset_index()
+                b_summary.columns = ['Root-Cause Bucket', 'Incidents']
+                fig_b = px.bar(
+                    b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents",
+                    color="Incidents", color_continuous_scale="Blues"
                 )
-            )
-            fig_b.update_traces(textposition='outside', textfont=dict(color="#0f172a", weight="bold"))
-            st.plotly_chart(fig_b, use_container_width=True)
-        else:
-            st.info("No active problem bucket recorded for this selection.")
-        st.markdown("</div>", unsafe_allow_html=True)
+                fig_b.update_layout(
+                    height=340,
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    plot_bgcolor="#ffffff",
+                    paper_bgcolor="#ffffff",
+                    font=dict(color="#0f172a", family="Inter, sans-serif"),
+                    xaxis=dict(
+                        showgrid=True, gridcolor="#f1f5f9", 
+                        tickfont=dict(color="#0f172a", size=11),
+                        title=dict(font=dict(color="#0f172a", weight="bold"))
+                    ),
+                    yaxis=dict(
+                        showgrid=True, gridcolor="#f1f5f9", 
+                        tickfont=dict(color="#0f172a"),
+                        title=dict(font=dict(color="#0f172a", weight="bold"))
+                    ),
+                    coloraxis_colorbar=dict(
+                        title=dict(text="Incidents", font=dict(color="#0f172a")),
+                        tickfont=dict(color="#0f172a")
+                    )
+                )
+                fig_b.update_traces(textposition='outside', textfont=dict(color="#0f172a", weight="bold"))
+                st.plotly_chart(fig_b, use_container_width=True)
+            else:
+                st.info("No active problem bucket recorded for this selection.")
 
     st.markdown("---")
     tab_m1, tab_m2, tab_m3, tab_m4 = st.tabs([
@@ -963,7 +958,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
             grid_cols = ['SAIP ID', 'JC', 'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status', 'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date', "Aging (Day's)", 'Timeline']
             valid_grid_cols = [c for c in grid_cols if c in df_status.columns]
             raw_target_df = df_status[valid_grid_cols] if jc_filter == "All JCs" else df_status[df_status['JC'] == jc_filter][valid_grid_cols]
-            target_grid_df = raw_target_grid_df = raw_target_df.copy()
+            target_grid_df = raw_target_df.copy()
 
             for date_c in ['Open Date', 'Present Docket raise Date']:
                 if date_c in target_grid_df.columns:
