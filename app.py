@@ -175,6 +175,12 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] label {
         color: #0f172a !important;
     }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] * {
+        color: #0f172a !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] * {
+        color: #64748b !important;
+    }
 
     .status-badge {
         padding: 6px 14px;
@@ -473,7 +479,7 @@ if not st.session_state.authenticated:
         st.markdown("""
         <div style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ DG NOC Portal</h2>
+                <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ Telecom NOC Portal</h2>
                 <p style="color: #64748b; font-size: 0.9rem;">North East Circle Operations Gateway</p>
             </div>
         """, unsafe_allow_html=True)
@@ -1113,7 +1119,7 @@ elif page == "🔍 AI Site Diagnostics":
                 k3.metric("Incident Aging", f"{int(aging_val) if pd.notna(aging_val) else 0} Days", "Delay Bracket")
                 k4.metric("Fuel Telemetry", fs_val, "Sensor Health", delta_color="normal" if fs_val == "Ok" else "inverse")
 
-            # ⚡ AI ৰুট-কজ ডায়গ্ৰাম আৰু একশ্যন
+            # ⚡ AI ৰুট-কজ ডায়গ্ৰাম আৰু একশ্যন
             bucket_val = str(site_row.get('Bucket', '')).strip()
             rem_val = str(site_row.get('Present Remarks', 'No active remarks logged.')).strip()
 
