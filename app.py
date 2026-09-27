@@ -146,10 +146,8 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ STRICT WHITE CARD & CONTAINER BLACK COLLAR TEXT FIX */
-    div[data-testid="stVerticalBlockBorderWrapper"],
-    div[data-testid="element-container"] div[style*="background-color: #ffffff"],
-    div[style*="background: #ffffff"] {
+    /* ⚡ FORCEFUL OVERRIDE FOR ALL WHITE CONTAINER CARDS */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         border-radius: 12px !important;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
@@ -157,11 +155,11 @@ st.markdown("""
         padding: 18px !important;
     }
     
-    div[data-testid="stVerticalBlockBorderWrapper"] *,
-    div[style*="background: #ffffff"] *,
-    div[style*="background-color: #ffffff"] * {
+    div[data-testid="stVerticalBlockBorderWrapper"] p,
+    div[data-testid="stVerticalBlockBorderWrapper"] span,
+    div[data-testid="stVerticalBlockBorderWrapper"] label,
+    div[data-testid="stVerticalBlockBorderWrapper"] div {
         color: #0f172a !important;
-        text-shadow: none !important;
     }
 
     /* PROFESSIONAL BLACK COLLAR BADGES */
@@ -1035,14 +1033,19 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ ABSOLUTE FIXED SITE HEADER CONTAINER WITH EXPLICIT BLACK COLLAR TEXT & BLACK BADGES
+            # ⚡ FULLY EXPLICIT INLINE DARK BLACK TEXT MAPPING FOR 100% VISIBILITY
+            jc_str = str(site_row.get('JC', 'N/A'))
+            state_str = str(site_row.get('State', 'N/A'))
+            st_type = str(site_row.get('Site Type', 'N/A'))
+            fac_5g = str(site_row.get('5G facality', 'N/A'))
+
             st.markdown(f"""
-            <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);">
+            <div style="background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 12px !important; padding: 20px 24px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15) !important;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
-                        <h2 style="margin: 0; color: #0f172a !important; font-weight: 800; font-size: 24px; text-shadow: none !important;">⚡ <span style="color: #0f172a !important;">{selected_site}</span></h2>
-                        <div style="margin-top: 4px; color: #0f172a !important; font-size: 14px; font-weight: 600;">
-                            Circle Territory: <span style="color: #0284c7; font-weight: 700;">{site_row.get('JC', 'N/A')}</span> | State: <span style="color: #0f172a; font-weight: 700;">{site_row.get('State', 'N/A')}</span> | Site Type: <span style="color: #0f172a; font-weight: 700;">{site_row.get('Site Type', 'N/A')}</span> | 5G Facility: <span style="color: #0f172a; font-weight: 700;">{site_row.get('5G facality', 'N/A')}</span>
+                        <h2 style="margin: 0 !important; color: #0f172a !important; font-weight: 800 !important; font-size: 24px !important; text-shadow: none !important;">⚡ <span style="color: #0f172a !important;">{selected_site}</span></h2>
+                        <div style="margin-top: 4px !important; color: #0f172a !important; font-size: 14px !important; font-weight: 600 !important;">
+                            Circle Territory: <span style="color: #0284c7 !important; font-weight: 700 !important;">{jc_str}</span> | State: <span style="color: #0f172a !important; font-weight: 700 !important;">{state_str}</span> | Site Type: <span style="color: #0f172a !important; font-weight: 700 !important;">{st_type}</span> | 5G Facility: <span style="color: #0f172a !important; font-weight: 700 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 8px;">
