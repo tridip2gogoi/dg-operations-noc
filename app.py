@@ -744,21 +744,43 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 st.warning("JC column not found in dataset.")
 
 # ---------------------------------------------------------
-# 4. FUEL SENSOR TELEMETRY
+# 4. FUEL SENSOR TELEMETRY (JC-WISE & MAKE/KVA BREAKDOWN)
 # ---------------------------------------------------------
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
+    st.caption("Active fuel sensor fault distribution cross-tabulated strictly by JC, DG Make, and KVA rating.")
+
     if not df_fuel.empty:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Active Faulty Sensors", len(df_fuel))
-        c2.metric("Most Affected JC", df_fuel['JC'].mode()[0] if 'JC' in df_fuel.columns else "N/A")
+        c2.metric("Most Affected JC", df_fuel['JC'].mode()[0] if 'JC' in df_fuel.columns else "N/A", f"{df_fuel['JC'].value_counts().max()} Sites" if 'JC' in df_fuel.columns else "")
         c3.metric("Primary Fault Make", df_fuel['DG MAKE'].mode()[0] if 'DG MAKE' in df_fuel.columns else "N/A")
         c4.metric("Primary Fault Rating", df_fuel['KVA'].mode()[0] if 'KVA' in df_fuel.columns else "N/A")
 
+        st.markdown("---")
+        
+        # ⚡ 1. JC-Wise Faulty Sensors Breakdown Matrix
         with st.container(border=True):
-            st.dataframe(df_fuel, use_container_width=True)
+            st.markdown("<h4 style='margin-bottom:10px;'>📊 JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
+            if 'JC' in df_fuel.columns and 'DG MAKE' in df_fuel.columns:
+                jc_fault_matrix = pd.crosstab(df_fuel['JC'], df_fuel['DG MAKE'], margins=True, margins_name="Total")
+                st.dataframe(jc_fault_matrix, use_container_width=True)
+
+        # ⚡ 2. DG Make wise with KVA Matrix
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px;'>⚡ DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
+            if 'DG MAKE' in df_fuel.columns and 'KVA' in df_fuel.columns:
+                make_kva_matrix = pd.crosstab(df_fuel['DG MAKE'], df_fuel['KVA'], margins=True, margins_name="Total")
+                st.dataframe(make_kva_matrix, use_container_width=True)
+
+        # ⚡ 3. Active Fault Site Registry Table
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px;'>📋 Active Fault Site Registry</h4>", unsafe_allow_html=True)
+            disp_fuel_cols = ['SITE ID', 'JC', 'DG MAKE', 'KVA', 'DOCKET NUMBER', 'COMPLAINT LOGGIN DATE', 'NATURE OF COMPLAINT', 'STATUS']
+            valid_disp_fuel = [c for c in disp_fuel_cols if c in df_fuel.columns]
+            st.dataframe(df_fuel[valid_disp_fuel], use_container_width=True)
     else:
-        st.info("No active fuel sensor faults detected.")
+        st.info("No active fuel sensor faults detected in the current tracker.")
 
 # ---------------------------------------------------------
 # 5. CRITICAL AGING ESCALATIONS
@@ -776,7 +798,7 @@ elif page == "⏳ Critical Aging Escalation Monitor":
             st.dataframe(crit_df.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
 
 # ---------------------------------------------------------
-# 6. ILA-AG1 OPERATIONS TRACKER (WITH EDIT, CLEAR, REMOVE & NEW CASE)
+# 6. ILA-AG1 OPERATIONS TRACKER
 # ---------------------------------------------------------
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
