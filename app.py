@@ -246,7 +246,6 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
-@st.cache_data
 def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
     df_status = pd.DataFrame()
     df_fuel = pd.DataFrame()
@@ -395,26 +394,6 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res[k] = ""
     return res
 
-def auto_sync_edited_data_to_engine(df_target, df_open_cm_data, df_cr):
-    if df_target.empty:
-        return df_target
-    updated = df_target.copy()
-    for idx, row in updated.iterrows():
-        s_id = row.get("SAIP ID")
-        cap = ai_capture_o_to_ab(s_id, df_open_cm_data, updated, df_cr)
-        if cap["source"] != "None":
-            if pd.isna(updated.at[idx, "Fuel Sensor Status"]) or updated.at[idx, "Fuel Sensor Status"] == "":
-                updated.at[idx, "Fuel Sensor Status"] = cap["Col_O_Fuel_Sensor_Status"]
-            if (pd.isna(updated.at[idx, "Docket no."]) or updated.at[idx, "Docket no."] == "") and cap["Col_P_Docket_no"]:
-                updated.at[idx, "Docket no."] = cap["Col_P_Docket_no"]
-            if (pd.isna(updated.at[idx, "Open Date"]) or updated.at[idx, "Open Date"] == "") and cap["Col_Q_Open_Date"]:
-                updated.at[idx, "Open Date"] = clean_date_str(cap["Col_Q_Open_Date"])
-            if (pd.isna(updated.at[idx, "Present Docket No."]) or updated.at[idx, "Present Docket No."] == "") and cap["Col_V_Present_Docket_No"]:
-                updated.at[idx, "Present Docket No."] = cap["Col_V_Present_Docket_No"]
-            if (pd.isna(updated.at[idx, "Present Docket raise Date"]) or updated.at[idx, "Present Docket raise Date"] == "") and cap["Col_W_Present_Docket_raise_Date"]:
-                updated.at[idx, "Present Docket raise Date"] = clean_date_str(cap["Col_W_Present_Docket_raise_Date"])
-    return updated
-
 def clear_site_active_fault_data(site_id, df_target):
     if df_target.empty or not site_id:
         return df_target
@@ -432,36 +411,6 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
         if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
-    return updated
-
-def execute_tt_close_shift_to_y_ab(site_id, closure_remarks, closure_date_str, df_target):
-    if df_target.empty or not site_id:
-        return df_target
-    updated = df_target.copy()
-    clean_id = str(site_id).strip().upper()
-    match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
-    if not match_idx.empty:
-        i = match_idx[0]
-        cur_docket = str(updated.at[i, "Present Docket No."]) if pd.notna(updated.at[i, "Present Docket No."]) else ""
-        cur_raise_date = clean_date_str(updated.at[i, "Present Docket raise Date"]) if pd.notna(updated.at[i, "Present Docket raise Date"]) else ""
-        cur_remarks = str(updated.at[i, "Present Remarks"]) if pd.notna(updated.at[i, "Present Remarks"]) else ""
-
-        if "Timeline" in updated.columns: updated.at[i, "Timeline"] = "Closed / Resolved"
-        if "Previous Remarks" in updated.columns: updated.at[i, "Previous Remarks"] = f"{cur_remarks} | Closed: {closure_remarks}".strip(" |")
-        if "Previous Docket No." in updated.columns: updated.at[i, "Previous Docket No."] = cur_docket
-        if "Previous Docket raise Date" in updated.columns: updated.at[i, "Previous Docket raise Date"] = cur_raise_date
-
-        if "Last Closed date" in updated.columns: updated.at[i, "Last Closed date"] = closure_date_str
-        if "Last Closed date.1" in updated.columns: updated.at[i, "Last Closed date.1"] = closure_date_str
-        if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
-        if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = "Automation Restored / Closed"
-        if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
-        if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
-        if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
-        if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
-        if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
-        if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
-        if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
     return updated
 
 # --- AUTHENTICATION GATEWAY ---
@@ -541,19 +490,16 @@ ila_source = uploaded_ila if uploaded_ila is not None else None
 
 df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
-file_key = str(getattr(uploaded_dg, 'name', dg_source))
-if "loaded_file_key" not in st.session_state or st.session_state.loaded_file_key != file_key:
-    st.session_state.loaded_file_key = file_key
-    st.session_state.master_tracker_df = df_status_raw.copy()
-    st.session_state.fuel_tracker_df = df_fuel_raw.copy()
-    st.session_state.ila_tracker_df = df_ila_raw.copy()
-
-# ⚡ ENSURE SESSION STATE DATAFRAMES EXIST TO PREVENT ATTRIBUTE ERRORS
-if "master_tracker_df" not in st.session_state:
+# ⚡ SAFE INITIALIZATION OF SESSION STATES
+if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
     st.session_state.master_tracker_df = df_status_raw.copy()
 if "fuel_tracker_df" not in st.session_state:
     st.session_state.fuel_tracker_df = df_fuel_raw.copy()
 if "ila_tracker_df" not in st.session_state:
+    st.session_state.ila_tracker_df = df_ila_raw.copy()
+
+# Update if new file is uploaded
+if uploaded_ila is not None:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
 df_status = st.session_state.master_tracker_df
@@ -570,12 +516,6 @@ if not df_open_cm.empty:
 
 if not df_ila.empty:
     st.sidebar.success(f"ILA-AG1: {len(df_ila)} Records Loaded")
-
-if not df_status.empty and "Aging (Day's)" in df_status.columns:
-    df_status['Aging_Num'] = pd.to_numeric(df_status["Aging (Day's)"], errors='coerce')
-    bins = [-1, 0, 7, 15, 30, 60, 90, 100000]
-    labels = ['0 Days', '1-7 Days', '8-15 Days', '16-30 Days', '31-60 Days', '61-90 Days', '>90 Days']
-    df_status['Aging_Bracket'] = pd.cut(df_status['Aging_Num'], bins=bins, labels=labels)
 
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
@@ -665,7 +605,7 @@ elif page == "⚡ O to AB Automated Sync Engine":
                 sync_count = 0
                 for idx, row in updated_df.iterrows():
                     s_id = row.get("SAIP ID")
-                    cap = ai_capture_o_to_ab(s_id, df_open_cm, df_status, df_cr_data)
+                    cap = ai_capture_o_to_ab(s_id, df_open_cm, df_status, None)
                     if cap["source"] != "None":
                         sync_count += 1
                         updated_df.at[idx, "Fuel Sensor Status"] = cap["Col_O_Fuel_Sensor_Status"]
@@ -715,20 +655,21 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
-    jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()])
+    jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()]) if 'JC' in df_status.columns else ["All JCs"]
     selected_fleet_jc = st.selectbox("Select JC Circle:", jc_options)
 
-    filtered_status = df_status if selected_fleet_jc == "All JCs" else df_status[df_status['JC'] == selected_fleet_jc]
-    valid_bucket = filtered_status[filtered_status['Bucket'].notna()]
+    filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'] == selected_fleet_jc]
+    valid_bucket = filtered_status[filtered_status['Bucket'].notna()] if 'Bucket' in filtered_status.columns else pd.DataFrame()
 
     col1, col2 = st.columns([1, 2])
     
     with col1:
         with st.container(border=True):
             st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Status Summary ({selected_fleet_jc})</div>", unsafe_allow_html=True)
-            stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
-            stat_summary.columns = ['Status Category', 'Site Count']
-            st.dataframe(stat_summary, use_container_width=True, hide_index=True)
+            if 'DG Automation Status' in filtered_status.columns:
+                stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
+                stat_summary.columns = ['Status Category', 'Site Count']
+                st.dataframe(stat_summary, use_container_width=True, hide_index=True)
 
     with col2:
         with st.container(border=True):
@@ -763,24 +704,27 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m1:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
-            status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
-            st.dataframe(status_matrix, use_container_width=True)
+            if 'JC' in df_status.columns and 'DG Automation Status' in df_status.columns:
+                status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
+                st.dataframe(status_matrix, use_container_width=True)
 
     with tab_m2:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
-            all_valid_bkt = df_status[df_status['Bucket'].notna()]
-            bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
-            st.dataframe(bucket_matrix, use_container_width=True)
+            if 'JC' in df_status.columns and 'Bucket' in df_status.columns:
+                all_valid_bkt = df_status[df_status['Bucket'].notna()]
+                bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
+                st.dataframe(bucket_matrix, use_container_width=True)
 
     with tab_m3:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
-            df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
-            df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified')
-            df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
-            ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
-            st.dataframe(ct_gcu_detailed, use_container_width=True)
+            if 'Bucket' in df_status.columns:
+                df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
+                df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified') if 'DG Make' in df_gcu.columns else 'Unspecified'
+                df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
+                ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
+                st.dataframe(ct_gcu_detailed, use_container_width=True)
 
     with tab_m4:
         with st.container(border=True):
@@ -788,7 +732,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
             target_statuses = ['DG Breakdown', 'Manual Mode']
             target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
             df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
-            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip()
+            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_sub.columns else ''
             df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
             if 'JC' in df_sub.columns:
                 ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
@@ -818,8 +762,8 @@ elif page == "⛽ Fuel Sensor Telemetry":
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
-    aging_valid = df_status[df_status['Aging_Num'].notna()].copy()
-    crit_df = aging_valid[aging_valid['Aging_Num'] > 90].copy()
+    aging_valid = df_status[df_status['Aging_Num'].notna()].copy() if 'Aging_Num' in df_status.columns else pd.DataFrame()
+    crit_df = aging_valid[aging_valid['Aging_Num'] > 90].copy() if not aging_valid.empty else pd.DataFrame()
 
     m1, m2 = st.columns(2)
     m1.metric("Total Delayed Sites", len(aging_valid))
@@ -871,7 +815,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab1:
             with st.container(border=True):
                 search_edit_site = st.text_input("Enter SAIP ID to modify or resolve:").strip().upper()
-                if search_edit_site:
+                if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
                     match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
                     if match_idx.empty:
                         st.error(f"Site `{search_edit_site}` not found.")
