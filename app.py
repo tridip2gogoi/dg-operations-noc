@@ -1036,14 +1036,14 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ FIXED SITE HEADER CONTAINER WITH DARK TEXT FOR 100% VISIBILITY
+            # ⚡ ABSOLUTE FIXED SITE HEADER CONTAINER WITH EXPLICIT DARK TEXT
             st.markdown(f"""
-            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);">
+            <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
                         <h2 style="margin: 0; color: #0f172a !important; font-weight: 800; font-size: 24px; text-shadow: none !important;">⚡ {selected_site}</h2>
                         <div style="margin-top: 4px; color: #475569 !important; font-size: 14px; font-weight: 600;">
-                            Circle Territory: <b style="color: #0284c7;">{site_row.get('JC', 'N/A')}</b> | State: <b style="color: #0f172a;">{site_row.get('State', 'N/A')}</b> | Site Type: <b style="color: #0f172a;">{site_row.get('Site Type', 'N/A')}</b> | 5G Facility: <b style="color: #0f172a;">{site_row.get('5G facality', 'N/A')}</b>
+                            Circle Territory: <span style="color: #0284c7; font-weight: 700;">{site_row.get('JC', 'N/A')}</span> | State: <span style="color: #0f172a; font-weight: 700;">{site_row.get('State', 'N/A')}</span> | Site Type: <span style="color: #0f172a; font-weight: 700;">{site_row.get('Site Type', 'N/A')}</span> | 5G Facility: <span style="color: #0f172a; font-weight: 700;">{site_row.get('5G facality', 'N/A')}</span>
                         </div>
                     </div>
                     <div style="margin-top: 8px;">
@@ -1145,7 +1145,7 @@ elif page == "🔍 AI Site Diagnostics":
                             cap_data.get("Col_V_Present_Docket_No", ""),
                             clean_date_str(cap_data.get("Col_W_Present_Docket_raise_Date", "")),
                             str(cap_data.get("Col_X_Aging_Days", "")),
-                            cap_data.get("Col_Y_Timeline", "")
+                            str(cap_data.get("Col_Y_Timeline", ""))
                         ]
                     })
                     st.dataframe(rec_table, use_container_width=True, hide_index=True)
