@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & Strict Black Collar Text
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & White Header Text
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -146,7 +146,6 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ FORCEFUL OVERRIDE FOR ALL WHITE CONTAINER CARDS */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         border-radius: 12px !important;
@@ -162,7 +161,7 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* PROFESSIONAL BLACK COLLAR BADGES */
+    /* PROFESSIONAL BLACK BADGES */
     .status-badge {
         padding: 6px 16px;
         border-radius: 9999px;
@@ -1033,7 +1032,7 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ FULLY EXPLICIT INLINE DARK BLACK TEXT MAPPING FOR 100% VISIBILITY
+            # ⚡ EXPLICIT WHITE COLLAR TEXT FOR ALL FIELDS INSIDE THE HEADER CONTAINER
             jc_str = str(site_row.get('JC', 'N/A'))
             state_str = str(site_row.get('State', 'N/A'))
             st_type = str(site_row.get('Site Type', 'N/A'))
@@ -1043,9 +1042,9 @@ elif page == "🔍 AI Site Diagnostics":
             <div style="background-color: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 12px !important; padding: 20px 24px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15) !important;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
-                        <h2 style="margin: 0 !important; color: #0f172a !important; font-weight: 800 !important; font-size: 24px !important; text-shadow: none !important;">⚡ <span style="color: #0f172a !important;">{selected_site}</span></h2>
-                        <div style="margin-top: 4px !important; color: #0f172a !important; font-size: 14px !important; font-weight: 600 !important;">
-                            Circle Territory: <span style="color: #0284c7 !important; font-weight: 700 !important;">{jc_str}</span> | State: <span style="color: #0f172a !important; font-weight: 700 !important;">{state_str}</span> | Site Type: <span style="color: #0f172a !important; font-weight: 700 !important;">{st_type}</span> | 5G Facility: <span style="color: #0f172a !important; font-weight: 700 !important;">{fac_5g}</span>
+                        <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 800 !important; font-size: 24px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
+                        <div style="margin-top: 4px !important; color: #ffffff !important; font-size: 14px !important; font-weight: 600 !important;">
+                            Circle Territory: <span style="color: #ffffff !important; font-weight: 700 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 700 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 700 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 700 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 8px;">
