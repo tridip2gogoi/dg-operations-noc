@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate NOC Styling with High Visibility Tabs, Radios & Clear Contrast
+# Custom Corporate NOC Styling with High Visibility Tabs & Clear Contrast
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -32,26 +32,7 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* ⚡ RADIO BUTTON VISIBILITY FIX */
-    div[data-testid="stRadio"] label,
-    div[data-testid="stRadio"] div[role="radiogroup"] label,
-    div[data-testid="stRadio"] div[role="radiogroup"] label div p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label span {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
-    }
-    div[data-testid="stRadio"] div[role="radiogroup"] label {
-        background: rgba(30, 41, 59, 0.75);
-        padding: 6px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        margin-right: 8px;
-    }
-
-    /* ⚡ TABS VISIBILITY FIX */
+    /* ⚡ TABS VISIBILITY FIX: সকলো টেবৰ লিখা উজ্জ্বল বগা আৰু স্পষ্ট কৰা হ'ল */
     button[data-baseweb="tab"] {
         background-color: rgba(30, 41, 59, 0.7) !important;
         border-radius: 8px 8px 0px 0px !important;
@@ -61,10 +42,12 @@ st.markdown("""
     button[data-baseweb="tab"] div p,
     button[data-baseweb="tab"] p,
     button[data-baseweb="tab"] span {
-        color: #cbd5e1 !important;
+        color: #cbd5e1 !important; /* Inactive Tab text: উজ্জ্বল চিলভাৰ বগা */
         font-weight: 600 !important;
         font-size: 14px !important;
     }
+
+    /* Active (চিলেক্ট কৰা) টেবৰ লিখা আৰু আণ্ডাৰলাইন */
     button[data-baseweb="tab"][aria-selected="true"] {
         background-color: rgba(59, 130, 246, 0.25) !important;
         border-bottom: 3px solid #38bdf8 !important;
@@ -72,11 +55,11 @@ st.markdown("""
     button[data-baseweb="tab"][aria-selected="true"] div p,
     button[data-baseweb="tab"][aria-selected="true"] p,
     button[data-baseweb="tab"][aria-selected="true"] span {
-        color: #ffffff !important;
+        color: #ffffff !important; /* Active Tab text: উজ্জ্বল বগা */
         font-weight: 800 !important;
     }
 
-    /* Headings */
+    /* মূল ডেশ্ববৰ্ডৰ সকলো হেডিং উজ্জ্বল বগা */
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
     [data-testid="stHeader"] *,
@@ -88,12 +71,13 @@ st.markdown("""
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
     }
 
+    /* সাধাৰণ টেক্সট আৰু কেপশ্যন বগা */
     .stMarkdown p, .stMarkdown span, .stCaption, [data-testid="stCaptionContainer"] {
         color: #f1f5f9 !important;
         font-weight: 500 !important;
     }
 
-    /* Metric Values */
+    /* Metric Values (1,663, 81.6%, 248) উজ্জ্বল বগা */
     [data-testid="stMetricValue"] * {
         color: #ffffff !important;
         font-weight: 800 !important;
@@ -103,7 +87,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* Sidebar */
+    /* বাওঁফালৰ Sidebar সম্পূৰ্ণ বগা বেকগ্ৰাউণ্ড আৰু স্পষ্ট ডাৰ্ক আখৰ */
     section[data-testid="stSidebar"] {
         background-color: #ffffff !important;
     }
@@ -123,15 +107,18 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
+    /* ইনপুট ফিল্ড আৰু লেবেল স্পষ্ট কৰা */
     .stTextInput label, .stSelectbox label, .stDateInput label {
         color: #ffffff !important;
         font-weight: 600 !important;
     }
 
+    /* File Uploader */
     [data-testid="stFileUploadDropzone"] * {
         color: #0f172a !important;
     }
 
+    /* কাৰ্ড আৰু ইনফো বক্স */
     .metric-card {
         background: rgba(255, 255, 255, 0.95);
         padding: 1.25rem;
@@ -160,15 +147,6 @@ st.markdown("""
     }
     .closure-success-box * {
         color: #166534 !important;
-    }
-
-    /* Native container white card styling */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #ffffff !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15) !important;
-        border: 1px solid #e2e8f0 !important;
-        padding: 12px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -232,8 +210,10 @@ def verify_login(username, password):
     return None
 
 def is_valid_source(src):
-    if hasattr(src, 'read'): return True
-    if isinstance(src, str) and os.path.exists(src): return True
+    if hasattr(src, 'read'):
+        return True
+    if isinstance(src, str) and os.path.exists(src):
+        return True
     return False
 
 # --- DATA PIPELINE LOADER ---
@@ -244,6 +224,7 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
     df_open_cm = pd.DataFrame()
     df_cr_data = pd.DataFrame()
     
+    # 1. DG Master Tracker
     if is_valid_source(dg_file):
         try:
             xls_dg = pd.ExcelFile(dg_file)
@@ -259,6 +240,7 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
         except Exception as e:
             st.error(f"Error loading DG tracker: {e}")
 
+    # 2. CM Tracker
     if is_valid_source(cm_file):
         try:
             xls_cm = pd.ExcelFile(cm_file)
@@ -273,6 +255,7 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
         except Exception as e:
             st.warning(f"Note on CM tracker: {e}")
 
+    # 3. Complaint Register (Optional)
     if cr_file and is_valid_source(cr_file):
         try:
             xls_cr = pd.ExcelFile(cr_file)
@@ -280,7 +263,7 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
                 if "TRACKER" in s.upper():
                     df_cr_data = pd.read_excel(xls_cr, sheet_name=s, header=2)
                     break
-        except Exception:
+        except Exception as e:
             pass
 
     return df_status, df_fuel, df_open_cm, df_cr_data
@@ -299,6 +282,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     if not clean_id:
         return res
 
+    # Check DG Master Tracker First
     if not df_status.empty and 'SAIP ID' in df_status.columns:
         dg_match = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == clean_id]
         if not dg_match.empty:
@@ -320,6 +304,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
             res["source"] = "DG Master Tracker"
 
+    # Overlay with CM Tracker (Open Site)
     if not df_open_cm.empty and 'SITE ID' in df_open_cm.columns:
         cm_match = df_open_cm[df_open_cm['SITE ID'].astype(str).str.strip().str.upper() == clean_id]
         if not cm_match.empty:
@@ -370,6 +355,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     for k, v in res.items():
         if str(v).lower() == 'nan' or str(v) == 'nat':
             res[k] = ""
+
     return res
 
 # --- AUTO-SYNC EDITED IN-PORTAL DATA DIRECTLY TO ENGINE ---
@@ -393,7 +379,7 @@ def auto_sync_edited_data_to_engine(df_target, df_open_cm_data, df_cr):
                 updated.at[idx, "Present Docket raise Date"] = clean_date_str(cap["Col_W_Present_Docket_raise_Date"])
     return updated
 
-# --- CLEAR ACTIVE FAULT DATA ---
+# --- CLEAR ACTIVE FAULT DATA (RESET FIELDS WITHOUT DELETING ROW) ---
 def clear_site_active_fault_data(site_id, df_target):
     if df_target.empty or not site_id:
         return df_target
@@ -426,11 +412,13 @@ def execute_tt_close_shift_to_y_ab(site_id, closure_remarks, closure_date_str, d
         cur_raise_date = clean_date_str(updated.at[i, "Present Docket raise Date"]) if pd.notna(updated.at[i, "Present Docket raise Date"]) else ""
         cur_remarks = str(updated.at[i, "Present Remarks"]) if pd.notna(updated.at[i, "Present Remarks"]) else ""
 
+        # 1. SHIFT TO COL Y TO AB
         if "Timeline" in updated.columns: updated.at[i, "Timeline"] = "Closed / Resolved"
         if "Previous Remarks" in updated.columns: updated.at[i, "Previous Remarks"] = f"{cur_remarks} | Closed: {closure_remarks}".strip(" |")
         if "Previous Docket No." in updated.columns: updated.at[i, "Previous Docket No."] = cur_docket
         if "Previous Docket raise Date" in updated.columns: updated.at[i, "Previous Docket raise Date"] = cur_raise_date
 
+        # 2. RESTORE STATUS & RESET ACTIVE FAULT
         if "Last Closed date" in updated.columns: updated.at[i, "Last Closed date"] = closure_date_str
         if "Last Closed date.1" in updated.columns: updated.at[i, "Last Closed date.1"] = closure_date_str
         if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
@@ -453,7 +441,7 @@ if not st.session_state.authenticated:
     _, col1, _ = st.columns([1, 1.2, 1])
     with col1:
         st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
+        <div class="login-container" style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
             <div style="text-align: center; margin-bottom: 1.5rem;">
                 <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ Telecom NOC Portal</h2>
                 <p style="color: #64748b; font-size: 0.9rem;">North East Circle Operations Gateway</p>
@@ -545,7 +533,7 @@ page = st.sidebar.radio("NOC Operations Navigation:", [
 ])
 
 # ---------------------------------------------------------
-# 1. EXECUTIVE CONTROL CENTER (WHITE BACKGROUND FOR GRAPHS)
+# 1. EXECUTIVE CONTROL CENTER
 # ---------------------------------------------------------
 if page == "📊 Executive Control Center":
     st.markdown("## ⚡ North East Circle - DG Operations Control Center")
@@ -563,42 +551,20 @@ if page == "📊 Executive Control Center":
 
         st.markdown("---")
         c1, c2 = st.columns([3, 2])
-        
-        # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health (White Background Card)
         with c1:
-            with st.container(border=True):
-                st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>Circle JC Wise Automation Health</div>", unsafe_allow_html=True)
-                fig_bar = px.histogram(
-                    df_status, x="JC", color="DG Automation Status", barmode="group",
-                    color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
-                )
-                fig_bar.update_layout(
-                    height=350,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    plot_bgcolor="#ffffff",
-                    paper_bgcolor="#ffffff",
-                    font=dict(color="#0f172a", family="Inter, sans-serif"),
-                    xaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
-                    yaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
-                    legend=dict(font=dict(color="#0f172a"), bgcolor="rgba(255,255,255,0.9)")
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
-
-        # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (White Background Card)
+            st.subheader("Circle JC Wise Automation Health")
+            fig_bar = px.histogram(
+                df_status, x="JC", color="DG Automation Status", barmode="group",
+                color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
+            )
+            fig_bar.update_layout(height=360, margin=dict(l=10, r=10, t=20, b=10), plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#ffffff")
+            st.plotly_chart(fig_bar, use_container_width=True)
         with c2:
-            with st.container(border=True):
-                st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>DG Make Fleet Allocation</div>", unsafe_allow_html=True)
-                if "DG Make" in df_status.columns:
-                    fig_donut = px.pie(df_status, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
-                    fig_donut.update_layout(
-                        height=350,
-                        margin=dict(l=10, r=10, t=10, b=10),
-                        paper_bgcolor="#ffffff",
-                        plot_bgcolor="#ffffff",
-                        font=dict(color="#0f172a", family="Inter, sans-serif"),
-                        legend=dict(font=dict(color="#0f172a"))
-                    )
-                    st.plotly_chart(fig_donut, use_container_width=True)
+            st.subheader("DG Make Fleet Allocation")
+            if "DG Make" in df_status.columns:
+                fig_donut = px.pie(df_status, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
+                fig_donut.update_layout(height=360, margin=dict(l=10, r=10, t=20, b=10), paper_bgcolor="rgba(0,0,0,0)", font_color="#ffffff")
+                st.plotly_chart(fig_donut, use_container_width=True)
 
 # ---------------------------------------------------------
 # 2. O TO AB AUTOMATED SYNC ENGINE
@@ -680,51 +646,21 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     valid_bucket = filtered_status[filtered_status['Bucket'].notna()]
 
     col1, col2 = st.columns([1, 2])
-    
-    # ⚡ কন্টেইনাৰ ১: Status Summary
     with col1:
-        with st.container(border=True):
-            st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Status Summary ({selected_fleet_jc})</div>", unsafe_allow_html=True)
-            stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
-            stat_summary.columns = ['Status Category', 'Site Count']
-            st.dataframe(stat_summary, use_container_width=True, hide_index=True)
-
-    # ⚡ কন্টেইনাৰ ২: Bucket Distribution
+        st.markdown(f"#### Status Summary ({selected_fleet_jc})")
+        stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
+        stat_summary.columns = ['Status Category', 'Site Count']
+        st.dataframe(stat_summary, use_container_width=True, hide_index=True)
     with col2:
-        with st.container(border=True):
-            st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Bucket Distribution ({selected_fleet_jc})</div>", unsafe_allow_html=True)
-            if not valid_bucket.empty:
-                b_summary = valid_bucket['Bucket'].value_counts().reset_index()
-                b_summary.columns = ['Root-Cause Bucket', 'Incidents']
-                fig_b = px.bar(
-                    b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents",
-                    color="Incidents", color_continuous_scale="Blues"
-                )
-                fig_b.update_layout(
-                    height=340,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    plot_bgcolor="#ffffff",
-                    paper_bgcolor="#ffffff",
-                    font=dict(color="#0f172a", family="Inter, sans-serif"),
-                    xaxis=dict(
-                        showgrid=True, gridcolor="#f1f5f9", 
-                        tickfont=dict(color="#0f172a", size=11),
-                        title=dict(font=dict(color="#0f172a", weight="bold"))
-                    ),
-                    yaxis=dict(
-                        showgrid=True, gridcolor="#f1f5f9", 
-                        tickfont=dict(color="#0f172a"),
-                        title=dict(font=dict(color="#0f172a", weight="bold"))
-                    ),
-                    coloraxis_colorbar=dict(
-                        title=dict(text="Incidents", font=dict(color="#0f172a")),
-                        tickfont=dict(color="#0f172a")
-                    )
-                )
-                fig_b.update_traces(textposition='outside', textfont=dict(color="#0f172a", weight="bold"))
-                st.plotly_chart(fig_b, use_container_width=True)
-            else:
-                st.info("No active problem bucket recorded for this selection.")
+        st.markdown(f"#### Bucket Distribution ({selected_fleet_jc})")
+        if not valid_bucket.empty:
+            b_summary = valid_bucket['Bucket'].value_counts().reset_index()
+            b_summary.columns = ['Root-Cause Bucket', 'Incidents']
+            fig_b = px.bar(b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents", color="Incidents", color_continuous_scale="Blues")
+            fig_b.update_layout(height=320, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#ffffff", margin=dict(l=10, r=10, t=10, b=10))
+            st.plotly_chart(fig_b, use_container_width=True)
+        else:
+            st.info("No active problem bucket recorded for this selection.")
 
     st.markdown("---")
     tab_m1, tab_m2, tab_m3, tab_m4 = st.tabs([
@@ -790,7 +726,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected in the current tracker.")
 
 # ---------------------------------------------------------
-# 5. CRITICAL AGING ESCALATION MONITOR
+# 5. CRITICAL AGING & ESCALATION RADAR
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
@@ -827,7 +763,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     st.caption(f"Authenticated Role: **{admin_role}** | Modifying telemetry and resolving active tickets.")
 
-    # 🔒 VIEWER একাউণ্টৰ বাবে সকলো এডিট বন্ধ (Read-only)
+    # 🔒 READ-ONLY ENFORCEMENT FOR VIEWER ROLE
     if "read_only" in user_perms:
         st.warning("🔒 Viewer Account: আপোনাৰ একাউণ্ট কেৱল পৰ্যবেক্ষণৰ বাবে (Read-only)। ছাইটৰ ডেটা এডিট কৰা, ফল্ট ৰিছেট কৰা বা TT বন্ধ কৰাৰ অনুমতি নিষ্ক্ৰিয় কৰা হৈছে।")
         st.dataframe(df_status.head(50), use_container_width=True)
