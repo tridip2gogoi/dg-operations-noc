@@ -548,7 +548,7 @@ if "loaded_file_key" not in st.session_state or st.session_state.loaded_file_key
     st.session_state.fuel_tracker_df = df_fuel_raw.copy()
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
-# ⚡ SESSION STATE SAFETY CHECK TO PREVENT AttributeError
+# ⚡ ENSURE SESSION STATE DATAFRAMES EXIST TO PREVENT ATTRIBUTE ERRORS
 if "master_tracker_df" not in st.session_state:
     st.session_state.master_tracker_df = df_status_raw.copy()
 if "fuel_tracker_df" not in st.session_state:
