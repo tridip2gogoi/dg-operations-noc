@@ -473,7 +473,7 @@ if not st.session_state.authenticated:
         st.markdown("""
         <div style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ Telecom NOC Portal</h2>
+                <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ DG NOC Portal</h2>
                 <p style="color: #64748b; font-size: 0.9rem;">North East Circle Operations Gateway</p>
             </div>
         """, unsafe_allow_html=True)
