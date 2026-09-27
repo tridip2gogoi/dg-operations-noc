@@ -557,9 +557,11 @@ if page == "📊 Executive Control Center":
         
         # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health (White Background Card)
         with c1:
+            # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health (White Background Card)
+        with c1:
             st.markdown("""
             <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 10px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px;">
-                <h4 style="margin: 0 0 10px 0; color: #0f172a !important; font-weight: 700; text-shadow: none !important;">Circle JC Wise Automation Health</h4>
+                <div style="margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;">Circle JC Wise Automation Health</div>
             """, unsafe_allow_html=True)
             
             fig_bar = px.histogram(
@@ -579,6 +581,25 @@ if page == "📊 Executive Control Center":
             st.plotly_chart(fig_bar, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
+        # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (White Background Card)
+        with c2:
+            st.markdown("""
+            <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 10px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                <div style="margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;">DG Make Fleet Allocation</div>
+            """, unsafe_allow_html=True)
+            
+            if "DG Make" in df_status.columns:
+                fig_donut = px.pie(df_status, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
+                fig_donut.update_layout(
+                    height=350,
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    paper_bgcolor="#ffffff",
+                    plot_bgcolor="#ffffff",
+                    font=dict(color="#0f172a", family="Inter, sans-serif"),
+                    legend=dict(font=dict(color="#0f172a"))
+                )
+                st.plotly_chart(fig_donut, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
         # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (White Background Card)
         with c2:
             st.markdown("""
