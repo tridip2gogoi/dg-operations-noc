@@ -674,29 +674,46 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
 
         map_df["Health_Flag"] = map_df.apply(get_color, axis=1)
 
-        fig_map = px.scatter_mapbox(
-            map_df,
-            lat="lat", lon="lon",
-            color="Health_Flag",
-            hover_name="SAIP ID",
-            hover_data={
-                "JC": True, "DG Automation Status": True, 
-                "Bucket": True, "Present Docket No.": True,
-                "lat": False, "lon": False
-            },
-            color_discrete_map={
-                "Red (Severe Fault)": "#ef4444",
-                "Amber (Manual Mode)": "#f59e0b",
-                "Green (Automation Ok)": "#10b981"
-            },
-            zoom=6.5,
-            height=600
-        )
-        fig_map.update_layout(
-            mapbox_style="carto-darkmatter",
-            margin=dict(l=0, r=0, t=0, b=0),
-            legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.02, bgcolor="rgba(15,23,42,0.85)", font=dict(color="#ffffff"))
-        )
+        # ⚡ Mapbox vs MapLibre Safe Compatibility Engine
+        color_map = {
+            "Red (Severe Fault)": "#ef4444",
+            "Amber (Manual Mode)": "#f59e0b",
+            "Green (Automation Ok)": "#10b981"
+        }
+        hover_dict = {
+            "JC": True, "DG Automation Status": True, 
+            "Bucket": True, "Present Docket No.": True,
+            "lat": False, "lon": False
+        }
+
+        try:
+            fig_map = px.scatter_map(
+                map_df, lat="lat", lon="lon",
+                color="Health_Flag",
+                hover_name="SAIP ID",
+                hover_data=hover_dict,
+                color_discrete_map=color_map,
+                zoom=6.5, height=600
+            )
+            fig_map.update_layout(
+                map_style="carto-darkmatter",
+                margin=dict(l=0, r=0, t=0, b=0),
+                legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.02, bgcolor="rgba(15,23,42,0.85)", font=dict(color="#ffffff"))
+            )
+        except Exception:
+            fig_map = px.scatter_mapbox(
+                map_df, lat="lat", lon="lon",
+                color="Health_Flag",
+                hover_name="SAIP ID",
+                hover_data=hover_dict,
+                color_discrete_map=color_map,
+                zoom=6.5, height=600
+            )
+            fig_map.update_layout(
+                mapbox_style="carto-darkmatter",
+                margin=dict(l=0, r=0, t=0, b=0),
+                legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.02, bgcolor="rgba(15,23,42,0.85)", font=dict(color="#ffffff"))
+            )
         st.plotly_chart(fig_map, use_container_width=True)
 
 # ---------------------------------------------------------
@@ -766,7 +783,7 @@ elif page == "⚡ O to AB Automated Sync Engine":
         )
 
 # ---------------------------------------------------------
-# 4. FLEET ANALYTICS & PROBLEM BUCKETS
+# 4. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
