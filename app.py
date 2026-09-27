@@ -246,6 +246,7 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
+@st.cache_data
 def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
     df_status = pd.DataFrame()
     df_fuel = pd.DataFrame()
@@ -303,6 +304,9 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
         try:
             xls_ila = pd.ExcelFile(ila_file)
             df_ila = pd.read_excel(xls_ila, sheet_name=xls_ila.sheet_names[0])
+            if 'Sap ID' in df_ila.columns:
+                df_ila = df_ila[df_ila['Sap ID'].notna()]
+                df_ila['Sap ID'] = df_ila['Sap ID'].astype(str).str.strip()
         except Exception as e:
             st.warning(f"Note on ILA-AG1 tracker: {e}")
 
@@ -495,10 +499,9 @@ if "master_tracker_df" not in st.session_state or st.session_state.master_tracke
     st.session_state.master_tracker_df = df_status_raw.copy()
 if "fuel_tracker_df" not in st.session_state:
     st.session_state.fuel_tracker_df = df_fuel_raw.copy()
-if "ila_tracker_df" not in st.session_state:
+if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
-# Update if new file is uploaded
 if uploaded_ila is not None:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
@@ -773,29 +776,143 @@ elif page == "⏳ Critical Aging Escalation Monitor":
             st.dataframe(crit_df.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
 
 # ---------------------------------------------------------
-# 6. ILA-AG1 OPERATIONS TRACKER
+# 6. ILA-AG1 OPERATIONS TRACKER (WITH EDIT, CLEAR, REMOVE & NEW CASE)
 # ---------------------------------------------------------
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
-    st.caption("Integrated tracking and analysis of ILA-AG1 operational logs.")
+    st.caption("Integrated tracking, editing, fault clearance, removal, and new case entries for ILA-AG1 operational logs.")
 
-    if not df_ila.empty:
-        with st.container(border=True):
-            st.markdown(f"### ILA-AG1 Registry Summary ({len(df_ila):,} Records)")
-            st.dataframe(df_ila, use_container_width=True)
-
-            ila_output = BytesIO()
-            with pd.ExcelWriter(ila_output, engine='openpyxl') as writer:
-                df_ila.to_excel(writer, sheet_name="ILA-AG1 Data", index=False)
-            st.download_button(
-                label="📥 Download Processed ILA-AG1 Report (.xlsx)",
-                data=ila_output.getvalue(),
-                file_name=f"ILA_AG1_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-    else:
+    if df_ila.empty:
         st.info("📂 Please upload the **ILA-AG1 Tracker** file from the sidebar upload section to initialize this module.")
+    else:
+        ila_tab1, ila_tab2, ila_tab3 = st.tabs([
+            "📊 Registry & Spreadsheet Grid",
+            "📝 Single Site Quick Editor, Clear & Removal",
+            "➕ New Case / Site Entry"
+        ])
+
+        with ila_tab1:
+            with st.container(border=True):
+                st.markdown(f"### ILA-AG1 Registry Summary ({len(df_ila):,} Records)")
+                edited_ila_data = st.data_editor(df_ila, use_container_width=True, height=450)
+                
+                if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
+                    st.session_state.ila_tracker_df = edited_ila_data.copy()
+                    st.success("ILA-AG1 grid updates saved successfully!")
+                    st.rerun()
+
+                ila_output = BytesIO()
+                with pd.ExcelWriter(ila_output, engine='openpyxl') as writer:
+                    df_ila.to_excel(writer, sheet_name="ILA-AG1 Data", index=False)
+                st.download_button(
+                    label="📥 Download Processed ILA-AG1 Report (.xlsx)",
+                    data=ila_output.getvalue(),
+                    file_name=f"ILA_AG1_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+
+        with ila_tab2:
+            with st.container(border=True):
+                st.markdown("### Single Site Quick Editor, Fault Clearance & Record Removal")
+                target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:").strip().upper()
+                
+                if target_sap_id and 'Sap ID' in df_ila.columns:
+                    match_ila_idx = df_ila[df_ila['Sap ID'].astype(str).str.strip().str.upper() == target_sap_id].index
+                    if match_ila_idx.empty:
+                        st.error(f"Sap ID `{target_sap_id}` not found in ILA-AG1 tracker.")
+                    else:
+                        i_idx = match_ila_idx[0]
+                        i_row = df_ila.loc[i_idx]
+                        st.info(f"Selected Record: **{i_row.get('Sap ID')}** | Facality: **{i_row.get('Facality', 'N/A')}** | JC: **{i_row.get('JC', 'N/A')}**")
+
+                        ila_action = st.radio(
+                            "Select Action:",
+                            ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
+                            horizontal=True
+                        )
+
+                        if ila_action == "📝 Edit Record Fields":
+                            with st.form("ila_edit_form"):
+                                e1, e2 = st.columns(2)
+                                with e1:
+                                    new_fac = st.text_input("Facality:", value=str(i_row.get('Facality', '')) if pd.notna(i_row.get('Facality')) else "")
+                                    new_jc = st.text_input("JC:", value=str(i_row.get('JC', '')) if pd.notna(i_row.get('JC')) else "")
+                                    new_state = st.text_input("State:", value=str(i_row.get('State', '')) if pd.notna(i_row.get('State')) else "")
+                                    new_sup = st.text_input("Supervisors:", value=str(i_row.get('Supervisors', '')) if pd.notna(i_row.get('Supervisors')) else "")
+                                with e2:
+                                    new_status = st.text_input("DG Automation Status:", value=str(i_row.get('DG Automation Status', '')) if pd.notna(i_row.get('DG Automation Status')) else "")
+                                    new_rem = st.text_input("Present Remarks:", value=str(i_row.get('Present Remarks', '')) if pd.notna(i_row.get('Present Remarks')) else "")
+                                    new_bkt = st.text_input("Bucket:", value=str(i_row.get('Bucket', '')) if pd.notna(i_row.get('Bucket')) else "")
+                                    new_docket = st.text_input("Docket No:", value=str(i_row.get('Docket No.', '')) if pd.notna(i_row.get('Docket No.')) else "")
+
+                                submit_ila_edit = st.form_submit_button("💾 Update ILA Record", type="primary", use_container_width=True)
+                                if submit_ila_edit:
+                                    st.session_state.ila_tracker_df.at[i_idx, 'Facality'] = new_fac
+                                    st.session_state.ila_tracker_df.at[i_idx, 'JC'] = new_jc
+                                    st.session_state.ila_tracker_df.at[i_idx, 'State'] = new_state
+                                    st.session_state.ila_tracker_df.at[i_idx, 'Supervisors'] = new_sup
+                                    st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = new_status
+                                    st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = new_rem
+                                    st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = new_bkt
+                                    st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = new_docket
+                                    st.success(f"Record `{target_sap_id}` updated successfully!")
+                                    st.rerun()
+
+                        elif ila_action == "🧹 Clear Fault Status & Reset":
+                            if st.button("🧹 Clear & Reset Status to OK", type="primary", use_container_width=True):
+                                st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = "Automation Ok"
+                                st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = "OK"
+                                st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = None
+                                st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = None
+                                st.success(f"Fault cleared for `{target_sap_id}`!")
+                                st.rerun()
+
+                        else:
+                            if st.button(f"🚨 Confirm Delete Record `{target_sap_id}`", type="primary", use_container_width=True):
+                                st.session_state.ila_tracker_df = st.session_state.ila_tracker_df.drop(index=i_idx).reset_index(drop=True)
+                                st.success(f"Record `{target_sap_id}` deleted successfully!")
+                                st.rerun()
+
+        with ila_tab3:
+            with st.container(border=True):
+                st.markdown("### Add New Case / Site Entry")
+                with st.form("new_ila_case_form"):
+                    nc1, nc2 = st.columns(2)
+                    with nc1:
+                        new_sap = st.text_input("Sap ID (Required):").strip().upper()
+                        new_fac_c = st.text_input("Facality:")
+                        new_jc_c = st.text_input("JC:")
+                        new_state_c = st.text_input("State:")
+                        new_sup_c = st.text_input("Supervisors:")
+                    with nc2:
+                        new_make_c = st.text_input("DG Make:")
+                        new_rate_c = st.text_input("DG Rating:")
+                        new_stat_c = st.selectbox("DG Automation Status:", STATUS_CHOICES)
+                        new_rem_c = st.text_input("Present Remarks:")
+                        new_bkt_c = st.selectbox("Bucket:", ["None"] + BUCKET_LIST)
+
+                    submit_new_case = st.form_submit_button("➕ Add New Case Entry", type="primary", use_container_width=True)
+                    if submit_new_case:
+                        if not new_sap:
+                            st.error("Sap ID is required.")
+                        else:
+                            new_row_data = {
+                                'Sap ID': new_sap,
+                                'Facality': new_fac_c,
+                                'JC': new_jc_c,
+                                'State': new_state_c,
+                                'Supervisors': new_sup_c,
+                                'DG Make': new_make_c,
+                                'DG Rating': new_rate_c,
+                                'DG Automation Status': new_stat_c,
+                                'Present Remarks': new_rem_c,
+                                'Bucket': None if new_bkt_c == "None" else new_bkt_c
+                            }
+                            new_df_row = pd.DataFrame([new_row_data])
+                            st.session_state.ila_tracker_df = pd.concat([st.session_state.ila_tracker_df, new_df_row], ignore_index=True)
+                            st.success(f"New case `{new_sap}` added successfully!")
+                            st.rerun()
 
 # ---------------------------------------------------------
 # 7. IN-PORTAL MASTER TRACKER EDITOR
