@@ -649,8 +649,17 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
             "Itanagar": (27.0844, 93.6053), "Tezpur": (26.6528, 92.7926)
         }
 
-        has_lat = "Latitude" in map_df.columns and "Longitude" in map_df.columns
-        if not has_lat:
+        # ⚡ প্ৰকৃত কঅৰ্ডিনেটছ আছে নে নাই পৰীক্ষা কৰা
+        has_coords = False
+        if "Latitude" in map_df.columns and "Longitude" in map_df.columns:
+            map_df["lat"] = pd.to_numeric(map_df["Latitude"], errors='coerce')
+            map_df["lon"] = pd.to_numeric(map_df["Longitude"], errors='coerce')
+            if map_df["lat"].dropna().shape[0] > 0:
+                has_coords = True
+                map_df = map_df.dropna(subset=["lat", "lon"])
+
+        # যদি এক্সেলত কঅৰ্ডিনেটছ খালী থাকে, তেন্তে JC কেন্দ্ৰবিন্দু অনুযায়ী মান প্ৰদান
+        if not has_coords:
             np.random.seed(42)
             lats, lons = [], []
             for _, r in map_df.iterrows():
@@ -660,10 +669,6 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
                 lons.append(center[1] + np.random.uniform(-0.15, 0.15))
             map_df["lat"] = lats
             map_df["lon"] = lons
-        else:
-            map_df["lat"] = pd.to_numeric(map_df["Latitude"], errors='coerce')
-            map_df["lon"] = pd.to_numeric(map_df["Longitude"], errors='coerce')
-            map_df = map_df.dropna(subset=["lat", "lon"])
 
         def get_color(row):
             st_val = str(row.get("DG Automation Status", ""))
@@ -674,7 +679,6 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
 
         map_df["Health_Flag"] = map_df.apply(get_color, axis=1)
 
-        # ⚡ Mapbox vs MapLibre Safe Compatibility Engine
         color_map = {
             "Red (Severe Fault)": "#ef4444",
             "Amber (Manual Mode)": "#f59e0b",
@@ -686,34 +690,27 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
             "lat": False, "lon": False
         }
 
-        try:
-            fig_map = px.scatter_map(
-                map_df, lat="lat", lon="lon",
-                color="Health_Flag",
-                hover_name="SAIP ID",
-                hover_data=hover_dict,
-                color_discrete_map=color_map,
-                zoom=6.5, height=600
+        # ⚡ নিৰ্ভৰযোগ্য OpenStreetMap টাইলছৰ জৰিয়তে লাইভ মেপ ৰেণ্ডাৰ
+        fig_map = px.scatter_mapbox(
+            map_df,
+            lat="lat", lon="lon",
+            color="Health_Flag",
+            hover_name="SAIP ID",
+            hover_data=hover_dict,
+            color_discrete_map=color_map,
+            zoom=6.5,
+            height=600
+        )
+        fig_map.update_layout(
+            mapbox_style="open-street-map",
+            mapbox=dict(center=dict(lat=25.8, lon=93.5)),
+            margin=dict(l=0, r=0, t=0, b=0),
+            legend=dict(
+                yanchor="top", y=0.98, xanchor="left", x=0.02,
+                bgcolor="rgba(255, 255, 255, 0.9)",
+                font=dict(color="#0f172a", weight="bold")
             )
-            fig_map.update_layout(
-                map_style="carto-darkmatter",
-                margin=dict(l=0, r=0, t=0, b=0),
-                legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.02, bgcolor="rgba(15,23,42,0.85)", font=dict(color="#ffffff"))
-            )
-        except Exception:
-            fig_map = px.scatter_mapbox(
-                map_df, lat="lat", lon="lon",
-                color="Health_Flag",
-                hover_name="SAIP ID",
-                hover_data=hover_dict,
-                color_discrete_map=color_map,
-                zoom=6.5, height=600
-            )
-            fig_map.update_layout(
-                mapbox_style="carto-darkmatter",
-                margin=dict(l=0, r=0, t=0, b=0),
-                legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.02, bgcolor="rgba(15,23,42,0.85)", font=dict(color="#ffffff"))
-            )
+        )
         st.plotly_chart(fig_map, use_container_width=True)
 
 # ---------------------------------------------------------
