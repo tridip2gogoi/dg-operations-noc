@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & Guaranteed Persistent Visibility
+# Custom Corporate Professional NOC Styling with Guaranteed Visible Text & Auto ILA Detection
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -177,6 +177,13 @@ st.markdown("""
 
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
+
+# Auto-detect default ILA filename if present in directory
+DEFAULT_ILA = None
+for f in os.listdir('.'):
+    if "ILA" in f.upper() and f.endswith(('.xlsx', '.xls')) and not f.startswith('~$'):
+        DEFAULT_ILA = f
+        break
 
 BUCKET_LIST = [
     "GCU", "Fuel Sensor", "DG Breakdown", "DG battery", "IPMS",
@@ -480,7 +487,7 @@ if not os.path.exists(DEFAULT_EXCEL):
 
 cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
 dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
-ila_source = uploaded_ila if uploaded_ila is not None else None
+ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
 df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
