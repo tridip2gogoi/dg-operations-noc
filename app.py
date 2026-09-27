@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Native Card Text Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -146,6 +146,7 @@ st.markdown("""
         color: #0f172a !important;
     }
 
+    /* ⚡ NATIVE WHITE CARD TEXT VISIBILITY FIX (DARK TEXT FOR CLEAR READABILITY) */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         border-radius: 12px !important;
@@ -153,13 +154,16 @@ st.markdown("""
         border: 1px solid #e2e8f0 !important;
         padding: 16px !important;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"] p,
-    div[data-testid="stVerticalBlockBorderWrapper"] span,
-    div[data-testid="stVerticalBlockBorderWrapper"] label,
     div[data-testid="stVerticalBlockBorderWrapper"] h1,
     div[data-testid="stVerticalBlockBorderWrapper"] h2,
     div[data-testid="stVerticalBlockBorderWrapper"] h3,
-    div[data-testid="stVerticalBlockBorderWrapper"] h4 {
+    div[data-testid="stVerticalBlockBorderWrapper"] h4,
+    div[data-testid="stVerticalBlockBorderWrapper"] h5,
+    div[data-testid="stVerticalBlockBorderWrapper"] h6,
+    div[data-testid="stVerticalBlockBorderWrapper"] p,
+    div[data-testid="stVerticalBlockBorderWrapper"] span,
+    div[data-testid="stVerticalBlockBorderWrapper"] label,
+    div[data-testid="stVerticalBlockBorderWrapper"] div {
         color: #0f172a !important;
         text-shadow: none !important;
     }
