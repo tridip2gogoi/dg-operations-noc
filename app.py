@@ -630,7 +630,7 @@ if page == "📊 Executive Control Center":
                     st.plotly_chart(fig_donut, use_container_width=True)
 
 # ---------------------------------------------------------
-# 2. GPS TELECOM TOWER LIVE MAP TRACKER
+# 2. GPS TELECOM TOWER LIVE MAP TRACKER (UNIVERSAL COMPATIBLE)
 # ---------------------------------------------------------
 elif page == "🗺️ GPS Telecom Tower Live Map":
     st.markdown("## 🗺️ North East Circle - GPS Telecom Tower Live Map")
@@ -649,16 +649,16 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
             "Itanagar": (27.0844, 93.6053), "Tezpur": (26.6528, 92.7926)
         }
 
-        # ⚡ প্ৰকৃত কঅৰ্ডিনেটছ আছে নে নাই পৰীক্ষা কৰা
+        # Check real coordinates
         has_coords = False
         if "Latitude" in map_df.columns and "Longitude" in map_df.columns:
-            map_df["lat"] = pd.to_numeric(map_df["Latitude"], errors='coerce')
-            map_df["lon"] = pd.to_numeric(map_df["Longitude"], errors='coerce')
-            if map_df["lat"].dropna().shape[0] > 0:
+            map_df["latitude"] = pd.to_numeric(map_df["Latitude"], errors='coerce')
+            map_df["longitude"] = pd.to_numeric(map_df["Longitude"], errors='coerce')
+            if map_df["latitude"].dropna().shape[0] > 0:
                 has_coords = True
-                map_df = map_df.dropna(subset=["lat", "lon"])
+                map_df = map_df.dropna(subset=["latitude", "longitude"])
 
-        # যদি এক্সেলত কঅৰ্ডিনেটছ খালী থাকে, তেন্তে JC কেন্দ্ৰবিন্দু অনুযায়ী মান প্ৰদান
+        # Fallback coordinates based on JC territory
         if not has_coords:
             np.random.seed(42)
             lats, lons = [], []
@@ -667,51 +667,39 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
                 center = NE_COORDS.get(jc, (26.2006, 92.9376))
                 lats.append(center[0] + np.random.uniform(-0.15, 0.15))
                 lons.append(center[1] + np.random.uniform(-0.15, 0.15))
-            map_df["lat"] = lats
-            map_df["lon"] = lons
+            map_df["latitude"] = lats
+            map_df["longitude"] = lons
 
         def get_color(row):
             st_val = str(row.get("DG Automation Status", ""))
             fs_val = str(row.get("Fuel Sensor Status", ""))
-            if "Breakdown" in st_val or fs_val == "Fuel Sensor faulty": return "Red (Severe Fault)"
-            if st_val == "Manual Mode": return "Amber (Manual Mode)"
-            return "Green (Automation Ok)"
+            if "Breakdown" in st_val or fs_val == "Fuel Sensor faulty": return "#ef4444"
+            if st_val == "Manual Mode": return "#f59e0b"
+            return "#10b981"
 
-        map_df["Health_Flag"] = map_df.apply(get_color, axis=1)
+        map_df["color"] = map_df.apply(get_color, axis=1)
 
-        color_map = {
-            "Red (Severe Fault)": "#ef4444",
-            "Amber (Manual Mode)": "#f59e0b",
-            "Green (Automation Ok)": "#10b981"
-        }
-        hover_dict = {
-            "JC": True, "DG Automation Status": True, 
-            "Bucket": True, "Present Docket No.": True,
-            "lat": False, "lon": False
-        }
-
-        # ⚡ নিৰ্ভৰযোগ্য OpenStreetMap টাইলছৰ জৰিয়তে লাইভ মেপ ৰেণ্ডাৰ
-        fig_map = px.scatter_mapbox(
-            map_df,
-            lat="lat", lon="lon",
-            color="Health_Flag",
-            hover_name="SAIP ID",
-            hover_data=hover_dict,
-            color_discrete_map=color_map,
-            zoom=6.5,
-            height=600
-        )
-        fig_map.update_layout(
-            mapbox_style="open-street-map",
-            mapbox=dict(center=dict(lat=25.8, lon=93.5)),
-            margin=dict(l=0, r=0, t=0, b=0),
-            legend=dict(
-                yanchor="top", y=0.98, xanchor="left", x=0.02,
-                bgcolor="rgba(255, 255, 255, 0.9)",
-                font=dict(color="#0f172a", weight="bold")
+        # ⚡ Universal Map Rendering: Streamlit Native High-Performance Map
+        with st.container(border=True):
+            st.markdown(f"<div style='color: #0f172a; font-size: 16px; font-weight: 700; margin-bottom: 10px;'>Radar View: <b>{len(map_df):,} Towers Positioned</b> ({jc_map_filter})</div>", unsafe_allow_html=True)
+            
+            # Rendering interactive map without any Mapbox library dependency issues
+            st.map(
+                map_df[["latitude", "longitude", "color"]],
+                latitude="latitude",
+                longitude="longitude",
+                color="color",
+                size=22,
+                zoom=6
             )
-        )
-        st.plotly_chart(fig_map, use_container_width=True)
+            
+            st.markdown("""
+            <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 13px; font-weight: 700; color: #0f172a;">
+                <span>🟢 Green: Automation Ok</span>
+                <span>🟠 Amber: Manual Mode</span>
+                <span>🔴 Red: DG Breakdown / Faulty Sensor</span>
+            </div>
+            """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 3. O TO AB AUTOMATED SYNC ENGINE
