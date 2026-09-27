@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate NOC Styling with High Contrast Tabs, Radios & Clear White Cards
+# Custom Corporate NOC Styling with High Contrast White Cards & Clear Tabs
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -44,37 +44,46 @@ st.markdown("""
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] label {
-        background: rgba(30, 41, 59, 0.75);
+        background: rgba(30, 41, 59, 0.85);
         padding: 6px 14px;
         border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         margin-right: 8px;
     }
 
-    /* ⚡ TABS ULTRA-HIGH CONTRAST VISIBILITY FIX */
-    div[data-testid="stTabs"] button[role="tab"],
-    button[data-baseweb="tab"] {
-        background-color: rgba(30, 41, 59, 0.95) !important;
+    /* ⚡ TABS 100% VISIBILITY FIX - BOLD WHITE CARDS */
+    div[data-testid="stTabs"] {
+        background: rgba(15, 23, 42, 0.6);
+        padding: 8px 8px 0px 8px;
+        border-radius: 12px 12px 0 0;
+    }
+    div[data-testid="stTabs"] button[role="tab"] {
+        background-color: #ffffff !important;
         border-radius: 8px 8px 0px 0px !important;
-        padding: 10px 20px !important;
-        margin-right: 6px !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        padding: 10px 22px !important;
+        margin-right: 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        opacity: 0.9;
     }
-    div[data-testid="stTabs"] button[role="tab"] *,
-    button[data-baseweb="tab"] * {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
-    button[data-baseweb="tab"][aria-selected="true"] {
-        background-color: #0284c7 !important;
-        border-bottom: 3px solid #38bdf8 !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] * {
-        color: #ffffff !important;
+    div[data-testid="stTabs"] button[role="tab"] p,
+    div[data-testid="stTabs"] button[role="tab"] span,
+    div[data-testid="stTabs"] button[role="tab"] div {
+        color: #0f172a !important;
         font-weight: 800 !important;
+        font-size: 14px !important;
+        text-shadow: none !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+        background-color: #0284c7 !important;
+        border: 1px solid #38bdf8 !important;
+        opacity: 1;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] div {
+        color: #ffffff !important;
+        font-weight: 900 !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
     }
 
     /* Headings */
@@ -126,20 +135,13 @@ st.markdown("""
 
     .stTextInput label, .stSelectbox label, .stDateInput label {
         color: #ffffff !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
 
     [data-testid="stFileUploadDropzone"] * {
         color: #0f172a !important;
     }
 
-    .metric-card {
-        background: rgba(255, 255, 255, 0.95);
-        padding: 1.25rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-    }
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
@@ -150,17 +152,6 @@ st.markdown("""
     }
     .auto-docket-box * {
         color: #0f172a !important;
-    }
-    .closure-success-box {
-        background-color: rgba(240, 253, 244, 0.98);
-        border: 1px solid #86efac;
-        padding: 14px 18px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        color: #166534 !important;
-    }
-    .closure-success-box * {
-        color: #166534 !important;
     }
 
     /* Native container white card styling */
@@ -173,8 +164,13 @@ st.markdown("""
     }
     div[data-testid="stVerticalBlockBorderWrapper"] p,
     div[data-testid="stVerticalBlockBorderWrapper"] span,
-    div[data-testid="stVerticalBlockBorderWrapper"] label {
+    div[data-testid="stVerticalBlockBorderWrapper"] label,
+    div[data-testid="stVerticalBlockBorderWrapper"] h1,
+    div[data-testid="stVerticalBlockBorderWrapper"] h2,
+    div[data-testid="stVerticalBlockBorderWrapper"] h3,
+    div[data-testid="stVerticalBlockBorderWrapper"] h4 {
         color: #0f172a !important;
+        text-shadow: none !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] * {
         color: #0f172a !important;
@@ -182,19 +178,6 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] * {
         color: #64748b !important;
     }
-
-    .status-badge {
-        padding: 6px 14px;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 13px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        display: inline-block;
-    }
-    .badge-ok { background-color: #dcfce7; color: #15803d !important; border: 1px solid #bbf7d0; }
-    .badge-warn { background-color: #fef9c3; color: #854d0e !important; border: 1px solid #fef08a; }
-    .badge-crit { background-color: #fee2e2; color: #b91c1c !important; border: 1px solid #fecaca; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -261,7 +244,7 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
-# --- DATA PIPELINE LOADER (EMPTY & NON-DG ROWS FILTERED) ---
+# --- DATA PIPELINE LOADER ---
 @st.cache_data
 def load_all_trackers(dg_file, cm_file, cr_file=None):
     df_status = pd.DataFrame()
@@ -275,13 +258,11 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
             sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
-            # ⚡ ১. খালী ৰো আৰু অস্তিত্বহীন ছাইট আঁতৰোৱা (Eliminating Phantom Blank Rows)
             if 'SAIP ID' in df_status.columns:
                 df_status = df_status[df_status['SAIP ID'].notna()]
                 df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
                 df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
             
-            # ⚡ ২. কেৱল প্ৰকৃত ডিজি থকা ছাইট ৰখা (ৰিমুভ নাল/নন-ডিজি)
             if 'DG Make' in df_status.columns:
                 df_status = df_status[df_status['DG Make'].notna()]
                 df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
@@ -620,7 +601,6 @@ if page == "📊 Executive Control Center":
         st.markdown("---")
         c1, c2 = st.columns([3, 2])
         
-        # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health
         with c1:
             with st.container(border=True):
                 st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>Circle JC Wise Automation Health</div>", unsafe_allow_html=True)
@@ -641,7 +621,6 @@ if page == "📊 Executive Control Center":
                     )
                     st.plotly_chart(fig_bar, use_container_width=True)
 
-        # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (No NULL values)
         with c2:
             with st.container(border=True):
                 st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>DG Make Fleet Allocation</div>", unsafe_allow_html=True)
@@ -741,7 +720,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     col1, col2 = st.columns([1, 2])
     
-    # ⚡ কন্টেইনাৰ ১: Status Summary
     with col1:
         with st.container(border=True):
             st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Status Summary ({selected_fleet_jc})</div>", unsafe_allow_html=True)
@@ -749,7 +727,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
             stat_summary.columns = ['Status Category', 'Site Count']
             st.dataframe(stat_summary, use_container_width=True, hide_index=True)
 
-    # ⚡ কন্টেইনাৰ ২: Bucket Distribution
     with col2:
         with st.container(border=True):
             st.markdown(f"<div style='color: #0f172a; font-size: 18px; font-weight: 800; margin-bottom: 10px;'>Bucket Distribution ({selected_fleet_jc})</div>", unsafe_allow_html=True)
@@ -795,33 +772,37 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     ])
 
     with tab_m1:
-        st.markdown("### JC vs DG Automation Status Cross-Tabulation")
-        status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
-        st.dataframe(status_matrix, use_container_width=True)
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
+            status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
+            st.dataframe(status_matrix, use_container_width=True)
 
     with tab_m2:
-        st.markdown("### JC vs Root-Cause Bucket Cross-Tabulation")
-        all_valid_bkt = df_status[df_status['Bucket'].notna()]
-        bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
-        st.dataframe(bucket_matrix, use_container_width=True)
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
+            all_valid_bkt = df_status[df_status['Bucket'].notna()]
+            bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
+            st.dataframe(bucket_matrix, use_container_width=True)
 
     with tab_m3:
-        st.markdown("### GCU Sites: JC vs DG Make & KVA Breakdown")
-        df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
-        df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified')
-        df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
-        ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
-        st.dataframe(ct_gcu_detailed, use_container_width=True)
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
+            df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
+            df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified')
+            df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
+            ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
+            st.dataframe(ct_gcu_detailed, use_container_width=True)
 
     with tab_m4:
-        st.markdown("### DG Breakdown & DG Manual: GCU, OEM Spare parts & DG Breakdown")
-        target_statuses = ['DG Breakdown', 'Manual Mode']
-        target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
-        df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
-        df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip()
-        df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
-        ct_sub_bkt = pd.crosstab([df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
-        st.dataframe(ct_sub_bkt, use_container_width=True)
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px;'>DG Breakdown & DG Manual: GCU, OEM Spare parts & DG Breakdown</h4>", unsafe_allow_html=True)
+            target_statuses = ['DG Breakdown', 'Manual Mode']
+            target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
+            df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
+            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip()
+            df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
+            ct_sub_bkt = pd.crosstab([df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
+            st.dataframe(ct_sub_bkt, use_container_width=True)
 
 # ---------------------------------------------------------
 # 4. FUEL SENSOR TELEMETRY
@@ -840,12 +821,14 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.markdown("---")
         tab_f1, tab_f2 = st.tabs(["📊 Fuel Sensor Faulty Sites (JC vs DG Make & KVA)", "📋 Active Fault Site Registry"])
         with tab_f1:
-            ct_fuel_detailed = pd.crosstab([df_fuel['JC'], df_fuel['DG MAKE']], df_fuel['KVA'], margins=True, margins_name="Total")
-            st.dataframe(ct_fuel_detailed, use_container_width=True)
+            with st.container(border=True):
+                ct_fuel_detailed = pd.crosstab([df_fuel['JC'], df_fuel['DG MAKE']], df_fuel['KVA'], margins=True, margins_name="Total")
+                st.dataframe(ct_fuel_detailed, use_container_width=True)
         with tab_f2:
-            disp_fuel_cols = ['SITE ID', 'JC', 'DG MAKE', 'KVA', 'DOCKET NUMBER', 'COMPLAINT LOGGIN DATE', 'NATURE OF COMPLAINT', 'STATUS']
-            valid_disp_fuel = [c for c in disp_fuel_cols if c in df_fuel.columns]
-            st.dataframe(df_fuel[valid_disp_fuel], use_container_width=True)
+            with st.container(border=True):
+                disp_fuel_cols = ['SITE ID', 'JC', 'DG MAKE', 'KVA', 'DOCKET NUMBER', 'COMPLAINT LOGGIN DATE', 'NATURE OF COMPLAINT', 'STATUS']
+                valid_disp_fuel = [c for c in disp_fuel_cols if c in df_fuel.columns]
+                st.dataframe(df_fuel[valid_disp_fuel], use_container_width=True)
     else:
         st.info("No active fuel sensor faults detected in the current tracker.")
 
@@ -868,8 +851,9 @@ elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("---")
     if 'Aging_Bracket' in df_status.columns:
         st.subheader("📊 1. JC-Wise All Aging Brackets Matrix")
-        jc_aging_full = pd.crosstab(df_status['JC'], df_status['Aging_Bracket'].dropna(), margins=True, margins_name="Total")
-        st.dataframe(jc_aging_full, use_container_width=True)
+        with st.container(border=True):
+            jc_aging_full = pd.crosstab(df_status['JC'], df_status['Aging_Bracket'].dropna(), margins=True, margins_name="Total")
+            st.dataframe(jc_aging_full, use_container_width=True)
 
     st.markdown("---")
     st.subheader("📋 2. Critical Escalation Sites Registry (>90 Days)")
@@ -878,19 +862,20 @@ elif page == "⏳ Critical Aging Escalation Monitor":
     filtered_crit = crit_df if selected_jc == "All" else crit_df[crit_df['JC'] == selected_jc]
     disp_cols = ['SAIP ID', 'JC', 'Bucket', 'DG Make', 'Present Docket No.', 'Aging_Num', 'Present Remarks', 'Timeline', 'Supervisor Name']
     valid_disp_cols = [c for c in disp_cols if c in filtered_crit.columns]
-    st.dataframe(filtered_crit[valid_disp_cols].sort_values(by='Aging_Num', ascending=False), use_container_width=True)
+    with st.container(border=True):
+        st.dataframe(filtered_crit[valid_disp_cols].sort_values(by='Aging_Num', ascending=False), use_container_width=True)
 
 # ---------------------------------------------------------
-# 6. IN-PORTAL MASTER TRACKER EDITOR (RBAC PROTECTED)
+# 6. IN-PORTAL MASTER TRACKER EDITOR (100% VISIBLE WHITE CARDS)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     st.caption(f"Authenticated Role: **{admin_role}** | Modifying telemetry and resolving active tickets.")
 
-    # 🔒 VIEWER একাউণ্টৰ বাবে সকলো এডিট বন্ধ (Read-only)
     if "read_only" in user_perms:
         st.warning("🔒 Viewer Account: আপোনাৰ একাউণ্ট কেৱল পৰ্যবেক্ষণৰ বাবে (Read-only)। ছাইটৰ ডেটা এডিট কৰা, ফল্ট ৰিছেট কৰা বা TT বন্ধ কৰাৰ অনুমতি নিষ্ক্ৰিয় কৰা হৈছে।")
-        st.dataframe(df_status.head(50), use_container_width=True)
+        with st.container(border=True):
+            st.dataframe(df_status.head(50), use_container_width=True)
     else:
         edit_tab1, edit_tab2 = st.tabs([
             "📝 Single Site Quick Editor, TT Closure & Removal",
@@ -898,161 +883,163 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         ])
 
         with edit_tab1:
-            st.subheader("Direct Site Modification, Fault Reset & Incident Resolution")
-            search_edit_site = st.text_input("Enter SAIP ID to modify, reset, or close (e.g. I-NE-CMKD-ENB-9020):").strip().upper()
-            
-            if search_edit_site:
-                match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
-                if match_idx.empty:
-                    st.error(f"Site `{search_edit_site}` not found in the loaded tracker.")
-                else:
-                    row_idx = match_idx[0]
-                    target_row = df_status.loc[row_idx]
-
-                    st.markdown(f"""
-                    <div style="background: rgba(255,255,255,0.95); border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 18px; margin-bottom: 12px; color: #0f172a;">
-                        <b>Target Site:</b> <code>{target_row['SAIP ID']}</code> | <b>JC:</b> {target_row.get('JC', 'N/A')} | <b>Current Status:</b> <code>{target_row.get('DG Automation Status', 'N/A')}</code> | <b>Bucket:</b> <code>{target_row.get('Bucket', 'None')}</code><br>
-                        <b>Fuel Sensor:</b> <code>{target_row.get('Fuel Sensor Status', 'Ok')}</code> (Docket: <code>{target_row.get('Docket no.', 'None')}</code>) | <b>Present Docket (Col V):</b> <code>{target_row.get('Present Docket No.', 'None')}</code> | <b>Raise Date (Col W):</b> <code>{clean_date_str(target_row.get('Present Docket raise Date', ''))}</code>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    action_mode = st.radio(
-                        "Select Action for this Site:",
-                        [
-                            "📝 Modify Telemetry / Docket Fields",
-                            "🧹 Remove Active Fault Data & Reset to Automation Ok",
-                            "✅ Close TT / Incident (Auto-Shift Y to AB)",
-                            "🗑️ Remove / Delete Site Record from Master Tracker"
-                        ],
-                        horizontal=True
-                    )
-
-                    if action_mode == "📝 Modify Telemetry / Docket Fields":
-                        with st.form("single_site_edit_form"):
-                            e_col1, e_col2, e_col3 = st.columns(3)
-                            with e_col1:
-                                curr_status = str(target_row.get('DG Automation Status', 'Automation Ok'))
-                                s_idx = STATUS_CHOICES.index(curr_status) if curr_status in STATUS_CHOICES else 0
-                                new_dg_status = st.selectbox("DG Automation Status (Col S):", STATUS_CHOICES, index=s_idx)
-                                curr_fs = str(target_row.get('Fuel Sensor Status', 'Ok'))
-                                fs_choices = ["Ok", "Fuel Sensor faulty"]
-                                fs_idx = fs_choices.index(curr_fs) if curr_fs in fs_choices else 0
-                                new_fs_status = st.selectbox("Fuel Sensor Status (Col O):", fs_choices, index=fs_idx)
-                                new_fs_docket = st.text_input("Fuel Sensor Docket no. (Col P):", value=str(target_row.get('Docket no.', '')) if pd.notna(target_row.get('Docket no.')) else "")
-                                fs_date_default = to_date_obj(target_row.get('Open Date', ''))
-                                new_fs_open_date_cal = st.date_input("📅 Fuel Sensor Open Date (Col Q):", value=fs_date_default)
-                                new_fs_open_date = new_fs_open_date_cal.strftime('%Y-%m-%d') if new_fs_open_date_cal else ""
-
-                            with e_col2:
-                                curr_bucket = str(target_row.get('Bucket', 'None'))
-                                b_choices = ["None"] + BUCKET_LIST
-                                b_idx = b_choices.index(curr_bucket) if curr_bucket in b_choices else 0
-                                new_bucket = st.selectbox("Problem Bucket (Col U):", b_choices, index=b_idx)
-                                new_docket = st.text_input("Present Docket No (Col V):", value=str(target_row.get('Present Docket No.', '')) if pd.notna(target_row.get('Present Docket No.')) else "")
-
-                            with e_col3:
-                                raise_date_default = to_date_obj(target_row.get('Present Docket raise Date', ''))
-                                new_raise_date_cal = st.date_input("📅 Present Docket Raise Date (Col W):", value=raise_date_default)
-                                new_raise_date = new_raise_date_cal.strftime('%Y-%m-%d') if new_raise_date_cal else ""
-                                new_aging = st.number_input("Aging Days (Col X):", value=int(target_row.get("Aging (Day's)", 0)) if pd.notna(target_row.get("Aging (Day's)")) else 0, step=1)
-
-                            new_remarks = st.text_area("Present Remarks (Col T):", value=str(target_row.get('Present Remarks', '')) if pd.notna(target_row.get('Present Remarks')) else "")
-                            new_timeline = st.text_input("Timeline (Col Y):", value=str(target_row.get('Timeline', '')) if pd.notna(target_row.get('Timeline')) else "")
-                            save_changes = st.form_submit_button("💾 Save & Update Record in Master Tracker", use_container_width=True, type="primary")
-
-                            if save_changes:
-                                st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = new_dg_status
-                                st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = new_fs_status
-                                st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = new_fs_docket
-                                st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = new_fs_open_date
-                                st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if new_bucket == "None" else new_bucket
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = new_docket
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = new_raise_date
-                                st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = new_aging
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = new_remarks
-                                st.session_state.master_tracker_df.at[row_idx, 'Timeline'] = new_timeline
-
-                                st.session_state.master_tracker_df = auto_sync_edited_data_to_engine(
-                                    st.session_state.master_tracker_df, df_open_cm, df_cr_data
-                                )
-                                st.success(f"Site `{search_edit_site}` updated & automatically synced to ⚡ O to AB Engine!")
-                                st.rerun()
-
-                    elif action_mode == "🧹 Remove Active Fault Data & Reset to Automation Ok":
-                        if st.button("🧹 Clear All Active Fault Details & Set Automation Ok", type="primary", use_container_width=True):
-                            st.session_state.master_tracker_df = clear_site_active_fault_data(
-                                search_edit_site, st.session_state.master_tracker_df
-                            )
-                            st.success(f"Active fault fields cleared for `{search_edit_site}` and restored to 'Automation Ok'. Synced to Master Tracker!")
-                            st.rerun()
-
-                    elif action_mode == "✅ Close TT / Incident (Auto-Shift Y to AB)":
-                        with st.form("single_site_tt_close_form"):
-                            close_c1, close_c2 = st.columns(2)
-                            with close_c1:
-                                cal_closed_date = st.date_input("📅 Closure Date (Col R, Calendar):", value=date.today())
-                                str_closed_date = cal_closed_date.strftime('%Y-%m-%d')
-                            with close_c2:
-                                resolution_remarks = st.text_input("Closure / Replacement Remarks:", placeholder="e.g. OEM parts replaced, automation restored")
-
-                            btn_tt_close = st.form_submit_button("✅ Close TT & Execute Auto-Shift to Col Y-AB", use_container_width=True, type="primary")
-                            if btn_tt_close:
-                                st.session_state.master_tracker_df = execute_tt_close_shift_to_y_ab(
-                                    site_id=search_edit_site,
-                                    closure_remarks=resolution_remarks,
-                                    closure_date_str=str_closed_date,
-                                    df_target=st.session_state.master_tracker_df
-                                )
-                                st.success(f"TT Closed for {search_edit_site}!")
-                                st.rerun()
-
+            with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0;'>Direct Site Modification, Fault Reset & Incident Resolution</h3>", unsafe_allow_html=True)
+                search_edit_site = st.text_input("Enter SAIP ID to modify, reset, or close (e.g. I-NE-CMKD-ENB-9020):").strip().upper()
+                
+                if search_edit_site:
+                    match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
+                    if match_idx.empty:
+                        st.error(f"Site `{search_edit_site}` not found in the loaded tracker.")
                     else:
-                        if st.button(f"🚨 Confirm Delete `{search_edit_site}` Record", type="primary", use_container_width=True):
-                            st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
-                            st.success(f"Site `{search_edit_site}` permanently deleted.")
-                            st.rerun()
+                        row_idx = match_idx[0]
+                        target_row = df_status.loc[row_idx]
+
+                        st.markdown(f"""
+                        <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 18px; margin-bottom: 12px; color: #0f172a;">
+                            <b>Target Site:</b> <code>{target_row['SAIP ID']}</code> | <b>JC:</b> {target_row.get('JC', 'N/A')} | <b>Current Status:</b> <code>{target_row.get('DG Automation Status', 'N/A')}</code> | <b>Bucket:</b> <code>{target_row.get('Bucket', 'None')}</code><br>
+                            <b>Fuel Sensor:</b> <code>{target_row.get('Fuel Sensor Status', 'Ok')}</code> (Docket: <code>{target_row.get('Docket no.', 'None')}</code>) | <b>Present Docket (Col V):</b> <code>{target_row.get('Present Docket No.', 'None')}</code> | <b>Raise Date (Col W):</b> <code>{clean_date_str(target_row.get('Present Docket raise Date', ''))}</code>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        action_mode = st.radio(
+                            "Select Action for this Site:",
+                            [
+                                "📝 Modify Telemetry / Docket Fields",
+                                "🧹 Remove Active Fault Data & Reset to Automation Ok",
+                                "✅ Close TT / Incident (Auto-Shift Y to AB)",
+                                "🗑️ Remove / Delete Site Record from Master Tracker"
+                            ],
+                            horizontal=True
+                        )
+
+                        if action_mode == "📝 Modify Telemetry / Docket Fields":
+                            with st.form("single_site_edit_form"):
+                                e_col1, e_col2, e_col3 = st.columns(3)
+                                with e_col1:
+                                    curr_status = str(target_row.get('DG Automation Status', 'Automation Ok'))
+                                    s_idx = STATUS_CHOICES.index(curr_status) if curr_status in STATUS_CHOICES else 0
+                                    new_dg_status = st.selectbox("DG Automation Status (Col S):", STATUS_CHOICES, index=s_idx)
+                                    curr_fs = str(target_row.get('Fuel Sensor Status', 'Ok'))
+                                    fs_choices = ["Ok", "Fuel Sensor faulty"]
+                                    fs_idx = fs_choices.index(curr_fs) if curr_fs in fs_choices else 0
+                                    new_fs_status = st.selectbox("Fuel Sensor Status (Col O):", fs_choices, index=fs_idx)
+                                    new_fs_docket = st.text_input("Fuel Sensor Docket no. (Col P):", value=str(target_row.get('Docket no.', '')) if pd.notna(target_row.get('Docket no.')) else "")
+                                    fs_date_default = to_date_obj(target_row.get('Open Date', ''))
+                                    new_fs_open_date_cal = st.date_input("📅 Fuel Sensor Open Date (Col Q):", value=fs_date_default)
+                                    new_fs_open_date = new_fs_open_date_cal.strftime('%Y-%m-%d') if new_fs_open_date_cal else ""
+
+                                with e_col2:
+                                    curr_bucket = str(target_row.get('Bucket', 'None'))
+                                    b_choices = ["None"] + BUCKET_LIST
+                                    b_idx = b_choices.index(curr_bucket) if curr_bucket in b_choices else 0
+                                    new_bucket = st.selectbox("Problem Bucket (Col U):", b_choices, index=b_idx)
+                                    new_docket = st.text_input("Present Docket No (Col V):", value=str(target_row.get('Present Docket No.', '')) if pd.notna(target_row.get('Present Docket No.')) else "")
+
+                                with e_col3:
+                                    raise_date_default = to_date_obj(target_row.get('Present Docket raise Date', ''))
+                                    new_raise_date_cal = st.date_input("📅 Present Docket Raise Date (Col W):", value=raise_date_default)
+                                    new_raise_date = new_raise_date_cal.strftime('%Y-%m-%d') if new_raise_date_cal else ""
+                                    new_aging = st.number_input("Aging Days (Col X):", value=int(target_row.get("Aging (Day's)", 0)) if pd.notna(target_row.get("Aging (Day's)")) else 0, step=1)
+
+                                new_remarks = st.text_area("Present Remarks (Col T):", value=str(target_row.get('Present Remarks', '')) if pd.notna(target_row.get('Present Remarks')) else "")
+                                new_timeline = st.text_input("Timeline (Col Y):", value=str(target_row.get('Timeline', '')) if pd.notna(target_row.get('Timeline')) else "")
+                                save_changes = st.form_submit_button("💾 Save & Update Record in Master Tracker", use_container_width=True, type="primary")
+
+                                if save_changes:
+                                    st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = new_dg_status
+                                    st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = new_fs_status
+                                    st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = new_fs_docket
+                                    st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = new_fs_open_date
+                                    st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if new_bucket == "None" else new_bucket
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = new_docket
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = new_raise_date
+                                    st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = new_aging
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = new_remarks
+                                    st.session_state.master_tracker_df.at[row_idx, 'Timeline'] = new_timeline
+
+                                    st.session_state.master_tracker_df = auto_sync_edited_data_to_engine(
+                                        st.session_state.master_tracker_df, df_open_cm, df_cr_data
+                                    )
+                                    st.success(f"Site `{search_edit_site}` updated & automatically synced to ⚡ O to AB Engine!")
+                                    st.rerun()
+
+                        elif action_mode == "🧹 Remove Active Fault Data & Reset to Automation Ok":
+                            if st.button("🧹 Clear All Active Fault Details & Set Automation Ok", type="primary", use_container_width=True):
+                                st.session_state.master_tracker_df = clear_site_active_fault_data(
+                                    search_edit_site, st.session_state.master_tracker_df
+                                )
+                                st.success(f"Active fault fields cleared for `{search_edit_site}` and restored to 'Automation Ok'. Synced to Master Tracker!")
+                                st.rerun()
+
+                        elif action_mode == "✅ Close TT / Incident (Auto-Shift Y to AB)":
+                            with st.form("single_site_tt_close_form"):
+                                close_c1, close_c2 = st.columns(2)
+                                with close_c1:
+                                    cal_closed_date = st.date_input("📅 Closure Date (Col R, Calendar):", value=date.today())
+                                    str_closed_date = cal_closed_date.strftime('%Y-%m-%d')
+                                with close_c2:
+                                    resolution_remarks = st.text_input("Closure / Replacement Remarks:", placeholder="e.g. OEM parts replaced, automation restored")
+
+                                btn_tt_close = st.form_submit_button("✅ Close TT & Execute Auto-Shift to Col Y-AB", use_container_width=True, type="primary")
+                                if btn_tt_close:
+                                    st.session_state.master_tracker_df = execute_tt_close_shift_to_y_ab(
+                                        site_id=search_edit_site,
+                                        closure_remarks=resolution_remarks,
+                                        closure_date_str=str_closed_date,
+                                        df_target=st.session_state.master_tracker_df
+                                    )
+                                    st.success(f"TT Closed for {search_edit_site}!")
+                                    st.rerun()
+
+                        else:
+                            if st.button(f"🚨 Confirm Delete `{search_edit_site}` Record", type="primary", use_container_width=True):
+                                st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
+                                st.success(f"Site `{search_edit_site}` permanently deleted.")
+                                st.rerun()
 
         with edit_tab2:
-            st.subheader("Interactive Spreadsheet Grid")
-            jc_filter = st.selectbox("Filter Grid by JC:", ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()]), key="grid_jc_filter")
-            grid_cols = ['SAIP ID', 'JC', 'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status', 'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date', "Aging (Day's)", 'Timeline']
-            valid_grid_cols = [c for c in grid_cols if c in df_status.columns]
-            raw_target_df = df_status[valid_grid_cols] if jc_filter == "All JCs" else df_status[df_status['JC'] == jc_filter][valid_grid_cols]
-            target_grid_df = raw_target_df.copy()
+            with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0;'>Interactive Spreadsheet Grid</h3>", unsafe_allow_html=True)
+                jc_filter = st.selectbox("Filter Grid by JC:", ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()]), key="grid_jc_filter")
+                grid_cols = ['SAIP ID', 'JC', 'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status', 'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date', "Aging (Day's)", 'Timeline']
+                valid_grid_cols = [c for c in grid_cols if c in df_status.columns]
+                raw_target_df = df_status[valid_grid_cols] if jc_filter == "All JCs" else df_status[df_status['JC'] == jc_filter][valid_grid_cols]
+                target_grid_df = raw_target_df.copy()
 
-            for date_c in ['Open Date', 'Present Docket raise Date']:
-                if date_c in target_grid_df.columns:
-                    target_grid_df[date_c] = pd.to_datetime(target_grid_df[date_c], errors='coerce').dt.date
+                for date_c in ['Open Date', 'Present Docket raise Date']:
+                    if date_c in target_grid_df.columns:
+                        target_grid_df[date_c] = pd.to_datetime(target_grid_df[date_c], errors='coerce').dt.date
 
-            edited_data = st.data_editor(
-                target_grid_df,
-                column_config={
-                    "Fuel Sensor Status": st.column_config.SelectboxColumn("Fuel Sensor Status", options=["Ok", "Fuel Sensor faulty"]),
-                    "Open Date": st.column_config.DateColumn("📅 Open Date", format="YYYY-MM-DD"),
-                    "DG Automation Status": st.column_config.SelectboxColumn("DG Automation Status", options=STATUS_CHOICES, required=True),
-                    "Bucket": st.column_config.SelectboxColumn("Bucket", options=BUCKET_LIST),
-                    "Present Docket raise Date": st.column_config.DateColumn("📅 Present Docket raise Date", format="YYYY-MM-DD")
-                },
-                disabled=["SAIP ID", "JC"],
-                use_container_width=True,
-                height=480
-            )
-
-            if st.button("💾 Commit Grid Edits to Master Tracker", use_container_width=True, type="primary"):
-                for idx, edited_row in edited_data.iterrows():
-                    orig_idx = df_status[df_status['SAIP ID'] == edited_row['SAIP ID']].index
-                    if not orig_idx.empty:
-                        i = orig_idx[0]
-                        for col in valid_grid_cols:
-                            if col not in ['SAIP ID', 'JC']:
-                                val = edited_row[col]
-                                if col in ['Open Date', 'Present Docket raise Date']: val = clean_date_str(val)
-                                st.session_state.master_tracker_df.at[i, col] = val
-                st.session_state.master_tracker_df = auto_sync_edited_data_to_engine(
-                    st.session_state.master_tracker_df, df_open_cm, df_cr_data
+                edited_data = st.data_editor(
+                    target_grid_df,
+                    column_config={
+                        "Fuel Sensor Status": st.column_config.SelectboxColumn("Fuel Sensor Status", options=["Ok", "Fuel Sensor faulty"]),
+                        "Open Date": st.column_config.DateColumn("📅 Open Date", format="YYYY-MM-DD"),
+                        "DG Automation Status": st.column_config.SelectboxColumn("DG Automation Status", options=STATUS_CHOICES, required=True),
+                        "Bucket": st.column_config.SelectboxColumn("Bucket", options=BUCKET_LIST),
+                        "Present Docket raise Date": st.column_config.DateColumn("📅 Present Docket raise Date", format="YYYY-MM-DD")
+                    },
+                    disabled=["SAIP ID", "JC"],
+                    use_container_width=True,
+                    height=480
                 )
-                st.success("All spreadsheet changes committed & synced!")
-                st.rerun()
+
+                if st.button("💾 Commit Grid Edits to Master Tracker", use_container_width=True, type="primary"):
+                    for idx, edited_row in edited_data.iterrows():
+                        orig_idx = df_status[df_status['SAIP ID'] == edited_row['SAIP ID']].index
+                        if not orig_idx.empty:
+                            i = orig_idx[0]
+                            for col in valid_grid_cols:
+                                if col not in ['SAIP ID', 'JC']:
+                                    val = edited_row[col]
+                                    if col in ['Open Date', 'Present Docket raise Date']: val = clean_date_str(val)
+                                    st.session_state.master_tracker_df.at[i, col] = val
+                    st.session_state.master_tracker_df = auto_sync_edited_data_to_engine(
+                        st.session_state.master_tracker_df, df_open_cm, df_cr_data
+                    )
+                    st.success("All spreadsheet changes committed & synced!")
+                    st.rerun()
 
     st.markdown("---")
     export_output = BytesIO()
@@ -1076,9 +1063,8 @@ elif page == "🔍 AI Site Diagnostics":
     st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
     st.caption("Circle-wide deep diagnostics, equipment specs, telemetry mapping, and field intervention radar.")
 
-    # ⚡ ছাৰ্চ বাৰ আৰু কন্ট্ৰ'ল পেনেল বগা কাৰ্ডত
     with st.container(border=True):
-        st.markdown("<div style='color: #0f172a; font-size: 17px; font-weight: 800; margin-bottom: 8px;'>🎯 Targeted Site Telemetry Search</div>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin:0 0 10px 0;'>🎯 Targeted Site Telemetry Search</h4>", unsafe_allow_html=True)
         s_col1, s_col2 = st.columns([3.5, 1])
         with s_col1:
             sq = st.text_input(
@@ -1092,9 +1078,8 @@ elif page == "🔍 AI Site Diagnostics":
                 sq = ""
 
     if not sq:
-        # ⚡ ডিফল্ট অৱস্থা: যদি কোনো ছাইট চাৰ্চ কৰা নাই
         with st.container(border=True):
-            st.markdown("<div style='color: #0f172a; font-size: 17px; font-weight: 800; margin-bottom: 12px;'>⚡ Circle Network Overview & Diagnostics Radar</div>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin:0 0 12px 0;'>⚡ Circle Network Overview & Diagnostics Radar</h3>", unsafe_allow_html=True)
             tot_s = len(df_status) if not df_status.empty else 0
             auto_s = len(df_status[df_status['DG Automation Status'] == 'Automation Ok']) if not df_status.empty else 0
             man_s = len(df_status[df_status['DG Automation Status'] == 'Manual Mode']) if not df_status.empty else 0
@@ -1106,8 +1091,8 @@ elif page == "🔍 AI Site Diagnostics":
             c3.metric("Manual Mode Alerts", f"{man_s:,}", delta_color="inverse")
             c4.metric("Active Breakdowns", f"{bd_s:,}", delta_color="inverse")
             
-            st.markdown("<hr style='margin: 14px 0; border-color: #e2e8f0;'>", unsafe_allow_html=True)
-            st.markdown("<div style='color: #475569; font-size: 13px; font-weight: 600;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</div>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 14px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 14px; font-weight: 600;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
 
     else:
         matches = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)] if not df_status.empty else pd.DataFrame()
@@ -1117,7 +1102,7 @@ elif page == "🔍 AI Site Diagnostics":
         else:
             if len(matches) > 1:
                 with st.container(border=True):
-                    st.markdown(f"<div style='color: #0f172a; font-size: 15px; font-weight: 700; margin-bottom: 6px;'>Multiple ({len(matches)}) Sites Found:</div>", unsafe_allow_html=True)
+                    st.markdown("<p style='font-size: 15px; font-weight: 700; margin-bottom: 6px;'>Multiple Sites Found:</p>", unsafe_allow_html=True)
                     selected_site = st.selectbox("Select Target SAIP ID:", matches['SAIP ID'].tolist(), label_visibility="collapsed")
                     site_row = matches[matches['SAIP ID'] == selected_site].iloc[0]
             else:
@@ -1128,7 +1113,6 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ ছাইটৰ হেডাৰ কাৰ্ড
             st.markdown(f"""
             <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
@@ -1145,7 +1129,6 @@ elif page == "🔍 AI Site Diagnostics":
             </div>
             """, unsafe_allow_html=True)
 
-            # ⚡ KPI মেট্ৰিক কাৰ্ড
             with st.container(border=True):
                 k1, k2, k3, k4 = st.columns(4)
                 aging_val = site_row.get("Aging (Day's)", 0)
@@ -1155,7 +1138,6 @@ elif page == "🔍 AI Site Diagnostics":
                 k3.metric("Incident Aging", f"{int(aging_val) if pd.notna(aging_val) else 0} Days", "Delay Bracket")
                 k4.metric("Fuel Telemetry", fs_val, "Sensor Health", delta_color="normal" if fs_val == "Ok" else "inverse")
 
-            # ⚡ AI ৰুট-কজ ডায়গ্ৰাম আৰু একশ্যন
             bucket_val = str(site_row.get('Bucket', '')).strip()
             rem_val = str(site_row.get('Present Remarks', 'No active remarks logged.')).strip()
 
@@ -1185,7 +1167,6 @@ elif page == "🔍 AI Site Diagnostics":
             </div>
             """, unsafe_allow_html=True)
 
-            # ⚡ ৩-টেব সমন্বিত বিশ্লেষণ
             diag_t1, diag_t2, diag_t3 = st.tabs([
                 "📋 Technical Asset Specifications",
                 "⚡ Active Dockets & Pipeline Reconciliation",
@@ -1210,7 +1191,7 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown("<div style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Live Master Tracker vs CM Open Docket Comparison</div>", unsafe_allow_html=True)
+                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Live Master Tracker vs CM Open Docket Comparison</p>", unsafe_allow_html=True)
                     rec_table = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket No", "Col Q: Open Date",
@@ -1251,6 +1232,6 @@ elif page == "🔍 AI Site Diagnostics":
                     h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
                     h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
                     h3.metric("Last Closure Date (Col R)", clean_date_str(site_row.get('Last Closed date', 'None')))
-                    st.markdown("<hr style='margin: 10px 0; border-color: #e2e8f0;'>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin: 10px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
                     st.info(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
