@@ -146,7 +146,6 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ FORCED WHITE CARD & VISIBLE BLACK TEXT FIX */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         background: #ffffff !important;
@@ -165,7 +164,7 @@ st.markdown("""
         text-shadow: none !important;
     }
 
-    /* PROFESSIONAL BLACK BADGES */
+    /* PROFESSIONAL BADGES */
     .status-badge {
         padding: 6px 16px;
         border-radius: 9999px;
@@ -1036,19 +1035,19 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ GUARANTEED VISIBLE BLACK TEXT ACROSS WHITE CARD
+            # ⚡ DARK SOLID BACKDROP CONTAINER WITH PURE WHITE TEXT FOR 100% CLARITY
             jc_str = str(site_row.get('JC', 'N/A'))
             state_str = str(site_row.get('State', 'N/A'))
             st_type = str(site_row.get('Site Type', 'N/A'))
             fac_5g = str(site_row.get('5G facality', 'N/A'))
 
             st.markdown(f"""
-            <div style="background-color: #ffffff !important; background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 12px !important; padding: 20px 24px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.25) !important;">
+            <div style="background-color: #0f172a !important; background: #0f172a !important; border: 1px solid #38bdf8 !important; border-radius: 12px !important; padding: 20px 24px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5) !important;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
-                        <h2 style="margin: 0 !important; color: #0f172a !important; font-weight: 800 !important; font-size: 24px !important; text-shadow: none !important;">⚡ <span style="color: #0f172a !important;">{selected_site}</span></h2>
-                        <div style="margin-top: 4px !important; color: #0f172a !important; font-size: 14px !important; font-weight: 600 !important;">
-                            Circle Territory: <span style="color: #0284c7 !important; font-weight: 700 !important;">{jc_str}</span> | State: <span style="color: #0f172a !important; font-weight: 700 !important;">{state_str}</span> | Site Type: <span style="color: #0f172a !important; font-weight: 700 !important;">{st_type}</span> | 5G Facility: <span style="color: #0f172a !important; font-weight: 700 !important;">{fac_5g}</span>
+                        <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 800 !important; font-size: 24px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
+                        <div style="margin-top: 6px !important; color: #f8fafc !important; font-size: 14px !important; font-weight: 600 !important;">
+                            Circle Territory: <span style="color: #38bdf8 !important; font-weight: 700 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 700 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 700 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 700 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 8px;">
