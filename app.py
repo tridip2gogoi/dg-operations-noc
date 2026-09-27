@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Native Card Text Fix
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Absolute Text Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -146,32 +146,37 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ NATIVE WHITE CARD TEXT VISIBILITY FIX (DARK TEXT FOR CLEAR READABILITY) */
+    /* ⚡ ABSOLUTE WHITE CARD TEXT VISIBILITY FIX */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         border-radius: 12px !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15) !important;
-        border: 1px solid #e2e8f0 !important;
-        padding: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 18px !important;
     }
+    div[data-testid="stVerticalBlockBorderWrapper"] *,
+    div[data-testid="stVerticalBlockBorderWrapper"] p,
+    div[data-testid="stVerticalBlockBorderWrapper"] span,
+    div[data-testid="stVerticalBlockBorderWrapper"] label,
     div[data-testid="stVerticalBlockBorderWrapper"] h1,
     div[data-testid="stVerticalBlockBorderWrapper"] h2,
     div[data-testid="stVerticalBlockBorderWrapper"] h3,
     div[data-testid="stVerticalBlockBorderWrapper"] h4,
     div[data-testid="stVerticalBlockBorderWrapper"] h5,
-    div[data-testid="stVerticalBlockBorderWrapper"] h6,
-    div[data-testid="stVerticalBlockBorderWrapper"] p,
-    div[data-testid="stVerticalBlockBorderWrapper"] span,
-    div[data-testid="stVerticalBlockBorderWrapper"] label,
-    div[data-testid="stVerticalBlockBorderWrapper"] div {
+    div[data-testid="stVerticalBlockBorderWrapper"] h6 {
         color: #0f172a !important;
         text-shadow: none !important;
+        -webkit-font-smoothing: antialiased;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] * {
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] *,
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] div {
         color: #0f172a !important;
+        font-weight: 800 !important;
     }
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] * {
-        color: #64748b !important;
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] *,
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] div {
+        color: #475569 !important;
+        font-weight: 600 !important;
     }
 
     .status-badge {
@@ -710,14 +715,14 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m1:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
             if 'JC' in df_status.columns and 'DG Automation Status' in df_status.columns:
                 status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
                 st.dataframe(status_matrix, use_container_width=True)
 
     with tab_m2:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
             if 'JC' in df_status.columns and 'Bucket' in df_status.columns:
                 all_valid_bkt = df_status[df_status['Bucket'].notna()]
                 bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
@@ -725,7 +730,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m3:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
             if 'Bucket' in df_status.columns:
                 df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
                 df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified') if 'DG Make' in df_gcu.columns else 'Unspecified'
@@ -735,7 +740,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m4:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
             target_statuses = ['DG Breakdown', 'Manual Mode']
             target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
             df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
@@ -815,7 +820,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab1:
             with st.container(border=True):
-                st.markdown(f"<h3 style='margin:0 0 10px 0;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='margin:0 0 10px 0; color: #0f172a;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
                 edited_ila_data = st.data_editor(df_ila, use_container_width=True, height=450)
                 
                 if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
@@ -836,7 +841,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab2:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0;'>Single Site Quick Editor, Fault Clearance & Record Removal</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Record Removal</h3>", unsafe_allow_html=True)
                 target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:").strip().upper()
                 
                 if target_sap_id and 'Sap ID' in df_ila.columns:
@@ -898,7 +903,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab3:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
                 with st.form("new_ila_case_form"):
                     nc1, nc2 = st.columns(2)
                     with nc1:
@@ -953,6 +958,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
         with edit_tab1:
             with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor</h3>", unsafe_allow_html=True)
                 search_edit_site = st.text_input("Enter SAIP ID to modify or resolve:").strip().upper()
                 if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
                     match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
@@ -970,6 +976,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
         with edit_tab2:
             with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Bulk Inline Grid Editor</h3>", unsafe_allow_html=True)
                 st.dataframe(df_status.head(100), use_container_width=True)
 
 # ---------------------------------------------------------
