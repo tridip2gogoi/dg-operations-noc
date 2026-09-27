@@ -666,7 +666,7 @@ elif page == "⚡ O to AB Automated Sync Engine":
         )
 
 # ---------------------------------------------------------
-# 3. FLEET ANALYTICS & PROBLEM BUCKETS
+# 3. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
@@ -679,21 +679,57 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     valid_bucket = filtered_status[filtered_status['Bucket'].notna()]
 
     col1, col2 = st.columns([1, 2])
+    
+    # ⚡ কন্টেইনাৰ ১: Status Summary (বগা কাৰ্ড)
     with col1:
-        st.markdown(f"#### Status Summary ({selected_fleet_jc})")
+        st.markdown(f"""
+        <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 12px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px; min-height: 410px;">
+            <div style="margin: 0 0 12px 0; color: #0f172a; font-size: 18px; font-weight: 800;">Status Summary ({selected_fleet_jc})</div>
+        """, unsafe_allow_html=True)
         stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
         stat_summary.columns = ['Status Category', 'Site Count']
         st.dataframe(stat_summary, use_container_width=True, hide_index=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    # ⚡ কন্টেইনাৰ ২: Bucket Distribution (বগা কাৰ্ড আৰু ডাৰ্ক টেক্সট)
     with col2:
-        st.markdown(f"#### Bucket Distribution ({selected_fleet_jc})")
+        st.markdown(f"""
+        <div style="background: #ffffff; border-radius: 12px; padding: 16px 18px 10px 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; margin-bottom: 15px; min-height: 410px;">
+            <div style="margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;">Bucket Distribution ({selected_fleet_jc})</div>
+        """, unsafe_allow_html=True)
         if not valid_bucket.empty:
             b_summary = valid_bucket['Bucket'].value_counts().reset_index()
             b_summary.columns = ['Root-Cause Bucket', 'Incidents']
-            fig_b = px.bar(b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents", color="Incidents", color_continuous_scale="Blues")
-            fig_b.update_layout(height=320, plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font_color="#ffffff", margin=dict(l=10, r=10, t=10, b=10))
+            fig_b = px.bar(
+                b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents",
+                color="Incidents", color_continuous_scale="Blues"
+            )
+            fig_b.update_layout(
+                height=340,
+                margin=dict(l=10, r=10, t=10, b=10),
+                plot_bgcolor="#ffffff",
+                paper_bgcolor="#ffffff",
+                font=dict(color="#0f172a", family="Inter, sans-serif"),
+                xaxis=dict(
+                    showgrid=True, gridcolor="#f1f5f9", 
+                    tickfont=dict(color="#0f172a", size=11),
+                    title=dict(font=dict(color="#0f172a", weight="bold"))
+                ),
+                yaxis=dict(
+                    showgrid=True, gridcolor="#f1f5f9", 
+                    tickfont=dict(color="#0f172a"),
+                    title=dict(font=dict(color="#0f172a", weight="bold"))
+                ),
+                coloraxis_colorbar=dict(
+                    title=dict(text="Incidents", font=dict(color="#0f172a")),
+                    tickfont=dict(color="#0f172a")
+                )
+            )
+            fig_b.update_traces(textposition='outside', textfont=dict(color="#0f172a", weight="bold"))
             st.plotly_chart(fig_b, use_container_width=True)
         else:
             st.info("No active problem bucket recorded for this selection.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
     tab_m1, tab_m2, tab_m3, tab_m4 = st.tabs([
@@ -927,7 +963,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
             grid_cols = ['SAIP ID', 'JC', 'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status', 'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date', "Aging (Day's)", 'Timeline']
             valid_grid_cols = [c for c in grid_cols if c in df_status.columns]
             raw_target_df = df_status[valid_grid_cols] if jc_filter == "All JCs" else df_status[df_status['JC'] == jc_filter][valid_grid_cols]
-            target_grid_df = raw_target_df.copy()
+            target_grid_df = raw_target_grid_df = raw_target_df.copy()
 
             for date_c in ['Open Date', 'Present Docket raise Date']:
                 if date_c in target_grid_df.columns:
