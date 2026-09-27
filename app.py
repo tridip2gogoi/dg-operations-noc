@@ -806,14 +806,17 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m4:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px;'>DG Breakdown & DG Manual: GCU, OEM Spare parts & DG Breakdown</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
             target_statuses = ['DG Breakdown', 'Manual Mode']
             target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
             df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
             df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip()
             df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
-            ct_sub_bkt = pd.crosstab([df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
-            st.dataframe(ct_sub_bkt, use_container_width=True)
+            if 'JC' in df_sub.columns:
+                ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
+                st.dataframe(ct_sub_bkt, use_container_width=True)
+            else:
+                st.warning("JC column not found in dataset.")
 
 # ---------------------------------------------------------
 # 4. FUEL SENSOR TELEMETRY
