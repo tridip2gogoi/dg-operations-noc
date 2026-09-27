@@ -175,6 +175,12 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] label {
         color: #0f172a !important;
     }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricValue"] * {
+        color: #0f172a !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetricLabel"] * {
+        color: #64748b !important;
+    }
 
     .status-badge {
         padding: 6px 14px;
@@ -226,7 +232,7 @@ def to_date_obj(val, fallback=None):
     except Exception:
         return fallback or date.today()
 
-# --- MULTI-ROLE CREDENTIALS (SUPER ADMIN & VIEWER) ---
+# --- MULTI-ROLE CREDENTIALS ---
 USER_CREDENTIALS = {
     "admin": {
         "password_hash": hashlib.sha256("admin@123".encode()).hexdigest(),
@@ -254,7 +260,7 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
-# --- DATA PIPELINE LOADER ---
+# --- DATA PIPELINE LOADER (EMPTY & NON-DG ROWS FILTERED) ---
 @st.cache_data
 def load_all_trackers(dg_file, cm_file, cr_file=None):
     df_status = pd.DataFrame()
@@ -265,11 +271,28 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
     if is_valid_source(dg_file):
         try:
             xls_dg = pd.ExcelFile(dg_file)
-            if "Automation Status" in xls_dg.sheet_names:
-                df_status = pd.read_excel(xls_dg, sheet_name="Automation Status")
-                for d_col in ['Open Date', 'Last Closed date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date.1']:
-                    if d_col in df_status.columns:
-                        df_status[d_col] = df_status[d_col].apply(clean_date_str)
+            sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
+            df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
+            
+            # ⚡ ১. খালী ৰো আৰু ভূৱা ছাইট আঁতৰোৱা (Eliminating Phantom Blank Rows)
+            if 'SAIP ID' in df_status.columns:
+                df_status = df_status[df_status['SAIP ID'].notna()]
+                df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
+                df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
+            
+            # ⚡ ২. কেৱল প্ৰকৃত ডিজি থকা ছাইট ৰখা (ৰিমুভ নাল/নন-ডিজি)
+            if 'DG Make' in df_status.columns:
+                df_status = df_status[df_status['DG Make'].notna()]
+                df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
+                df_status = df_status[~df_status['DG Make'].str.lower().isin(['', 'nan', 'none', 'null', 'no dg', 'non dg'])]
+            
+            if 'JC' in df_status.columns:
+                df_status['JC'] = df_status['JC'].astype(str).str.strip()
+            
+            for d_col in ['Open Date', 'Last Closed date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date.1']:
+                if d_col in df_status.columns:
+                    df_status[d_col] = df_status[d_col].apply(clean_date_str)
+                    
             if "Fuel Sensor faulty" in xls_dg.sheet_names:
                 df_fuel = pd.read_excel(xls_dg, sheet_name="Fuel Sensor faulty")
                 if 'COMPLAINT LOGGIN DATE' in df_fuel.columns:
@@ -285,6 +308,8 @@ def load_all_trackers(dg_file, cm_file, cr_file=None):
             elif "CM Tracket" in xls_cm.sheet_names:
                 temp_cm = pd.read_excel(xls_cm, sheet_name="CM Tracket")
                 df_open_cm = temp_cm[temp_cm['STATUS'].astype(str).str.lower() == 'open']
+            else:
+                df_open_cm = pd.read_excel(xls_cm, sheet_name=0)
             
             if not df_open_cm.empty and 'COMPLAINT LOGGIN DATE' in df_open_cm.columns:
                 df_open_cm['COMPLAINT LOGGIN DATE'] = df_open_cm['COMPLAINT LOGGIN DATE'].apply(clean_date_str)
@@ -526,21 +551,33 @@ uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx"
 uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
 uploaded_cr = st.sidebar.file_uploader("3. Complaint Register (Optional)", type=["xlsx", "xls"])
 
+detected_excel = DEFAULT_EXCEL
+if not os.path.exists(DEFAULT_EXCEL):
+    local_files = [f for f in os.listdir('.') if f.endswith(('.xlsx', '.xls')) and not f.startswith('~$')]
+    for lf in local_files:
+        if "CM" not in lf.upper():
+            detected_excel = lf
+            break
+
 cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
-dg_source = uploaded_dg if uploaded_dg is not None else DEFAULT_EXCEL
+dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
 cr_source = uploaded_cr if uploaded_cr is not None else None
 
 df_status_raw, df_fuel_raw, df_open_cm, df_cr_data = load_all_trackers(dg_source, cm_source, cr_source)
 
-# Session State Cache for Live Editing across the Portal
-if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
+file_key = str(getattr(uploaded_dg, 'name', dg_source))
+if "loaded_file_key" not in st.session_state or st.session_state.loaded_file_key != file_key:
+    st.session_state.loaded_file_key = file_key
     st.session_state.master_tracker_df = df_status_raw.copy()
-
-if "fuel_tracker_df" not in st.session_state:
     st.session_state.fuel_tracker_df = df_fuel_raw.copy()
 
 df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
+
+if not df_status.empty:
+    st.sidebar.success(f"Master: {len(df_status)} Monitored Sites Active")
+else:
+    st.sidebar.warning("⚠️ No data loaded. Upload Master Tracker.")
 
 if not df_open_cm.empty:
     st.sidebar.success(f"CM Tracker: {len(df_open_cm)} Open Incidents Synced")
@@ -563,7 +600,7 @@ page = st.sidebar.radio("NOC Operations Navigation:", [
 ])
 
 # ---------------------------------------------------------
-# 1. EXECUTIVE CONTROL CENTER (WHITE BACKGROUND FOR GRAPHS)
+# 1. EXECUTIVE CONTROL CENTER (ACCURATE DG BASE COUNT)
 # ---------------------------------------------------------
 if page == "📊 Executive Control Center":
     st.markdown("## ⚡ North East Circle - DG Operations Control Center")
@@ -571,43 +608,45 @@ if page == "📊 Executive Control Center":
 
     if not df_status.empty:
         total_sites = len(df_status)
-        auto_ok = len(df_status[df_status['DG Automation Status'] == 'Automation Ok'])
-        manual_mode = len(df_status[df_status['DG Automation Status'] == 'Manual Mode'])
+        auto_ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
+        manual_mode = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
 
         k1, k2, k3 = st.columns(3)
-        k1.metric("Network Base (Total Sites)", f"{total_sites:,}", "Monitored Fleet")
-        k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%", f"{auto_ok} Sites Online")
-        k3.metric("Manual Mode Alerts", manual_mode, f"-{round((manual_mode/total_sites)*100, 1)}%", delta_color="inverse")
+        k1.metric("Network Base (Total Sites)", f"{total_sites:,}", "Active Monitored Fleet")
+        k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%", f"{auto_ok:,} Sites Online")
+        k3.metric("Manual Mode Alerts", manual_mode, f"-{round((manual_mode/total_sites)*100, 1)}%" if total_sites else "0%", delta_color="inverse")
 
         st.markdown("---")
         c1, c2 = st.columns([3, 2])
         
-        # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health (White Background Card)
+        # ⚡ প্ৰথম গ্ৰাফ: Circle JC Wise Automation Health
         with c1:
             with st.container(border=True):
                 st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>Circle JC Wise Automation Health</div>", unsafe_allow_html=True)
-                fig_bar = px.histogram(
-                    df_status, x="JC", color="DG Automation Status", barmode="group",
-                    color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
-                )
-                fig_bar.update_layout(
-                    height=350,
-                    margin=dict(l=10, r=10, t=10, b=10),
-                    plot_bgcolor="#ffffff",
-                    paper_bgcolor="#ffffff",
-                    font=dict(color="#0f172a", family="Inter, sans-serif"),
-                    xaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
-                    yaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
-                    legend=dict(font=dict(color="#0f172a"), bgcolor="rgba(255,255,255,0.9)")
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+                if "JC" in df_status.columns and "DG Automation Status" in df_status.columns:
+                    fig_bar = px.histogram(
+                        df_status, x="JC", color="DG Automation Status", barmode="group",
+                        color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
+                    )
+                    fig_bar.update_layout(
+                        height=350,
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        plot_bgcolor="#ffffff",
+                        paper_bgcolor="#ffffff",
+                        font=dict(color="#0f172a", family="Inter, sans-serif"),
+                        xaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
+                        yaxis=dict(showgrid=True, gridcolor="#f1f5f9", title_font=dict(color="#0f172a")),
+                        legend=dict(font=dict(color="#0f172a"), bgcolor="rgba(255,255,255,0.9)")
+                    )
+                    st.plotly_chart(fig_bar, use_container_width=True)
 
-        # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (White Background Card)
+        # ⚡ দ্বিতীয় গ্ৰাফ: DG Make Fleet Allocation (No NULL values)
         with c2:
             with st.container(border=True):
                 st.markdown("<div style='margin: 0 0 10px 0; color: #0f172a; font-size: 18px; font-weight: 800;'>DG Make Fleet Allocation</div>", unsafe_allow_html=True)
                 if "DG Make" in df_status.columns:
-                    fig_donut = px.pie(df_status, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
+                    valid_makes = df_status[df_status['DG Make'].notna() & (df_status['DG Make'].astype(str).str.strip() != '')]
+                    fig_donut = px.pie(valid_makes, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
                     fig_donut.update_layout(
                         height=350,
                         margin=dict(l=10, r=10, t=10, b=10),
@@ -617,6 +656,8 @@ if page == "📊 Executive Control Center":
                         legend=dict(font=dict(color="#0f172a"))
                     )
                     st.plotly_chart(fig_donut, use_container_width=True)
+    else:
+        st.info("No data loaded. Please upload the Master Tracker from the sidebar.")
 
 # ---------------------------------------------------------
 # 2. O TO AB AUTOMATED SYNC ENGINE
@@ -626,7 +667,7 @@ elif page == "⚡ O to AB Automated Sync Engine":
     st.caption("AI-driven pipeline mapping CM Tracker (`Open Site`) directly into Col O to AB of `Automation Status`.")
 
     if df_status.empty:
-        st.warning("Please verify that 'DG Auto-Update Automation Tracker 26.xlsx' is present or uploaded.")
+        st.warning("Please verify that the DG Master Tracker is uploaded.")
     else:
         st.markdown(f"""
         <div class="auto-docket-box">
@@ -679,7 +720,7 @@ elif page == "⚡ O to AB Automated Sync Engine":
         st.download_button(
             label="📥 Download Master Updated Tracker (Col O to AB Synced .xlsx)",
             data=output.getvalue(),
-            file_name=f"Updated_DG_Automation_Tracker_26_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            file_name=f"Updated_DG_Automation_Tracker_{datetime.now().strftime('%Y%m%d')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=True
         )
@@ -764,15 +805,15 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         st.dataframe(bucket_matrix, use_container_width=True)
 
     with tab_m3:
-        st.markdown("### GCU Sites: JC vs DG Make & KVA Breakdown (79 Sites)")
+        st.markdown("### GCU Sites: JC vs DG Make & KVA Breakdown")
         df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
-        df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified (MWKG-G003)')
-        df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified')
+        df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified')
+        df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
         ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
         st.dataframe(ct_gcu_detailed, use_container_width=True)
 
     with tab_m4:
-        st.markdown("### DG Breakdown & DG Manual: GCU, OEM Spare parts & DG Breakdown (212 Sites)")
+        st.markdown("### DG Breakdown & DG Manual: GCU, OEM Spare parts & DG Breakdown")
         target_statuses = ['DG Breakdown', 'Manual Mode']
         target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
         df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
@@ -821,7 +862,7 @@ elif page == "⏳ Critical Aging Escalation Monitor":
     m1.metric("Total Delayed Sites", len(aging_valid), "Active Incidents")
     m2.metric("Severe Delays (>90 Days)", len(crit_df), "Critical Escalations")
     m3.metric("Most Affected JC", crit_df['JC'].mode()[0] if not crit_df.empty else "N/A", f"{crit_df['JC'].value_counts().max()} Sites")
-    m4.metric("Maximum Recorded Delay", f"{int(aging_valid['Aging_Num'].max())} Days")
+    m4.metric("Maximum Recorded Delay", f"{int(aging_valid['Aging_Num'].max()) if not aging_valid.empty else 0} Days")
 
     st.markdown("---")
     if 'Aging_Bracket' in df_status.columns:
@@ -1113,7 +1154,7 @@ elif page == "🔍 AI Site Diagnostics":
                 k3.metric("Incident Aging", f"{int(aging_val) if pd.notna(aging_val) else 0} Days", "Delay Bracket")
                 k4.metric("Fuel Telemetry", fs_val, "Sensor Health", delta_color="normal" if fs_val == "Ok" else "inverse")
 
-            # ⚡ AI ৰুট-কজ ডায়গ্ৰাম আৰু একশ্যন
+            # ⚡ AI ৰুট-কজ ডায়গ্ৰাম আৰু একশ্যন
             bucket_val = str(site_row.get('Bucket', '')).strip()
             rem_val = str(site_row.get('Present Remarks', 'No active remarks logged.')).strip()
 
