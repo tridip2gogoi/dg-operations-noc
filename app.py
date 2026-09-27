@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Absolute Text Fix
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Black Headings
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -81,6 +81,7 @@ st.markdown("""
         font-weight: 900 !important;
     }
 
+    /* General page headings (outside white cards) */
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
     [data-testid="stHeader"] *,
@@ -146,7 +147,7 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ ABSOLUTE WHITE CARD TEXT VISIBILITY FIX */
+    /* ⚡ ABSOLUTE WHITE CARD TEXT & BLACK COLLAR/TEXT FIX */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         border-radius: 12px !important;
@@ -1036,7 +1037,7 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ ABSOLUTE FIXED SITE HEADER CONTAINER WITH EXPLICIT DARK TEXT
+            # ⚡ ABSOLUTE FIXED SITE HEADER CONTAINER WITH EXPLICIT DARK TEXT (BLACK COLLAR)
             st.markdown(f"""
             <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 24px; margin-top: 14px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.15);">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
