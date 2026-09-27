@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & Guaranteed Visible Text
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & Guaranteed Persistent Visibility
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -146,24 +146,6 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #ffffff !important;
-        background: #ffffff !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25) !important;
-        border: 1px solid #cbd5e1 !important;
-        padding: 20px !important;
-        opacity: 1 !important;
-    }
-    
-    div[data-testid="stVerticalBlockBorderWrapper"] p,
-    div[data-testid="stVerticalBlockBorderWrapper"] span,
-    div[data-testid="stVerticalBlockBorderWrapper"] label,
-    div[data-testid="stVerticalBlockBorderWrapper"] div {
-        color: #0f172a !important;
-        text-shadow: none !important;
-    }
-
     /* PROFESSIONAL BADGES */
     .status-badge {
         padding: 6px 16px;
@@ -173,21 +155,21 @@ st.markdown("""
         letter-spacing: 0.05em;
         text-transform: uppercase;
         display: inline-block;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .badge-ok { 
-        background-color: #0f172a !important; 
-        color: #38bdf8 !important; 
+        background-color: #0284c7 !important; 
+        color: #ffffff !important; 
         border: 1px solid #38bdf8; 
     }
     .badge-warn { 
-        background-color: #0f172a !important; 
-        color: #facc15 !important; 
+        background-color: #ca8a04 !important; 
+        color: #ffffff !important; 
         border: 1px solid #facc15; 
     }
     .badge-crit { 
-        background-color: #0f172a !important; 
-        color: #f87171 !important; 
+        background-color: #dc2626 !important; 
+        color: #ffffff !important; 
         border: 1px solid #f87171; 
     }
 </style>
@@ -502,15 +484,24 @@ ila_source = uploaded_ila if uploaded_ila is not None else None
 
 df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
-# ⚡ SAFE INITIALIZATION OF SESSION STATES
-if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
-    st.session_state.master_tracker_df = df_status_raw.copy()
+# ⚡ ROBUST PERSISTENT SESSION STATE INITIALIZATION FOR ALL TRACKERS
+if "master_tracker_df" not in st.session_state:
+    st.session_state.master_tracker_df = pd.DataFrame()
 if "fuel_tracker_df" not in st.session_state:
+    st.session_state.fuel_tracker_df = pd.DataFrame()
+if "ila_tracker_df" not in st.session_state:
+    st.session_state.ila_tracker_df = pd.DataFrame()
+
+if st.session_state.master_tracker_df.empty and not df_status_raw.empty:
+    st.session_state.master_tracker_df = df_status_raw.copy()
+if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
     st.session_state.fuel_tracker_df = df_fuel_raw.copy()
-if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
+if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
-if uploaded_ila is not None:
+if uploaded_dg is not None and not df_status_raw.empty:
+    st.session_state.master_tracker_df = df_status_raw.copy()
+if uploaded_ila is not None and not df_ila_raw.empty:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
 
 df_status = st.session_state.master_tracker_df
@@ -1035,22 +1026,22 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ DARK SOLID BACKDROP CONTAINER WITH PURE WHITE TEXT FOR 100% CLARITY
+            # ⚡ HIGH CONTRAST DARK STYLING WITH PURE WHITE TEXT FOR ABSOLUTE CLARITY
             jc_str = str(site_row.get('JC', 'N/A'))
             state_str = str(site_row.get('State', 'N/A'))
             st_type = str(site_row.get('Site Type', 'N/A'))
             fac_5g = str(site_row.get('5G facality', 'N/A'))
 
             st.markdown(f"""
-            <div style="background-color: #0f172a !important; background: #0f172a !important; border: 1px solid #38bdf8 !important; border-radius: 12px !important; padding: 20px 24px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5) !important;">
+            <div style="background-color: #0f172a !important; background: #0f172a !important; border: 2px solid #38bdf8 !important; border-radius: 12px !important; padding: 22px 26px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
-                        <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 800 !important; font-size: 24px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
-                        <div style="margin-top: 6px !important; color: #f8fafc !important; font-size: 14px !important; font-weight: 600 !important;">
-                            Circle Territory: <span style="color: #38bdf8 !important; font-weight: 700 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 700 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 700 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 700 !important;">{fac_5g}</span>
+                        <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
+                        <div style="margin-top: 8px !important; color: #ffffff !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
+                            Circle Territory: <span style="color: #38bdf8 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
                         </div>
                     </div>
-                    <div style="margin-top: 8px;">
+                    <div style="margin-top: 10px;">
                         <span class="status-badge {badge_class}">{status_val}</span>
                     </div>
                 </div>
