@@ -446,7 +446,7 @@ if not st.session_state.authenticated:
         st.markdown("""
         <div class="login-container">
             <div class="login-header">
-                <h2>⚡ Telecom NOC Portal</h2>
+                <h2>⚡ DG NOC Portal</h2>
                 <p>North East Circle Operations Gateway</p>
             </div>
         """, unsafe_allow_html=True)
