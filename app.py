@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with High Contrast White Cards & 100% Visible White Tabs & Strict Black Collar Text Fix
+# Custom Corporate Professional NOC Styling with High Contrast White Cards & Strict Black Collar Text
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -164,7 +164,7 @@ st.markdown("""
         text-shadow: none !important;
     }
 
-    /* ⚡ PROFESSIONAL BLACK COLLAR BADGES */
+    /* PROFESSIONAL BLACK COLLAR BADGES */
     .status-badge {
         padding: 6px 16px;
         border-radius: 9999px;
