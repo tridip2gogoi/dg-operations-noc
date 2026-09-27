@@ -201,6 +201,7 @@ st.markdown("""
 
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio_24th_Sep'26.xlsx"
+DEFAULT_Complaint_Register = "COMPLAINT REGISTER AP NL MN MZ TR RJIO.xlsx"
 
 BUCKET_LIST = [
     "GCU", "Fuel Sensor", "DG Breakdown", "DG battery", "IPMS",
