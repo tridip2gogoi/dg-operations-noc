@@ -650,17 +650,35 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
             "Itanagar": (27.0844, 93.6053), "Tezpur": (26.6528, 92.7926)
         }
 
-        # Check real coordinates
+        # ⚡ ACQ_LAT আৰু ACQ_LONG বা অন্যান্য ক'লম চিনাক্তকৰণ
         has_coords = False
-        if "Latitude" in map_df.columns and "Longitude" in map_df.columns:
-            map_df["latitude"] = pd.to_numeric(map_df["Latitude"], errors='coerce')
-            map_df["longitude"] = pd.to_numeric(map_df["Longitude"], errors='coerce')
-            if map_df["latitude"].dropna().shape[0] > 0:
-                has_coords = True
-                map_df = map_df.dropna(subset=["latitude", "longitude"])
+        lat_col = None
+        lon_col = None
 
-        # Fallback coordinates based on JC territory
-        if not has_coords:
+        # সম্ভাৱ্য ক'লমসমূহ স্কেন কৰা
+        for col in map_df.columns:
+            c_clean = str(col).strip().upper()
+            if c_clean in ["ACQ_LAT", "LATITUDE", "LAT"]:
+                lat_col = col
+            elif c_clean in ["ACQ_LONG", "ACQ_LON", "LONGITUDE", "LONG", "LON"]:
+                lon_col = col
+
+        if lat_col and lon_col:
+            map_df["latitude"] = pd.to_numeric(map_df[lat_col], errors='coerce')
+            map_df["longitude"] = pd.to_numeric(map_df[lon_col], errors='coerce')
+            # 0, nan আৰু ভুল কঅৰ্ডিনেট আঁতৰাই প্ৰকৃত কঅৰ্ডিনেট বাছনি কৰা
+            valid_coord_mask = (
+                map_df["latitude"].notna() & 
+                map_df["longitude"].notna() & 
+                (map_df["latitude"] > 0) & 
+                (map_df["longitude"] > 0)
+            )
+            if valid_coord_mask.sum() > 0:
+                has_coords = True
+                map_df = map_df[valid_coord_mask].copy()
+
+        # যদি কোনো ছাইটত কঅৰ্ডিনেট খালী থাকে, তেন্তে JC কেন্দ্ৰবিন্দু অনুসৰি মান দিয়া হ'ব
+        if not has_coords or map_df.empty:
             np.random.seed(42)
             lats, lons = [], []
             for _, r in map_df.iterrows():
@@ -680,11 +698,10 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
 
         map_df["color"] = map_df.apply(get_color, axis=1)
 
-        # ⚡ Universal Map Rendering: Streamlit Native High-Performance Map
+        # ⚡ লাইভ মানচিত্ৰ প্ৰদৰ্শন
         with st.container(border=True):
-            st.markdown(f"<div style='color: #0f172a; font-size: 16px; font-weight: 700; margin-bottom: 10px;'>Radar View: <b>{len(map_df):,} Towers Positioned</b> ({jc_map_filter})</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: #0f172a; font-size: 16px; font-weight: 700; margin-bottom: 10px;'>Radar View: <b>{len(map_df):,} Towers Positioned via GPS</b> ({jc_map_filter})</div>", unsafe_allow_html=True)
             
-            # Rendering interactive map without any Mapbox library dependency issues
             st.map(
                 map_df[["latitude", "longitude", "color"]],
                 latitude="latitude",
@@ -701,7 +718,6 @@ elif page == "🗺️ GPS Telecom Tower Live Map":
                 <span>🔴 Red: DG Breakdown / Faulty Sensor</span>
             </div>
             """, unsafe_allow_html=True)
-
 # ---------------------------------------------------------
 # 3. O TO AB AUTOMATED SYNC ENGINE
 # ---------------------------------------------------------
