@@ -951,10 +951,16 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
                                 
-                                # ⚡ FUEL SENSOR STATUS (Col O) & DOCKET NO (Col P)
+                                # ⚡ FUEL SENSOR STATUS (Col O) & DOCKET NO (Col P) & OPEN DATE (Col Q)
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
                                 edit_docket = st.text_input("Present Docket No (Col V / P):", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
+                                raw_open_date_val = s_row.get('Open Date')
+                                if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
+                                    raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
+                                existing_open_date = to_date_obj(raw_open_date_val)
+                                edit_open_date = st.date_input("Open Date (Col Q):", value=existing_open_date)
+
                                 raw_date_val = s_row.get('Present Docket raise Date')
                                 if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
                                     raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
@@ -980,6 +986,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
                                 st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_docket
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
+                                st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date.strftime('%Y-%m-%d')
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_raise_date.strftime('%Y-%m-%d')
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
                                 st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
