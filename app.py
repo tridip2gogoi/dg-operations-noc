@@ -366,6 +366,59 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
 
+def auto_sync_cm_tracker_to_master(df_status, df_open_cm):
+    if df_status.empty or df_open_cm.empty:
+        return df_status
+    
+    updated_master = df_status.copy()
+    cm_cols = {c.lower(): c for c in df_open_cm.columns}
+    site_col = cm_cols.get('site id') or cm_cols.get('site_id') or cm_cols.get('sap id') or cm_cols.get('saip id')
+    docket_col = cm_cols.get('docket number') or cm_cols.get('docket no') or cm_cols.get('docket')
+    complaint_col = cm_cols.get('nature of complaint') or cm_cols.get('complaint') or cm_cols.get('remarks')
+    bucket_col = cm_cols.get('bucket') or cm_cols.get('root cause')
+    aging_col = cm_cols.get('ageing') or cm_cols.get('aging')
+    date_col = cm_cols.get('complaint loggin date') or cm_cols.get('open date') or cm_cols.get('date')
+
+    if site_col:
+        for idx, row in updated_master.iterrows():
+            saip_id = str(row.get('SAIP ID', '')).strip().upper()
+            if not saip_id:
+                continue
+            
+            cm_match = df_open_cm[df_open_cm[site_col].astype(str).str.strip().str.upper() == saip_id]
+            if not cm_match.empty:
+                cm_row = cm_match.iloc[0]
+                new_docket = str(cm_row.get(docket_col, "")).strip() if docket_col else ""
+                new_complaint = str(cm_row.get(complaint_col, "")).strip() if complaint_col else ""
+                new_bucket = str(cm_row.get(bucket_col, "")).strip() if bucket_col else ""
+                new_aging = cm_row.get(aging_col, 0) if aging_col else 0
+                date_str = clean_date_str(cm_row.get(date_col, "")) if date_col else ""
+
+                if new_docket and new_docket.lower() != 'nan':
+                    updated_master.at[idx, 'Present Docket No.'] = new_docket
+                if date_str:
+                    updated_master.at[idx, 'Present Docket raise Date'] = date_str
+                    updated_master.at[idx, 'Open Date'] = date_str
+                if new_complaint and new_complaint.lower() != 'nan':
+                    updated_master.at[idx, 'Present Remarks'] = new_complaint
+                if new_bucket and new_bucket.lower() != 'nan' and new_bucket in BUCKET_LIST:
+                    updated_master.at[idx, 'Bucket'] = new_bucket
+                
+                if "FUEL" in new_complaint.upper() or "FUEL" in new_bucket.upper():
+                    updated_master.at[idx, 'Fuel Sensor Status'] = "Fuel Sensor faulty"
+                    updated_master.at[idx, 'Bucket'] = "Fuel Sensor"
+
+                try:
+                    aging_val = float(new_aging) if pd.notna(new_aging) else 0
+                    updated_master.at[idx, "Aging (Day's)"] = aging_val
+                    updated_master.at[idx, "Aging_Num"] = aging_val
+                except:
+                    pass
+                
+                updated_master.at[idx, 'DG Automation Status'] = "Manual Mode"
+
+    return updated_master
+
 def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     clean_id = str(site_id).strip().upper() if site_id else ""
     res = {
@@ -405,7 +458,6 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
         docket_col = cols.get('docket number') or cols.get('docket no') or cols.get('docket')
         complaint_col = cols.get('nature of complaint') or cols.get('complaint') or cols.get('remarks')
         bucket_col = cols.get('bucket') or cols.get('root cause')
-        timeline_col = cols.get('timeline')
         aging_col = cols.get('ageing') or cols.get('aging')
         date_col = cols.get('complaint loggin date') or cols.get('open date') or cols.get('date')
 
@@ -590,6 +642,10 @@ if uploaded_dg is not None and not df_status_raw.empty:
     st.session_state.master_tracker_df = df_status_raw.copy()
 if uploaded_ila is not None and not df_ila_raw.empty:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
+
+# ⚡ AUTO-SYNC CM TRACKER OPEN TT DIRECTLY INTO MASTER DATASET
+if not df_open_cm.empty and not st.session_state.master_tracker_df.empty:
+    st.session_state.master_tracker_df = auto_sync_cm_tracker_to_master(st.session_state.master_tracker_df, df_open_cm)
 
 df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
@@ -839,19 +895,18 @@ elif page == "📈 ILA-AG1 Operations Tracker":
             with st.container(border=True):
                 st.markdown(f"<h3 style='margin:0 0 10px 0; color: #0f172a;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
                 
-                # ⚡ MULTIPLE SITE ID SEARCH BAR FOR ILA-AG1 GRID
                 ila_search_query = st.text_input("🔍 Search / Filter ILA Registry by Sap ID, JC, Facility etc.:", "").strip().upper()
                 filtered_ila_df = df_ila.copy()
                 if ila_search_query:
                     ila_mask = filtered_ila_df.astype(str).apply(lambda col: col.str.contains(ila_search_query, case=False, na=False)).any(axis=1)
-                    filtered_ila_df = filtered_ila_df[ila_mask]
-                    st.info(f"Showing {len(filtered_ila_df):,} matching rows out of {len(df_ila):,} total records.")
+                    filtered_grid_df = filtered_ila_df[ila_mask]
+                    st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(df_ila):,} total records.")
 
                 if is_viewer:
                     st.warning("🔒 Viewer Account: Read-only access. Editing is disabled.")
-                    st.dataframe(filtered_ila_df, use_container_width=True, height=450)
+                    st.dataframe(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450)
                 else:
-                    edited_ila_data = st.data_editor(filtered_ila_df, use_container_width=True, height=450)
+                    edited_ila_data = st.data_editor(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450)
                     if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
                         if ila_search_query:
                             full_ila = df_ila.copy()
@@ -875,7 +930,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab2:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Record Removal</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
                 
                 if is_viewer:
                     st.warning("🔒 Viewer Account: Single site modification and fault clearance are disabled.")
