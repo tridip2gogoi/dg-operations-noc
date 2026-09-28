@@ -338,11 +338,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
                 df_status['Aging_Num'] = pd.to_numeric(df_status[aging_col_target], errors='coerce').fillna(0)
             else:
                 df_status['Aging_Num'] = 0
-                    
-            if "Fuel Sensor faulty" in xls_dg.sheet_names:
-                df_fuel = pd.read_excel(xls_dg, sheet_name="Fuel Sensor faulty")
-                if 'COMPLAINT LOGGIN DATE' in df_fuel.columns:
-                    df_fuel['COMPLAINT LOGGIN DATE'] = df_fuel['COMPLAINT LOGGIN DATE'].apply(clean_date_str)
         except Exception as e:
             st.error(f"Error loading DG tracker: {e}")
 
@@ -727,39 +722,50 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 st.warning("JC column not found in dataset.")
 
 # ---------------------------------------------------------
-# 3. FUEL SENSOR TELEMETRY
+# 3. FUEL SENSOR TELEMETRY (AUTOMATIC SCAN DIRECTLY FROM MASTER TRACKER)
 # ---------------------------------------------------------
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
-    st.caption("Active fuel sensor fault distribution cross-tabulated strictly by JC, DG Make, and KVA rating.")
+    st.caption("Active fuel sensor fault distribution automatically scanned from Master Tracker and cross-tabulated strictly by JC, DG Make, and KVA rating.")
 
-    if not df_fuel.empty:
+    # Automatically filter fuel sensor faults directly from df_status (Master Tracker)
+    auto_df_fuel = pd.DataFrame()
+    if not df_status.empty:
+        bkt_match = df_status['Bucket'].astype(str).str.strip().str.upper() == "FUEL SENSOR" if 'Bucket' in df_status.columns else pd.Series([False]*len(df_status))
+        stat_match = df_status['Fuel Sensor Status'].astype(str).str.strip().str.upper() == "FUEL SENSOR FAULTY" if 'Fuel Sensor Status' in df_status.columns else pd.Series([False]*len(df_status))
+        auto_df_fuel = df_status[bkt_match | stat_match].copy()
+
+    if not auto_df_fuel.empty:
+        # Calculate dynamic metrics based on scanned master tracker data
+        total_faulty_sensors = len(auto_df_fuel)
+        most_affected_jc = auto_df_fuel['JC'].mode()[0] if 'JC' in auto_df_fuel.columns and not auto_df_fuel['JC'].mode().empty else "N/A"
+        primary_make = auto_df_fuel['DG Make'].mode()[0] if 'DG Make' in auto_df_fuel.columns and not auto_df_fuel['DG Make'].mode().empty else "N/A"
+        primary_rating = auto_df_fuel['DG Rating'].mode()[0] if 'DG Rating' in auto_df_fuel.columns and not auto_df_fuel['DG Rating'].mode().empty else "N/A"
+
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Active Faulty Sensors", len(df_fuel))
-        c2.metric("Most Affected JC", df_fuel['JC'].mode()[0] if 'JC' in df_fuel.columns else "N/A", f"{df_fuel['JC'].value_counts().max()} Sites" if 'JC' in df_fuel.columns else "")
-        c3.metric("Primary Fault Make", df_fuel['DG MAKE'].mode()[0] if 'DG MAKE' in df_fuel.columns else "N/A")
-        c4.metric("Primary Fault Rating", df_fuel['KVA'].mode()[0] if 'KVA' in df_fuel.columns else "N/A")
+        c1.metric("Active Faulty Sensors (Master)", total_faulty_sensors)
+        c2.metric("Most Affected JC", most_affected_jc)
+        c3.metric("Primary Fault Make", primary_make)
+        c4.metric("Primary Fault Rating", primary_rating)
 
         st.markdown("---")
         with st.container(border=True):
             st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
-            if 'JC' in df_fuel.columns and 'DG MAKE' in df_fuel.columns:
-                jc_fault_matrix = pd.crosstab(df_fuel['JC'], df_fuel['DG MAKE'], margins=True, margins_name="Total")
+            if 'JC' in auto_df_fuel.columns and 'DG Make' in auto_df_fuel.columns:
+                jc_fault_matrix = pd.crosstab(auto_df_fuel['JC'], auto_df_fuel['DG Make'], margins=True, margins_name="Total")
                 st.dataframe(jc_fault_matrix, use_container_width=True)
 
         with st.container(border=True):
             st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>⚡ DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
-            if 'DG MAKE' in df_fuel.columns and 'KVA' in df_fuel.columns:
-                make_kva_matrix = pd.crosstab(df_fuel['DG MAKE'], df_fuel['KVA'], margins=True, margins_name="Total")
+            if 'DG Make' in auto_df_fuel.columns and 'DG Rating' in auto_df_fuel.columns:
+                make_kva_matrix = pd.crosstab(auto_df_fuel['DG Make'], auto_df_fuel['DG Rating'], margins=True, margins_name="Total")
                 st.dataframe(make_kva_matrix, use_container_width=True)
 
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Active Fault Site Registry</h4>", unsafe_allow_html=True)
-            disp_fuel_cols = ['SITE ID', 'JC', 'DG MAKE', 'KVA', 'DOCKET NUMBER', 'COMPLAINT LOGGIN DATE', 'NATURE OF COMPLAINT', 'STATUS']
-            valid_disp_fuel = [c for c in disp_fuel_cols if c in df_fuel.columns]
-            st.dataframe(df_fuel[valid_disp_fuel], use_container_width=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Active Fuel Sensor Fault Site Registry</h4>", unsafe_allow_html=True)
+            st.dataframe(auto_df_fuel, use_container_width=True)
     else:
-        st.info("No active fuel sensor faults detected.")
+        st.info("No active fuel sensor faults detected in Master Tracker.")
 
 # ---------------------------------------------------------
 # 4. CRITICAL AGING ESCALATIONS (SHOWING ONLY PRESENT DAY FAULT LIVE COUNT FROM COL W)
@@ -768,7 +774,6 @@ elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
     st.caption("Showing strictly Present Day Faults (scanned from Col W: Present Docket raise Date) cross-tabulated by JC and Problem Buckets.")
 
-    # Filter strictly for Present Day faults based on Col W (Present Docket raise Date) matching today (2026-09-28)
     today_str = "2026-09-28"
     present_day_df = pd.DataFrame()
     
