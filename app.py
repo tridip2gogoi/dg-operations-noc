@@ -366,59 +366,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
 
-def auto_sync_cm_tracker_to_master(df_status, df_open_cm):
-    if df_status.empty or df_open_cm.empty:
-        return df_status
-    
-    updated_master = df_status.copy()
-    cm_cols = {c.lower(): c for c in df_open_cm.columns}
-    site_col = cm_cols.get('site id') or cm_cols.get('site_id') or cm_cols.get('sap id') or cm_cols.get('saip id')
-    docket_col = cm_cols.get('docket number') or cm_cols.get('docket no') or cm_cols.get('docket')
-    complaint_col = cm_cols.get('nature of complaint') or cm_cols.get('complaint') or cm_cols.get('remarks')
-    bucket_col = cm_cols.get('bucket') or cm_cols.get('root cause')
-    aging_col = cm_cols.get('ageing') or cm_cols.get('aging')
-    date_col = cm_cols.get('complaint loggin date') or cm_cols.get('open date') or cm_cols.get('date')
-
-    if site_col:
-        for idx, row in updated_master.iterrows():
-            saip_id = str(row.get('SAIP ID', '')).strip().upper()
-            if not saip_id:
-                continue
-            
-            cm_match = df_open_cm[df_open_cm[site_col].astype(str).str.strip().str.upper() == saip_id]
-            if not cm_match.empty:
-                cm_row = cm_match.iloc[0]
-                new_docket = str(cm_row.get(docket_col, "")).strip() if docket_col else ""
-                new_complaint = str(cm_row.get(complaint_col, "")).strip() if complaint_col else ""
-                new_bucket = str(cm_row.get(bucket_col, "")).strip() if bucket_col else ""
-                new_aging = cm_row.get(aging_col, 0) if aging_col else 0
-                date_str = clean_date_str(cm_row.get(date_col, "")) if date_col else ""
-
-                if new_docket and new_docket.lower() != 'nan':
-                    updated_master.at[idx, 'Present Docket No.'] = new_docket
-                if date_str:
-                    updated_master.at[idx, 'Present Docket raise Date'] = date_str
-                    updated_master.at[idx, 'Open Date'] = date_str
-                if new_complaint and new_complaint.lower() != 'nan':
-                    updated_master.at[idx, 'Present Remarks'] = new_complaint
-                if new_bucket and new_bucket.lower() != 'nan' and new_bucket in BUCKET_LIST:
-                    updated_master.at[idx, 'Bucket'] = new_bucket
-                
-                if "FUEL" in new_complaint.upper() or "FUEL" in new_bucket.upper():
-                    updated_master.at[idx, 'Fuel Sensor Status'] = "Fuel Sensor faulty"
-                    updated_master.at[idx, 'Bucket'] = "Fuel Sensor"
-
-                try:
-                    aging_val = float(new_aging) if pd.notna(new_aging) else 0
-                    updated_master.at[idx, "Aging (Day's)"] = aging_val
-                    updated_master.at[idx, "Aging_Num"] = aging_val
-                except:
-                    pass
-                
-                updated_master.at[idx, 'DG Automation Status'] = "Manual Mode"
-
-    return updated_master
-
 def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     clean_id = str(site_id).strip().upper() if site_id else ""
     res = {
@@ -451,46 +398,6 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res["Col_AA_Previous_Docket_No"] = str(prev_row.get("Previous Docket No.", "")).strip()
             res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
             res["source"] = "DG Master Tracker"
-
-    if not df_open_cm.empty:
-        cols = {c.lower(): c for c in df_open_cm.columns}
-        site_col = cols.get('site id') or cols.get('site_id') or cols.get('sap id') or cols.get('saip id')
-        docket_col = cols.get('docket number') or cols.get('docket no') or cols.get('docket')
-        complaint_col = cols.get('nature of complaint') or cols.get('complaint') or cols.get('remarks')
-        bucket_col = cols.get('bucket') or cols.get('root cause')
-        aging_col = cols.get('ageing') or cols.get('aging')
-        date_col = cols.get('complaint loggin date') or cols.get('open date') or cols.get('date')
-
-        if site_col:
-            cm_match = df_open_cm[df_open_cm[site_col].astype(str).str.strip().str.upper() == clean_id]
-            if not cm_match.empty:
-                cm_row = cm_match.iloc[0]
-                new_docket = str(cm_row.get(docket_col, "")).strip() if docket_col else ""
-                new_complaint = str(cm_row.get(complaint_col, "")).strip() if complaint_col else ""
-                new_bucket = str(cm_row.get(bucket_col, "")).strip() if bucket_col else ""
-                new_aging = cm_row.get(aging_col, 0) if aging_col else 0
-                date_str = clean_date_str(cm_row.get(date_col, "")) if date_col else ""
-
-                if new_docket and new_docket.lower() != 'nan':
-                    res["Col_V_Present_Docket_No"] = new_docket
-                if date_str:
-                    res["Col_W_Present_Docket_raise_Date"] = date_str
-                    res["Col_Q_Open_Date"] = date_str
-                if new_complaint and new_complaint.lower() != 'nan':
-                    res["Col_T_Present_Remarks"] = new_complaint
-                if new_bucket and new_bucket.lower() != 'nan':
-                    res["Col_U_Bucket"] = new_bucket
-                
-                if "FUEL" in new_complaint.upper() or "FUEL" in new_bucket.upper():
-                    res["Col_O_Fuel_Sensor_Status"] = "Fuel Sensor faulty"
-                    res["Col_P_Docket_no"] = new_docket
-
-                try:
-                    res["Col_X_Aging_Days"] = float(new_aging) if pd.notna(new_aging) else 0
-                except:
-                    res["Col_X_Aging_Days"] = 0
-
-                res["source"] = "CM Tracker (Open Site Auto-Scan)"
 
     for k, v in res.items():
         if str(v).lower() == 'nan' or str(v) == 'nat':
@@ -642,10 +549,6 @@ if uploaded_dg is not None and not df_status_raw.empty:
     st.session_state.master_tracker_df = df_status_raw.copy()
 if uploaded_ila is not None and not df_ila_raw.empty:
     st.session_state.ila_tracker_df = df_ila_raw.copy()
-
-# ⚡ AUTO-SYNC CM TRACKER OPEN TT DIRECTLY INTO MASTER DATASET
-if not df_open_cm.empty and not st.session_state.master_tracker_df.empty:
-    st.session_state.master_tracker_df = auto_sync_cm_tracker_to_master(st.session_state.master_tracker_df, df_open_cm)
 
 df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
@@ -859,18 +762,31 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected.")
 
 # ---------------------------------------------------------
-# 4. CRITICAL AGING ESCALATIONS
+# 4. CRITICAL AGING ESCALATIONS (DIRECT FROM MASTER TRACKER)
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
+    st.caption("Delayed site distribution directly from Master Tracker, cross-tabulated by JC and Problem Buckets.")
+
     aging_valid = df_status[df_status['Aging_Num'] > 0].copy() if 'Aging_Num' in df_status.columns else pd.DataFrame()
     crit_df = aging_valid[aging_valid['Aging_Num'] > 90].copy() if not aging_valid.empty else pd.DataFrame()
 
     m1, m2 = st.columns(2)
-    m1.metric("Total Delayed Sites", len(aging_valid))
+    m1.metric("Total Delayed Sites (Master Tracker)", len(aging_valid))
     m2.metric("Severe Delays (>90 Days)", len(crit_df))
+
     if not aging_valid.empty:
+        st.markdown("---")
         with st.container(border=True):
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Master Tracker)</h4>", unsafe_allow_html=True)
+            if 'JC' in aging_valid.columns and 'Bucket' in aging_valid.columns:
+                jc_bucket_matrix = pd.crosstab(aging_valid['JC'], aging_valid['Bucket'], margins=True, margins_name="Total")
+                st.dataframe(jc_bucket_matrix, use_container_width=True)
+            else:
+                st.info("JC or Bucket columns not found for cross-tabulation.")
+
+        with st.container(border=True):
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Detailed Delayed Sites Registry</h4>", unsafe_allow_html=True)
             st.dataframe(aging_valid.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
     else:
         st.info("No delayed sites found exceeding threshold.")
