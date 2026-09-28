@@ -996,24 +996,26 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to X)</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=True)
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
-                            "Col O: Fuel Sensor Status", "Col P: Docket No", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Problem Bucket",
-                            "Col V: Present Docket No", "Col W: Present Docket Raise Date",
-                            "Col X: Aging (Days)"
+                            "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
+                            "Col R: Last Closed date", "Col S: DG Automation Status", "Col T: Present Remarks",
+                            "Col U: Bucket", "Col V: Present Docket No.", "Col W: Present Docket raise Date",
+                            "Col X: Aging (Day's)", "Col Y: Timeline"
                         ],
                         "Master Tracker (Live)": [
                             str(site_row.get("Fuel Sensor Status", "")),
                             str(site_row.get("Docket no.", "")),
                             clean_date_str(site_row.get("Open Date", "")),
+                            clean_date_str(site_row.get("Last Closed date", "")),
                             str(site_row.get("DG Automation Status", "")),
                             str(site_row.get("Present Remarks", "")),
                             str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
-                            str(site_row.get("Aging (Day's)", ""))
+                            str(site_row.get("Aging (Day's)", "")),
+                            str(site_row.get("Timeline", ""))
                         ]
                     })
                     st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
