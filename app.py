@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Guaranteed White Text for Header Banner
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -161,7 +161,6 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* ⚡ CUSTOM HEADER BANNER CONTAINER STYLING */
     .custom-header-banner {
         background-color: #0f172a !important;
         border: 2px solid #38bdf8 !important;
@@ -414,6 +413,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
                 
                 if "FUEL" in new_complaint.upper() or "FUEL" in new_bucket.upper():
                     res["Col_O_Fuel_Sensor_Status"] = "Fuel Sensor faulty"
+                    res["Col_P_Docket_no"] = new_docket
 
                 try:
                     res["Col_X_Aging_Days"] = float(new_aging) if pd.notna(new_aging) else 0
@@ -986,6 +986,10 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                         if auto_scanned_data["Col_O_Fuel_Sensor_Status"] and auto_scanned_data["Col_O_Fuel_Sensor_Status"] != "Ok":
                             default_fuel_status = auto_scanned_data["Col_O_Fuel_Sensor_Status"]
 
+                        default_fuel_docket = str(s_row.get('Docket no.', ''))
+                        if (not default_fuel_docket or default_fuel_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_P_Docket_no"]:
+                            default_fuel_docket = auto_scanned_data["Col_P_Docket_no"]
+
                         st.success(f"Site Found: **{s_row.get('SAIP ID')}** | Auto-Scanned Source: **{auto_scanned_data['source']}**")
 
                         with st.form("single_site_inline_edit_form"):
@@ -995,6 +999,12 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
                                 
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
+                                
+                                # ⚡ FUEL SENSOR DOCKET NO (Col P) - APPEARS DYNAMICALLY IF FUEL SENSOR FAULTY
+                                edit_fuel_docket = ""
+                                if edit_fuel_status == "Fuel Sensor faulty":
+                                    edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
+
                                 edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
                                 raw_open_date_val = s_row.get('Open Date')
@@ -1034,7 +1044,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
                                 st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
                                 st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
-                                st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_docket
+                                st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_fuel_docket if edit_fuel_status == "Fuel Sensor faulty" else ""
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
                                 st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date_str.strip()
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_faulty_date_str.strip()
@@ -1154,7 +1164,6 @@ elif page == "🔍 AI Site Diagnostics":
             st_type = str(site_row.get('Site Type', 'N/A'))
             fac_5g = str(site_row.get('5G facality', 'N/A'))
 
-            # ⚡ GUARANTEED WHITE TEXT CONTAINER BANNER
             st.markdown(f"""
             <div class="custom-header-banner">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
