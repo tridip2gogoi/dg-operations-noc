@@ -490,12 +490,12 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# ⚡ NAVIGATION RADIO PLACED AT THE TOP OF SIDEBAR
+# ⚡ NAVIGATION UPDATED WITH "Daily Fault Summary"
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
     "⚙️ Fleet Analytics & Problem Buckets",
     "⛽ Fuel Sensor Telemetry",
-    "⏳ Critical Aging Escalation Monitor",
+    "⏳ Daily Fault Summary",
     "📈 ILA-AG1 Operations Tracker",
     "✏️ In-Portal Master Tracker Editor",
     "🔍 AI Site Diagnostics"
@@ -728,7 +728,6 @@ elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
     st.caption("Active fuel sensor fault distribution automatically scanned from Master Tracker and cross-tabulated strictly by JC, DG Make, and KVA rating.")
 
-    # Automatically filter fuel sensor faults directly from df_status (Master Tracker)
     auto_df_fuel = pd.DataFrame()
     if not df_status.empty:
         bkt_match = df_status['Bucket'].astype(str).str.strip().str.upper() == "FUEL SENSOR" if 'Bucket' in df_status.columns else pd.Series([False]*len(df_status))
@@ -736,7 +735,6 @@ elif page == "⛽ Fuel Sensor Telemetry":
         auto_df_fuel = df_status[bkt_match | stat_match].copy()
 
     if not auto_df_fuel.empty:
-        # Calculate dynamic metrics based on scanned master tracker data
         total_faulty_sensors = len(auto_df_fuel)
         most_affected_jc = auto_df_fuel['JC'].mode()[0] if 'JC' in auto_df_fuel.columns and not auto_df_fuel['JC'].mode().empty else "N/A"
         primary_make = auto_df_fuel['DG Make'].mode()[0] if 'DG Make' in auto_df_fuel.columns and not auto_df_fuel['DG Make'].mode().empty else "N/A"
@@ -768,10 +766,10 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected in Master Tracker.")
 
 # ---------------------------------------------------------
-# 4. CRITICAL AGING ESCALATIONS (SHOWING ONLY PRESENT DAY FAULT LIVE COUNT FROM COL W)
+# 4. DAILY FAULT SUMMARY (SHOWING ONLY PRESENT DAY FAULT LIVE COUNT FROM COL W)
 # ---------------------------------------------------------
-elif page == "⏳ Critical Aging Escalation Monitor":
-    st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
+elif page == "⏳ Daily Fault Summary":
+    st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
     st.caption("Showing strictly Present Day Faults (scanned from Col W: Present Docket raise Date) cross-tabulated by JC and Problem Buckets.")
 
     today_str = "2026-09-28"
