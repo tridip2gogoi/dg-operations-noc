@@ -360,7 +360,6 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
 
                 if new_docket and new_docket.lower() != 'nan':
                     res["Col_V_Present_Docket_No"] = new_docket
-                    res["Col_P_Docket_no"] = new_docket
                 if date_str:
                     res["Col_W_Present_Docket_raise_Date"] = date_str
                     res["Col_Q_Open_Date"] = date_str
@@ -951,9 +950,9 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
                                 
-                                # ⚡ FUEL SENSOR STATUS (Col O) & DOCKET NO (Col P) & OPEN DATE (Col Q)
+                                # ⚡ FUEL SENSOR STATUS (Col O) & PRESENT DOCKET NO (Col V) & OPEN DATE (Col Q)
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
-                                edit_docket = st.text_input("Present Docket No (Col V / P):", value=default_docket if default_docket.lower() != 'nan' else "")
+                                edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
                                 raw_open_date_val = s_row.get('Open Date')
                                 if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
