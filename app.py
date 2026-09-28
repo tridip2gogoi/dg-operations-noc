@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling with Guaranteed White Text for Header Banner
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -157,8 +157,24 @@ st.markdown("""
         font-size: 15px !important;
         font-weight: 600 !important;
     }
-    .previous-remarks-box p {
+    .previous-remarks-box p, .previous-remarks-box span, .previous-remarks-box div {
         color: #ffffff !important;
+    }
+
+    /* ⚡ CUSTOM HEADER BANNER CONTAINER STYLING */
+    .custom-header-banner {
+        background-color: #0f172a !important;
+        border: 2px solid #38bdf8 !important;
+        border-radius: 12px !important;
+        padding: 22px 26px !important;
+        margin-top: 14px !important;
+        margin-bottom: 16px !important;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;
+        color: #ffffff !important;
+    }
+    .custom-header-banner * {
+        color: #ffffff !important;
+        text-shadow: none !important;
     }
 
     /* PROFESSIONAL BADGES */
@@ -1138,9 +1154,9 @@ elif page == "🔍 AI Site Diagnostics":
             st_type = str(site_row.get('Site Type', 'N/A'))
             fac_5g = str(site_row.get('5G facality', 'N/A'))
 
-            # ⚡ UPDATED HEADER BANNER WITH GUARANTEED WHITE TEXT STYLING
+            # ⚡ GUARANTEED WHITE TEXT CONTAINER BANNER
             st.markdown(f"""
-            <div style="background-color: #0f172a !important; background: #0f172a !important; border: 2px solid #38bdf8 !important; border-radius: 12px !important; padding: 22px 26px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;">
+            <div class="custom-header-banner">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
                         <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
