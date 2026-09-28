@@ -396,7 +396,9 @@ cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
 dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
 ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
-df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
+# ⚡ LOADER SPINNER FOR SMOOTH DATA SYNCHRONIZATION
+with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
+    df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
 # ⚡ PERSISTENT SESSION STATE INITIALIZATION
 if "master_tracker_df" not in st.session_state:
@@ -429,6 +431,24 @@ else:
 
 if not df_ila.empty:
     st.sidebar.success(f"ILA-AG1: {len(df_ila)} Records Loaded")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📥 Complete Data Download")
+if not df_status.empty:
+    full_output = BytesIO()
+    with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
+        df_status.to_excel(writer, sheet_name="Automation Status", index=False)
+        if not df_fuel.empty:
+            df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
+        if not df_ila.empty:
+            df_ila.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
+    st.sidebar.download_button(
+        label="📥 Download Complete Trackers (.xlsx)",
+        data=full_output.getvalue(),
+        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
