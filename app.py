@@ -409,6 +409,9 @@ def clear_site_active_fault_data(site_id, df_target):
     if df_target.empty or not site_id:
         return df_target
     updated = df_target.copy()
+    for col in updated.columns:
+        updated[col] = updated[col].astype(object)
+    
     clean_id = str(site_id).strip().upper()
     match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
     if not match_idx.empty:
@@ -944,6 +947,9 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
                                         submit_ila_edit = st.form_submit_button("💾 Update ILA Record", type="primary", use_container_width=True)
                                         if submit_ila_edit:
+                                            for col in st.session_state.ila_tracker_df.columns:
+                                                st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
+                                            
                                             st.session_state.ila_tracker_df.at[i_idx, 'Facality'] = str(new_fac)
                                             st.session_state.ila_tracker_df.at[i_idx, 'JC'] = str(new_jc)
                                             st.session_state.ila_tracker_df.at[i_idx, 'State'] = str(new_state)
@@ -957,6 +963,8 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
                                 elif ila_action == "🧹 Clear Fault Status & Reset":
                                     if st.button("🧹 Clear & Reset Status to OK", type="primary", use_container_width=True):
+                                        for col in st.session_state.ila_tracker_df.columns:
+                                            st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
                                         st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = "Automation Ok"
                                         st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = "OK"
                                         st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = None
@@ -997,18 +1005,23 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                 st.error("Sap ID is required.")
                             else:
                                 new_row_data = {
-                                    'Sap ID': new_sap,
-                                    'Facality': new_fac_c,
-                                    'JC': new_jc_c,
-                                    'State': new_state_c,
-                                    'Supervisors': new_sup_c,
-                                    'DG Make': new_make_c,
-                                    'DG Rating': new_rate_c,
-                                    'DG Automation Status': new_stat_c,
-                                    'Present Remarks': new_rem_c,
-                                    'Bucket': None if new_bkt_c == "None" else new_bkt_c
+                                    'Sap ID': str(new_sap),
+                                    'Facality': str(new_fac_c),
+                                    'JC': str(new_jc_c),
+                                    'State': str(new_state_c),
+                                    'Supervisors': str(new_sup_c),
+                                    'DG Make': str(new_make_c),
+                                    'DG Rating': str(new_rate_c),
+                                    'DG Automation Status': str(new_stat_c),
+                                    'Present Remarks': str(new_rem_c),
+                                    'Bucket': None if new_bkt_c == "None" else str(new_bkt_c)
                                 }
                                 new_df_row = pd.DataFrame([new_row_data])
+                                for col in new_df_row.columns:
+                                    new_df_row[col] = new_df_row[col].astype(object)
+                                for col in st.session_state.ila_tracker_df.columns:
+                                    st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
+
                                 st.session_state.ila_tracker_df = pd.concat([st.session_state.ila_tracker_df, new_df_row], ignore_index=True)
                                 st.success(f"New case `{new_sap}` added successfully!")
                                 st.rerun()
@@ -1110,6 +1123,9 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
                                 submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                                 if submit_single_edit:
+                                    for col in st.session_state.master_tracker_df.columns:
+                                        st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
+
                                     old_docket = str(s_row.get('Present Docket No.', '')).strip()
                                     if edit_docket and old_docket and old_docket.lower() not in ['', 'nan', 'none'] and old_docket != edit_docket:
                                         st.session_state.master_tracker_df = archive_current_fault_to_previous(row_idx, st.session_state.master_tracker_df)
@@ -1174,6 +1190,9 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                 )
                 
                 if st.button("💾 Commit & Save Full Master Grid Changes", type="primary", use_container_width=True):
+                    for col in st.session_state.master_tracker_df.columns:
+                        st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
+
                     if search_grid_query:
                         full_df = st.session_state.master_tracker_df.copy()
                         full_df.update(edited_full_master)
@@ -1339,7 +1358,7 @@ elif page == "🔍 AI Site Diagnostics":
                             clean_date_str(site_row.get("Open Date", "")),
                             str(site_row.get("DG Automation Status", "")),
                             str(site_row.get("Present Remarks", "")),
-                            str(site_row.get("Grade", site_row.get("Bucket", ""))),
+                            str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
                             str(site_row.get("Aging (Day's)", "")),
