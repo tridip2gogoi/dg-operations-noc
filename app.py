@@ -1049,7 +1049,7 @@ elif page == "🔍 AI Site Diagnostics":
             st.markdown("<h3 style='margin:0 0 12px 0; color: #0f172a;'>⚡ Circle Network Overview & Diagnostics Radar</h3>", unsafe_allow_html=True)
             tot_s = len(df_status) if not df_status.empty else 0
             auto_s = len(df_status[df_status['DG Automation Status'] == 'Automation Ok']) if not df_status.empty else 0
-            man_s = len(df_status[df_status['DG Automation Status'] == 'Manual Mode']) if not df_status.empty else 0
+            manual_mode = len(df_status[df_status['DG Automation Status'] == 'Manual Mode']) if not df_status.empty else 0
             bd_s = len(df_status[df_status['DG Automation Status'] == 'DG Breakdown']) if not df_status.empty else 0
             
             c1, c2, c3, c4 = st.columns(4)
