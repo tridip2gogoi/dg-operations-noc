@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Explicit Form Label Visibility Fix
+# Custom Corporate Professional NOC Styling with TT Closure & Removal
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -125,7 +125,6 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* ⚡ ENSURE ALL INPUT & FORM LABELS ARE VISIBLE (WHITE COLLAR) */
     .stTextInput label, .stSelectbox label, .stDateInput label, .stTextArea label, .stNumberInput label {
         color: #ffffff !important;
         font-weight: 700 !important;
@@ -941,7 +940,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             st.rerun()
 
 # ---------------------------------------------------------
-# 7. IN-PORTAL MASTER TRACKER EDITOR
+# 7. IN-PORTAL MASTER TRACKER EDITOR (WITH TT CLOSED & REMOVAL)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
@@ -957,8 +956,8 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
         with edit_tab1:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor</h3>", unsafe_allow_html=True)
-                search_edit_site = st.text_input("Enter SAIP ID to modify or resolve:").strip().upper()
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, TT Closure & Removal</h3>", unsafe_allow_html=True)
+                search_edit_site = st.text_input("Enter SAIP ID to modify, close TT, or remove:").strip().upper()
                 
                 if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
                     match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
@@ -987,6 +986,21 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
                                 st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = edit_aging
                                 st.success(f"Site `{search_edit_site}` updated successfully!")
+                                st.rerun()
+
+                        st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
+                        st.markdown("<h4 style='color: #0f172a; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
+                        
+                        col_bt1, col_bt2 = st.columns(2)
+                        with col_bt1:
+                            if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
+                                st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df)
+                                st.success(f"TT closed and site `{search_edit_site}` reset to Automation Ok successfully!")
+                                st.rerun()
+                        with col_bt2:
+                            if st.button(f"🚨 Permanently Remove Site `{search_edit_site}`", type="secondary", use_container_width=True):
+                                st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
+                                st.success(f"Site `{search_edit_site}` removed from Master Tracker successfully!")
                                 st.rerun()
 
         with edit_tab2:
@@ -1030,8 +1044,8 @@ elif page == "🔍 AI Site Diagnostics":
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Total Circle Base", f"{tot_s:,}")
             c2.metric("Automation Healthy", f"{auto_s:,}", f"{round((auto_s/tot_s)*100, 1) if tot_s else 0}%")
-            c3.metric("Manual Mode Alerts", f"{man_s:,}", delta_color="inverse")
-            c4.metric("Active Breakdowns", f"{bd_s:,}", delta_color="inverse")
+            c3.metric("Manual Mode Alerts", manual_mode, f"-{round((manual_mode/tot_s)*100, 1) if tot_s else 0}%", delta_color="inverse")
+            c4.metric("Active Breakdowns", bd_s, f"-{round((bd_s/tot_s)*100, 1) if tot_s else 0}%", delta_color="inverse")
             
             st.markdown("<hr style='margin: 14px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
             st.markdown("<p style='font-size: 14px; font-weight: 600; color: #475569;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
