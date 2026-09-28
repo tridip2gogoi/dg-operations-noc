@@ -998,12 +998,9 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
                                 
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
-                                
-                                # ⚡ FUEL SENSOR DOCKET NO (Col P) - ALWAYS ACTIVE AND VISIBLE
                                 edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
-
-                                edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
+                                # ⚡ REORDERED POSITION AS REQUESTED: OPEN DATE (COL Q) UNDER FUEL SENSOR DOCKET NO (COL P)
                                 raw_open_date_val = s_row.get('Open Date')
                                 if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
                                     raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
@@ -1011,15 +1008,18 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 open_date_str_val = clean_date_str(raw_open_date_val)
                                 edit_open_date_str = st.text_input("Open Date (Col Q) [Optional]:", value=open_date_str_val)
 
+                            with se2:
+                                edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
+                                
+                                # ⚡ REORDERED POSITION AS REQUESTED: PRESENT DOCKET NO (COL V) & FAULTY DATE (COL W) UNDER REMARKS
+                                edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
+
                                 raw_date_val = s_row.get('Present Docket raise Date')
                                 if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
                                     raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
                                 
                                 faulty_date_str_val = clean_date_str(raw_date_val)
                                 edit_faulty_date_str = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=faulty_date_str_val)
-
-                            with se2:
-                                edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
 
                             submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                             if submit_single_edit:
