@@ -1339,7 +1339,7 @@ elif page == "🔍 AI Site Diagnostics":
                             clean_date_str(site_row.get("Open Date", "")),
                             str(site_row.get("DG Automation Status", "")),
                             str(site_row.get("Present Remarks", "")),
-                            str(site_row.get("Bucket", "")),
+                            str(site_row.get("Grade", site_row.get("Bucket", ""))),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
                             str(site_row.get("Aging (Day's)", "")),
