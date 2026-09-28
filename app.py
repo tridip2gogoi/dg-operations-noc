@@ -490,7 +490,7 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# ⚡ NAVIGATION UPDATED WITH "Daily Fault Summary"
+# ⚡ NAVIGATION RADIO PLACED AT THE TOP OF SIDEBAR
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
     "⚙️ Fleet Analytics & Problem Buckets",
@@ -587,10 +587,16 @@ if page == "📊 Executive Control Center":
         auto_ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
         manual_mode = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
 
-        k1, k2, k3 = st.columns(3)
+        # ⚡ CALCULATE DG BREAKDOWN, DG BER, DG OVERLOAD COUNTS
+        dg_breakdown_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg breakdown']) if 'DG Automation Status' in df_status.columns else 0
+        dg_ber_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
+        dg_overload_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
+
+        k1, k2, k3, k4 = st.columns(4)
         k1.metric("Network Base (Total Sites)", f"{total_sites:,}", "Active Monitored Fleet")
         k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%", f"{auto_ok:,} Sites Online")
         k3.metric("Manual Mode Alerts", manual_mode, f"-{round((manual_mode/total_sites)*100, 1)}%" if total_sites else "0%", delta_color="inverse")
+        k4.metric("DG Breakdown / BER / Overload", f"{dg_breakdown_count} / {dg_ber_count} / {dg_overload_count}", "Critical Engine Alarms", delta_color="inverse")
 
         st.markdown("---")
         c1, c2 = st.columns([3, 2])
@@ -722,7 +728,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 st.warning("JC column not found in dataset.")
 
 # ---------------------------------------------------------
-# 3. FUEL SENSOR TELEMETRY (AUTOMATIC SCAN DIRECTLY FROM MASTER TRACKER)
+# 3. FUEL SENSOR TELEMETRY
 # ---------------------------------------------------------
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
@@ -766,7 +772,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected in Master Tracker.")
 
 # ---------------------------------------------------------
-# 4. DAILY FAULT SUMMARY (SHOWING ONLY PRESENT DAY FAULT LIVE COUNT FROM COL W)
+# 4. DAILY FAULT SUMMARY
 # ---------------------------------------------------------
 elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
