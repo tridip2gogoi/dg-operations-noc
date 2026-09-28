@@ -148,6 +148,20 @@ st.markdown("""
         color: #0f172a !important;
     }
 
+    /* ⚡ CUSTOM STYLING FOR PREVIOUS REMARKS BOX WITH WHITE TEXT */
+    .previous-remarks-box {
+        background-color: rgba(15, 23, 42, 0.85) !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 10px !important;
+        padding: 16px 20px !important;
+        color: #ffffff !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+    }
+    .previous-remarks-box p {
+        color: #ffffff !important;
+    }
+
     /* PROFESSIONAL BADGES */
     .status-badge {
         padding: 6px 16px;
@@ -282,10 +296,14 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
                 if d_col in df_status.columns:
                     df_status[d_col] = df_status[d_col].apply(clean_date_str)
             
-            # ⚡ ROBUST AGING NUMERIC PARSING
-            aging_col_name = "Aging (Day's)"
-            if aging_col_name in df_status.columns:
-                df_status['Aging_Num'] = pd.to_numeric(df_status[aging_col_name], errors='coerce').fillna(0)
+            aging_col_target = None
+            for col in df_status.columns:
+                if 'aging' in col.lower() or 'ageing' in col.lower():
+                    aging_col_target = col
+                    break
+            
+            if aging_col_target:
+                df_status['Aging_Num'] = pd.to_numeric(df_status[aging_col_target], errors='coerce').fillna(0)
             else:
                 df_status['Aging_Num'] = 0
                     
@@ -758,9 +776,9 @@ elif page == "⏳ Critical Aging Escalation Monitor":
     m1, m2 = st.columns(2)
     m1.metric("Total Delayed Sites", len(aging_valid))
     m2.metric("Severe Delays (>90 Days)", len(crit_df))
-    if not crit_df.empty:
+    if not aging_valid.empty:
         with st.container(border=True):
-            st.dataframe(crit_df.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
+            st.dataframe(aging_valid.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
     else:
         st.info("No delayed sites found exceeding threshold.")
 
@@ -1054,7 +1072,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     else:
                         st.session_state.master_tracker_df = edited_full_master.copy()
                     
-                    # Refresh Aging_Num automatically after bulk edit
                     if "Aging (Day's)" in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df['Aging_Num'] = pd.to_numeric(st.session_state.master_tracker_df["Aging (Day's)"], errors='coerce').fillna(0)
 
@@ -1229,4 +1246,10 @@ elif page == "🔍 AI Site Diagnostics":
                     h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
                     st.markdown("<hr style='margin: 10px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
-                    st.info(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
+                    # ⚡ APPLIED WHITE COLOR STYLING CONTAINER FOR PREVIOUS REMARKS
+                    prev_rem_text = str(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
+                    st.markdown(f"""
+                    <div class="previous-remarks-box">
+                        {prev_rem_text}
+                    </div>
+                    """, unsafe_allow_html=True)
