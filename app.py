@@ -169,9 +169,8 @@ st.markdown("""
         margin-top: 14px !important;
         margin-bottom: 16px !important;
         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;
-        color: #ffffff !important;
     }
-    .custom-header-banner * {
+    .custom-header-banner, .custom-header-banner *, .custom-header-banner span, .custom-header-banner div, .custom-header-banner h2 {
         color: #ffffff !important;
         text-shadow: none !important;
     }
@@ -1000,10 +999,8 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
                                 
-                                # ⚡ FUEL SENSOR DOCKET NO (Col P) - APPEARS DYNAMICALLY IF FUEL SENSOR FAULTY
-                                edit_fuel_docket = ""
-                                if edit_fuel_status == "Fuel Sensor faulty":
-                                    edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
+                                # ⚡ FUEL SENSOR DOCKET NO (Col P) - ALWAYS ACTIVE AND VISIBLE
+                                edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
 
                                 edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
@@ -1044,7 +1041,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
                                 st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
                                 st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
-                                st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_fuel_docket if edit_fuel_status == "Fuel Sensor faulty" else ""
+                                st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_fuel_docket.strip()
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
                                 st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date_str.strip()
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_faulty_date_str.strip()
