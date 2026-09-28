@@ -197,6 +197,8 @@ STATUS_CHOICES = [
     "DG BER", "DG Overload", "Access issue"
 ]
 
+FUEL_STATUS_CHOICES = ["Ok", "Fuel Sensor faulty"]
+
 def clean_date_str(val):
     if pd.isna(val) or val is None:
         return ""
@@ -287,8 +289,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             xls_cm = pd.ExcelFile(cm_file)
             target_cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
             df_open_cm = pd.read_excel(xls_cm, sheet_name=target_cm_sheet)
-            if not df_open_cm.empty:
-                df_open_cm.columns = [str(c).strip() for c in df_open_cm.columns]
         except Exception as e:
             st.warning(f"Note on CM tracker: {e}")
 
