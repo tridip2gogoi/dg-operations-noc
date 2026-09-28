@@ -592,11 +592,13 @@ if page == "📊 Executive Control Center":
         dg_ber_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
         dg_overload_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
 
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric("Network Base (Total Sites)", f"{total_sites:,}", "Active Monitored Fleet")
-        k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%", f"{auto_ok:,} Sites Online")
-        k3.metric("Manual Mode Alerts", manual_mode, f"-{round((manual_mode/total_sites)*100, 1)}%" if total_sites else "0%", delta_color="inverse")
-        k4.metric("DG Breakdown / BER / Overload", f"{dg_breakdown_count} / {dg_ber_count} / {dg_overload_count}", "Critical Engine Alarms", delta_color="inverse")
+        k1, k2, k3, k4, k5, k6 = st.columns(6)
+        k1.metric("Total Sites", f"{total_sites:,}")
+        k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%")
+        k3.metric("Manual Mode", manual_mode)
+        k4.metric("DG Breakdown", dg_breakdown_count)
+        k5.metric("DG BER", dg_ber_count)
+        k6.metric("DG Overload", dg_overload_count)
 
         st.markdown("---")
         c1, c2 = st.columns([3, 2])
