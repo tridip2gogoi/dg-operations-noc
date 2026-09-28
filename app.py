@@ -788,11 +788,11 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected in Master Tracker.")
 
 # ---------------------------------------------------------
-# 4. DAILY FAULT SUMMARY (WITH STATE-WISE, DG BATTERY, GCU, OEM SPARE PARTS)
+# 4. DAILY FAULT SUMMARY (WITH STATE-WISE, FUEL SENSOR, DG BATTERY, GCU, OEM SPARE PARTS)
 # ---------------------------------------------------------
 elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
-    st.caption("Showing Present Day Faults (scanned from Col W: Present Docket raise Date) cross-tabulated by JC, State, and Problem Buckets (DG Battery, GCU, OEM Spare Parts).")
+    st.caption("Showing Present Day Faults (scanned from Col W: Present Docket raise Date) cross-tabulated by JC, State, and Problem Buckets (Fuel Sensor, DG Battery, GCU, OEM Spare Parts).")
 
     today_str = "2026-09-28"
     present_day_df = pd.DataFrame()
@@ -807,17 +807,19 @@ elif page == "⏳ Daily Fault Summary":
         if chosen_summary_state != "All States":
             present_day_df = present_day_df[present_day_df['State'].astype(str).str.strip() == chosen_summary_state]
 
-    # Calculate specific metrics for present day faults
+    # Calculate specific metrics for present day faults including Fuel Sensor
+    p_fuel_sensor = len(present_day_df[(present_day_df['Bucket'].astype(str).str.strip().str.upper() == 'FUEL SENSOR') | (present_day_df['Fuel Sensor Status'].astype(str).str.strip().str.upper() == 'FUEL SENSOR FAULTY')]) if not present_day_df.empty else 0
     p_dg_battery = len(present_day_df[present_day_df['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if not present_day_df.empty and 'Bucket' in present_day_df.columns else 0
     p_gcu = len(present_day_df[present_day_df['Bucket'].astype(str).str.strip().str.lower() == 'gcu']) if not present_day_df.empty and 'Bucket' in present_day_df.columns else 0
     p_oem = len(present_day_df[present_day_df['Bucket'].astype(str).str.strip().str.lower() == 'oem spare parts']) if not present_day_df.empty and 'Bucket' in present_day_df.columns else 0
 
-    m1, m2, m3, m4, m5 = st.columns(5)
+    m1, m2, m3, m4, m5, m6 = st.columns(6)
     m1.metric("Present Day Faults", len(present_day_df), f"Scanned for {today_str}")
-    m2.metric("DG Battery Faults", p_dg_battery)
-    m3.metric("GCU Faults", p_gcu)
-    m4.metric("OEM Spare Parts", p_oem)
-    m5.metric("Total Master Base", len(df_status))
+    m2.metric("Fuel Sensor Faults", p_fuel_sensor)
+    m3.metric("DG Battery", p_dg_battery)
+    m4.metric("GCU Faults", p_gcu)
+    m5.metric("OEM Spare Parts", p_oem)
+    m6.metric("Total Master Base", len(df_status))
 
     if not present_day_df.empty:
         st.markdown("---")
