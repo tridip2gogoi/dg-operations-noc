@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Guaranteed Visible Text & Auto ILA Detection
+# Custom Corporate Professional NOC Styling with Guaranteed Visible Text & Full Master Editor Support
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -178,7 +178,6 @@ st.markdown("""
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
-# Auto-detect default ILA filename if present in directory
 DEFAULT_ILA = None
 for f in os.listdir('.'):
     if "ILA" in f.upper() and f.endswith(('.xlsx', '.xls')) and not f.startswith('~$'):
@@ -741,7 +740,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
             target_statuses = ['DG Breakdown', 'Manual Mode']
             target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
             df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
-            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_sub.columns else ''
+            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_status.columns else ''
             df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
             if 'JC' in df_sub.columns:
                 ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
@@ -957,24 +956,44 @@ elif page == "✏️ In-Portal Master Tracker Editor":
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor</h3>", unsafe_allow_html=True)
                 search_edit_site = st.text_input("Enter SAIP ID to modify or resolve:").strip().upper()
+                
                 if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
                     match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
                     if match_idx.empty:
-                        st.error(f"Site `{search_edit_site}` not found.")
+                        st.error(f"Site `{search_edit_site}` not found in Master Tracker.")
                     else:
                         row_idx = match_idx[0]
-                        target_row = df_status.loc[row_idx]
-                        st.write(f"Found site: {target_row['SAIP ID']} | Status: {target_row.get('DG Automation Status')}")
+                        s_row = df_status.loc[row_idx]
+                        st.success(f"Site Found: **{s_row.get('SAIP ID')}** | Current Status: **{s_row.get('DG Automation Status')}**")
 
-                        if st.button("✅ Reset to Automation Ok", type="primary"):
-                            st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df)
-                            st.success(f"Site {search_edit_site} reset successfully!")
-                            st.rerun()
+                        with st.form("single_site_inline_edit_form"):
+                            se1, se2 = st.columns(2)
+                            with se1:
+                                edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(s_row.get('DG Automation Status')) if s_row.get('DG Automation Status') in STATUS_CHOICES else 0)
+                                edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(s_row.get('Bucket')) + 1 if s_row.get('Bucket') in BUCKET_LIST else 0)
+                                edit_docket = st.text_input("Present Docket No:", value=str(s_row.get('Present Docket No.', '')) if pd.notna(s_row.get('Present Docket No.')) else "")
+                            with se2:
+                                edit_rem = st.text_area("Present Remarks / Complaint:", value=str(s_row.get('Present Remarks', '')) if pd.notna(s_row.get('Present Remarks')) else "")
+                                edit_aging = st.number_input("Aging (Days):", value=int(s_row.get("Aging (Day's)", 0)) if pd.notna(s_row.get("Aging (Day's)")) else 0)
+
+                            submit_single_edit = st.form_submit_button("💾 Save Site Updates to Master Tracker", type="primary", use_container_width=True)
+                            if submit_single_edit:
+                                st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
+                                st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
+                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
+                                st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
+                                st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = edit_aging
+                                st.success(f"Site `{search_edit_site}` updated successfully!")
+                                st.rerun()
 
         with edit_tab2:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Bulk Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.dataframe(df_status.head(100), use_container_width=True)
+                edited_master_grid = st.data_editor(df_status, use_container_width=True, height=450)
+                if st.button("💾 Save Bulk Grid Changes", type="primary", use_container_width=True):
+                    st.session_state.master_tracker_df = edited_master_grid.copy()
+                    st.success("Master Tracker grid changes saved successfully!")
+                    st.rerun()
 
 # ---------------------------------------------------------
 # 8. AI SITE DIAGNOSTICS (PROFESSIONAL ENTERPRISE EDITION)
