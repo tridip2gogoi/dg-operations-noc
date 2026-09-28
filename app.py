@@ -281,6 +281,13 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date']:
                 if d_col in df_status.columns:
                     df_status[d_col] = df_status[d_col].apply(clean_date_str)
+            
+            # ⚡ ROBUST AGING NUMERIC PARSING
+            aging_col_name = "Aging (Day's)"
+            if aging_col_name in df_status.columns:
+                df_status['Aging_Num'] = pd.to_numeric(df_status[aging_col_name], errors='coerce').fillna(0)
+            else:
+                df_status['Aging_Num'] = 0
                     
             if "Fuel Sensor faulty" in xls_dg.sheet_names:
                 df_fuel = pd.read_excel(xls_dg, sheet_name="Fuel Sensor faulty")
@@ -417,6 +424,7 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
         if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
+        if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
     return updated
 
 # --- AUTHENTICATION GATEWAY ---
@@ -744,7 +752,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
-    aging_valid = df_status[df_status['Aging_Num'].notna()].copy() if 'Aging_Num' in df_status.columns else pd.DataFrame()
+    aging_valid = df_status[df_status['Aging_Num'] > 0].copy() if 'Aging_Num' in df_status.columns else pd.DataFrame()
     crit_df = aging_valid[aging_valid['Aging_Num'] > 90].copy() if not aging_valid.empty else pd.DataFrame()
 
     m1, m2 = st.columns(2)
@@ -753,6 +761,8 @@ elif page == "⏳ Critical Aging Escalation Monitor":
     if not crit_df.empty:
         with st.container(border=True):
             st.dataframe(crit_df.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
+    else:
+        st.info("No delayed sites found exceeding threshold.")
 
 # ---------------------------------------------------------
 # 5. ILA-AG1 OPERATIONS TRACKER
@@ -997,6 +1007,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_faulty_date_str.strip()
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
                                 st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
+                                st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = calc_aging
                                 st.success(f"Site `{search_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
                                 st.rerun()
 
@@ -1020,7 +1031,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
                 st.caption("Use the search box below to filter rows by SAIP ID, JC, State, or any keyword before editing.")
                 
-                # ⚡ ADDED SEARCH / FILTER OPTION
                 search_grid_query = st.text_input("🔍 Filter Master Grid Rows (by SAIP ID, JC, State, Supervisor etc.):", "").strip().upper()
                 
                 filtered_grid_df = st.session_state.master_tracker_df.copy()
@@ -1038,12 +1048,16 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                 
                 if st.button("💾 Commit & Save Full Master Grid Changes", type="primary", use_container_width=True):
                     if search_grid_query:
-                        # Merge back edited rows into master dataframe
                         full_df = st.session_state.master_tracker_df.copy()
                         full_df.update(edited_full_master)
                         st.session_state.master_tracker_df = full_df
                     else:
                         st.session_state.master_tracker_df = edited_full_master.copy()
+                    
+                    # Refresh Aging_Num automatically after bulk edit
+                    if "Aging (Day's)" in st.session_state.master_tracker_df.columns:
+                        st.session_state.master_tracker_df['Aging_Num'] = pd.to_numeric(st.session_state.master_tracker_df["Aging (Day's)"], errors='coerce').fillna(0)
+
                     st.success("Full Master Tracker dataset updated and saved successfully across all modules!")
                     st.rerun()
 
