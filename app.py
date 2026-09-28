@@ -975,116 +975,128 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab1:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, TT Closure & Removal</h3>", unsafe_allow_html=True)
-                search_edit_site = st.text_input("Enter SAIP ID to modify, close TT, or remove:").strip().upper()
+                
+                # ⚡ TARGETED SITE SEARCH BOX MATCHING AI DIAGNOSTICS STYLE
+                search_edit_site = st.text_input(
+                    "Enter SAIP ID to modify, close TT, or remove:",
+                    placeholder="Enter SAIP ID (e.g. 9011, BARA, DNGI, 9020)..."
+                ).strip().upper()
                 
                 if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
-                    match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == search_edit_site].index
-                    if match_idx.empty:
-                        st.error(f"Site `{search_edit_site}` not found in Master Tracker.")
+                    matches_edit = df_status[df_status['SAIP ID'].astype(str).str.contains(search_edit_site, case=False, na=False)]
+                    if matches_edit.empty:
+                        st.error(f"Site matching `{search_edit_site}` not found in Master Tracker.")
                     else:
-                        row_idx = match_idx[0]
-                        s_row = df_status.loc[row_idx]
-                        
-                        auto_scanned_data = ai_capture_o_to_ab(search_edit_site, df_open_cm, df_status, None)
-                        
-                        default_stat = s_row.get('DG Automation Status', 'Automation Ok')
-                        if auto_scanned_data["source"] != "None" and default_stat == "Automation Ok":
-                            default_stat = auto_scanned_data["Col_S_DG_Automation_Status"]
+                        if len(matches_edit) > 1:
+                            selected_edit_site = st.selectbox("Multiple Sites Found:", matches_edit['SAIP ID'].tolist())
+                        else:
+                            selected_edit_site = matches_edit.iloc[0]['SAIP ID']
 
-                        default_bkt = s_row.get('Bucket')
-                        if not default_bkt or pd.isna(default_bkt):
-                            default_bkt = auto_scanned_data["Col_U_Bucket"]
+                        match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == str(selected_edit_site).strip().upper()].index
+                        if not match_idx.empty:
+                            row_idx = match_idx[0]
+                            s_row = df_status.loc[row_idx]
+                            
+                            auto_scanned_data = ai_capture_o_to_ab(selected_edit_site, df_open_cm, df_status, None)
+                            
+                            default_stat = s_row.get('DG Automation Status', 'Automation Ok')
+                            if auto_scanned_data["source"] != "None" and default_stat == "Automation Ok":
+                                default_stat = auto_scanned_data["Col_S_DG_Automation_Status"]
 
-                        default_docket = str(s_row.get('Present Docket No.', ''))
-                        if (not default_docket or default_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_V_Present_Docket_No"]:
-                            default_docket = auto_scanned_data["Col_V_Present_Docket_No"]
+                            default_bkt = s_row.get('Bucket')
+                            if not default_bkt or pd.isna(default_bkt):
+                                default_bkt = auto_scanned_data["Col_U_Bucket"]
 
-                        default_rem = str(s_row.get('Present Remarks', ''))
-                        if (not default_rem or default_rem.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_T_Present_Remarks"]:
-                            default_rem = auto_scanned_data["Col_T_Present_Remarks"]
+                            default_docket = str(s_row.get('Present Docket No.', ''))
+                            if (not default_docket or default_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_V_Present_Docket_No"]:
+                                default_docket = auto_scanned_data["Col_V_Present_Docket_No"]
 
-                        default_fuel_status = str(s_row.get('Fuel Sensor Status', 'Ok'))
-                        if auto_scanned_data["Col_O_Fuel_Sensor_Status"] and auto_scanned_data["Col_O_Fuel_Sensor_Status"] != "Ok":
-                            default_fuel_status = auto_scanned_data["Col_O_Fuel_Sensor_Status"]
+                            default_rem = str(s_row.get('Present Remarks', ''))
+                            if (not default_rem or default_rem.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_T_Present_Remarks"]:
+                                default_rem = auto_scanned_data["Col_T_Present_Remarks"]
 
-                        default_fuel_docket = str(s_row.get('Docket no.', ''))
-                        if (not default_fuel_docket or default_fuel_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_P_Docket_no"]:
-                            default_fuel_docket = auto_scanned_data["Col_P_Docket_no"]
+                            default_fuel_status = str(s_row.get('Fuel Sensor Status', 'Ok'))
+                            if auto_scanned_data["Col_O_Fuel_Sensor_Status"] and auto_scanned_data["Col_O_Fuel_Sensor_Status"] != "Ok":
+                                default_fuel_status = auto_scanned_data["Col_O_Fuel_Sensor_Status"]
 
-                        st.success(f"Site Found: **{s_row.get('SAIP ID')}** | Auto-Scanned Source: **{auto_scanned_data['source']}**")
+                            default_fuel_docket = str(s_row.get('Docket no.', ''))
+                            if (not default_fuel_docket or default_fuel_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_P_Docket_no"]:
+                                default_fuel_docket = auto_scanned_data["Col_P_Docket_no"]
 
-                        with st.form("single_site_inline_edit_form"):
-                            se1, se2 = st.columns(2)
-                            with se1:
-                                edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
-                                edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
-                                
-                                edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
-                                edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
-                                
-                                raw_open_date_val = s_row.get('Open Date')
-                                if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
-                                    raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
-                                
-                                open_date_str_val = clean_date_str(raw_open_date_val)
-                                edit_open_date_str = st.text_input("Open Date (Col Q) [Optional]:", value=open_date_str_val)
+                            st.success(f"Site Selected: **{selected_edit_site}** | Auto-Scanned Source: **{auto_scanned_data['source']}**")
 
-                            with se2:
-                                edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
-                                
-                                edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
+                            with st.form("single_site_inline_edit_form"):
+                                se1, se2 = st.columns(2)
+                                with se1:
+                                    edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
+                                    edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
+                                    
+                                    edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
+                                    edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
+                                    
+                                    raw_open_date_val = s_row.get('Open Date')
+                                    if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
+                                        raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
+                                    
+                                    open_date_str_val = clean_date_str(raw_open_date_val)
+                                    edit_open_date_str = st.text_input("Open Date (Col Q) [Optional]:", value=open_date_str_val)
 
-                                raw_date_val = s_row.get('Present Docket raise Date')
-                                if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
-                                    raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
-                                
-                                faulty_date_str_val = clean_date_str(raw_date_val)
-                                edit_faulty_date_str = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=faulty_date_str_val)
+                                with se2:
+                                    edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
+                                    
+                                    edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
 
-                            submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
-                            if submit_single_edit:
-                                old_docket = str(s_row.get('Present Docket No.', '')).strip()
-                                if edit_docket and old_docket and old_docket.lower() not in ['', 'nan', 'none'] and old_docket != edit_docket:
-                                    st.session_state.master_tracker_df = archive_current_fault_to_previous(row_idx, st.session_state.master_tracker_df)
+                                    raw_date_val = s_row.get('Present Docket raise Date')
+                                    if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
+                                        raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
+                                    
+                                    faulty_date_str_val = clean_date_str(raw_date_val)
+                                    edit_faulty_date_str = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=faulty_date_str_val)
 
-                                calc_aging = 0
-                                if edit_faulty_date_str.strip():
-                                    try:
-                                        parsed_faulty_date = pd.to_datetime(edit_faulty_date_str.strip()).date()
-                                        current_eval_date = date(2026, 9, 28)
-                                        calc_aging = (current_eval_date - parsed_faulty_date).days
-                                        if calc_aging < 0:
-                                            calc_aging = 0
-                                    except:
-                                        calc_aging = int(s_row.get("Aging (Day's)", 0)) if pd.notna(s_row.get("Aging (Day's)")) else 0
+                                submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
+                                if submit_single_edit:
+                                    old_docket = str(s_row.get('Present Docket No.', '')).strip()
+                                    if edit_docket and old_docket and old_docket.lower() not in ['', 'nan', 'none'] and old_docket != edit_docket:
+                                        st.session_state.master_tracker_df = archive_current_fault_to_previous(row_idx, st.session_state.master_tracker_df)
 
-                                st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
-                                st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
-                                st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
-                                st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_fuel_docket.strip()
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
-                                st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date_str.strip()
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_faulty_date_str.strip()
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
-                                st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
-                                st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = calc_aging
-                                st.success(f"Site `{search_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
-                                st.rerun()
+                                    calc_aging = 0
+                                    if edit_faulty_date_str.strip():
+                                        try:
+                                            parsed_faulty_date = pd.to_datetime(edit_faulty_date_str.strip()).date()
+                                            current_eval_date = date(2026, 9, 28)
+                                            calc_aging = (current_eval_date - parsed_faulty_date).days
+                                            if calc_aging < 0:
+                                                calc_aging = 0
+                                        except:
+                                            calc_aging = int(s_row.get("Aging (Day's)", 0)) if pd.notna(s_row.get("Aging (Day's)")) else 0
 
-                        st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
-                        st.markdown("<h4 style='color: #0f172a; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
-                        
-                        col_bt1, col_bt2 = st.columns(2)
-                        with col_bt1:
-                            if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
-                                st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df)
-                                st.success(f"TT closed and site `{search_edit_site}` reset to Automation Ok successfully! Previous fault archived.")
-                                st.rerun()
-                        with col_bt2:
-                            if st.button(f"🚨 Permanently Remove Site `{search_edit_site}`", type="secondary", use_container_width=True):
-                                st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
-                                st.success(f"Site `{search_edit_site}` removed from Master Tracker successfully!")
-                                st.rerun()
+                                    st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
+                                    st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
+                                    st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
+                                    st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_fuel_docket.strip()
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
+                                    st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date_str.strip()
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_faulty_date_str.strip()
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
+                                    st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
+                                    st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = calc_aging
+                                    st.success(f"Site `{selected_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
+                                    st.rerun()
+
+                            st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #0f172a; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
+                            
+                            col_bt1, col_bt2 = st.columns(2)
+                            with col_bt1:
+                                if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
+                                    st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df)
+                                    st.success(f"TT closed and site `{selected_edit_site}` reset to Automation Ok successfully! Previous fault archived.")
+                                    st.rerun()
+                            with col_bt2:
+                                if st.button(f"🚨 Permanently Remove Site `{selected_edit_site}`", type="secondary", use_container_width=True):
+                                    st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
+                                    st.success(f"Site `{selected_edit_site}` removed from Master Tracker successfully!")
+                                    st.rerun()
 
         with edit_tab2:
             with st.container(border=True):
