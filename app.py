@@ -762,42 +762,38 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected.")
 
 # ---------------------------------------------------------
-# 4. CRITICAL AGING ESCALATIONS (WITH COL W SCANNING FOR DAILY COUNT)
+# 4. CRITICAL AGING ESCALATIONS (SHOWING ONLY PRESENT DAY FAULT LIVE COUNT FROM COL W)
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
-    st.caption("Delayed site distribution directly from Master Tracker, cross-tabulated by JC and Problem Buckets with daily Col W scan.")
+    st.caption("Showing strictly Present Day Faults (scanned from Col W: Present Docket raise Date) cross-tabulated by JC and Problem Buckets.")
 
-    aging_valid = df_status[df_status['Aging_Num'] > 0].copy() if 'Aging_Num' in df_status.columns else pd.DataFrame()
-    crit_df = aging_valid[aging_valid['Aging_Num'] > 90].copy() if not aging_valid.empty else pd.DataFrame()
-
-    # ⚡ PER DAY ADDED COUNT SCANNING STRICTLY FROM COL W (Present Docket raise Date)
+    # Filter strictly for Present Day faults based on Col W (Present Docket raise Date) matching today (2026-09-28)
     today_str = "2026-09-28"
-    daily_added_count = 0
-    if not aging_valid.empty and 'Present Docket raise Date' in aging_valid.columns:
-        matched_col_w = aging_valid[aging_valid['Present Docket raise Date'].astype(str).str.startswith(today_str)]
-        daily_added_count = len(matched_col_w)
+    present_day_df = pd.DataFrame()
+    
+    if not df_status.empty and 'Present Docket raise Date' in df_status.columns:
+        present_day_df = df_status[df_status['Present Docket raise Date'].astype(str).str.startswith(today_str)].copy()
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Delayed Sites (Master)", len(aging_valid))
-    m2.metric("Severe Delays (>90 Days)", len(crit_df))
-    m3.metric("Per Day Added (Col W)", daily_added_count, f"Scanned for {today_str}")
+    m1, m2 = st.columns(2)
+    m1.metric("Present Day Faults (Live Count - Col W)", len(present_day_df), f"Scanned for {today_str}")
+    m2.metric("Total Master Base", len(df_status))
 
-    if not aging_valid.empty:
+    if not present_day_df.empty:
         st.markdown("---")
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Master Tracker)</h4>", unsafe_allow_html=True)
-            if 'JC' in aging_valid.columns and 'Bucket' in aging_valid.columns:
-                jc_bucket_matrix = pd.crosstab(aging_valid['JC'], aging_valid['Bucket'], margins=True, margins_name="Total")
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Present Day Faults - {today_str})</h4>", unsafe_allow_html=True)
+            if 'JC' in present_day_df.columns and 'Bucket' in present_day_df.columns:
+                jc_bucket_matrix = pd.crosstab(present_day_df['JC'], present_day_df['Bucket'], margins=True, margins_name="Total")
                 st.dataframe(jc_bucket_matrix, use_container_width=True)
             else:
                 st.info("JC or Bucket columns not found for cross-tabulation.")
 
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Detailed Delayed Sites Registry</h4>", unsafe_allow_html=True)
-            st.dataframe(aging_valid.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Detailed Present Day Faults Registry</h4>", unsafe_allow_html=True)
+            st.dataframe(present_day_df, use_container_width=True)
     else:
-        st.info("No delayed sites found exceeding threshold.")
+        st.info(f"No fault records found matching present day date (`{today_str}`) in Col W.")
 
 # ---------------------------------------------------------
 # 5. ILA-AG1 OPERATIONS TRACKER
