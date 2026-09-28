@@ -306,11 +306,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
-            if 'Last Closed date' in df_status.columns:
-                df_status = df_status.drop(columns=['Last Closed date'])
-            if 'Last Closed date.1' in df_status.columns:
-                df_status = df_status.drop(columns=['Last Closed date.1'])
-            
             if 'SAIP ID' in df_status.columns:
                 df_status = df_status[df_status['SAIP ID'].notna()]
                 df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
@@ -326,7 +321,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             if 'State' in df_status.columns:
                 df_status['State'] = df_status['State'].astype(str).str.strip()
             
-            for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date']:
+            for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date', 'Last Closed date.1']:
                 if d_col in df_status.columns:
                     df_status[d_col] = df_status[d_col].apply(clean_date_str)
             
@@ -432,6 +427,19 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
         if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
+        
+        # ⚡ AUTO-FILL LAST CLOSED DATE AUTOMATICALLY AFTER PREVIOUS DOCKET RAISE DATE
+        today_date_str = datetime.now().strftime('%Y-%m-%d')
+        target_closed_col = None
+        for col in updated.columns:
+            if 'last closed' in col.lower():
+                target_closed_col = col
+                break
+        if target_closed_col:
+            updated.at[i, target_closed_col] = today_date_str
+        else:
+            updated.at[i, 'Last Closed date'] = today_date_str
+
     return updated
 
 # --- AUTHENTICATION GATEWAY ---
@@ -589,7 +597,6 @@ if page == "📊 Executive Control Center":
         auto_ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
         manual_mode = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
 
-        # ⚡ UPDATED METRIC COUNTS: DG Breakdown, DG BER, DG Overload
         dg_breakdown_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg breakdown']) if 'DG Automation Status' in df_status.columns else 0
         dg_ber_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
         dg_overload_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
@@ -1142,7 +1149,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                             with col_bt1:
                                 if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
                                     st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df)
-                                    st.success(f"TT closed and site `{selected_edit_site}` reset to Automation Ok successfully! Previous fault archived.")
+                                    st.success(f"TT closed and site `{selected_edit_site}` reset to Automation Ok successfully! Previous fault archived and Last Closed Date updated.")
                                     st.rerun()
                             with col_bt2:
                                 if st.button(f"🚨 Permanently Remove Site `{selected_edit_site}`", type="secondary", use_container_width=True):
