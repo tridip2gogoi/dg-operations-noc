@@ -287,6 +287,8 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             xls_cm = pd.ExcelFile(cm_file)
             target_cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
             df_open_cm = pd.read_excel(xls_cm, sheet_name=target_cm_sheet)
+            if not df_open_cm.empty:
+                df_open_cm.columns = [str(c).strip() for c in df_open_cm.columns]
         except Exception as e:
             st.warning(f"Note on CM tracker: {e}")
 
@@ -302,8 +304,82 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
 
+def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
+    clean_id = str(site_id).strip().upper() if site_id else ""
+    res = {
+        "JC": "", "Col_O_Fuel_Sensor_Status": "Ok", "Col_P_Docket_no": "",
+        "Col_Q_Open_Date": "", "Col_R_Last_Closed_date": "", "Col_S_DG_Automation_Status": "Automation Ok",
+        "Col_T_Present_Remarks": "", "Col_U_Bucket": "", "Col_V_Present_Docket_No": "",
+        "Col_W_Present_Docket_raise_Date": "", "Col_X_Aging_Days": 0, "Col_Y_Timeline": "",
+        "Col_Z_Previous_Remarks": "", "Col_AA_Previous_Docket_No": "", "Col_AB_Previous_Docket_raise_Date": "",
+        "source": "None"
+    }
+    if not clean_id:
+        return res
+
+    if not df_status.empty and 'SAIP ID' in df_status.columns:
+        dg_match = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == clean_id]
+        if not dg_match.empty:
+            prev_row = dg_match.iloc[0]
+            res["JC"] = str(prev_row.get("JC", "")).strip()
+            res["Col_O_Fuel_Sensor_Status"] = str(prev_row.get("Fuel Sensor Status", "Ok")).strip()
+            res["Col_P_Docket_no"] = str(prev_row.get("Docket no.", "")).strip()
+            res["Col_Q_Open_Date"] = clean_date_str(prev_row.get("Open Date", ""))
+            res["Col_R_Last_Closed_date"] = clean_date_str(prev_row.get("Last Closed date", ""))
+            res["Col_S_DG_Automation_Status"] = str(prev_row.get("DG Automation Status", "Manual Mode")).strip()
+            res["Col_T_Present_Remarks"] = str(prev_row.get("Present Remarks", "")).strip()
+            res["Col_U_Bucket"] = str(prev_row.get("Bucket", "")).strip()
+            res["Col_V_Present_Docket_No"] = str(prev_row.get("Present Docket No.", "")).strip()
+            res["Col_W_Present_Docket_raise_Date"] = clean_date_str(prev_row.get("Present Docket raise Date", ""))
+            res["Col_X_Aging_Days"] = prev_row.get("Aging (Day's)", 0)
+            res["Col_Y_Timeline"] = str(prev_row.get("Timeline", "")).strip()
+            res["Col_Z_Previous_Remarks"] = str(prev_row.get("Previous Remarks", "")).strip()
+            res["Col_AA_Previous_Docket_No"] = str(prev_row.get("Previous Docket No.", "")).strip()
+            res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
+            res["source"] = "DG Master Tracker"
+
+    if not df_open_cm.empty:
+        cols = {c.lower(): c for c in df_open_cm.columns}
+        site_col = cols.get('site id') or cols.get('site_id') or cols.get('sap id') or cols.get('saip id')
+        docket_col = cols.get('docket number') or cols.get('docket no') or cols.get('docket')
+        complaint_col = cols.get('nature of complaint') or cols.get('complaint') or cols.get('remarks')
+        bucket_col = cols.get('bucket') or cols.get('root cause')
+        timeline_col = cols.get('timeline')
+        aging_col = cols.get('ageing') or cols.get('aging')
+        date_col = cols.get('complaint loggin date') or cols.get('open date') or cols.get('date')
+
+        if site_col:
+            cm_match = df_open_cm[df_open_cm[site_col].astype(str).str.strip().str.upper() == clean_id]
+            if not cm_match.empty:
+                cm_row = cm_match.iloc[0]
+                new_docket = str(cm_row.get(docket_col, "")).strip() if docket_col else ""
+                new_complaint = str(cm_row.get(complaint_col, "")).strip() if complaint_col else ""
+                new_bucket = str(cm_row.get(bucket_col, "")).strip() if bucket_col else ""
+                new_aging = cm_row.get(aging_col, 0) if aging_col else 0
+                date_str = clean_date_str(cm_row.get(date_col, "")) if date_col else ""
+
+                if new_docket and new_docket.lower() != 'nan':
+                    res["Col_V_Present_Docket_No"] = new_docket
+                if date_str:
+                    res["Col_W_Present_Docket_raise_Date"] = date_str
+                if new_complaint and new_complaint.lower() != 'nan':
+                    res["Col_T_Present_Remarks"] = new_complaint
+                if new_bucket and new_bucket.lower() != 'nan':
+                    res["Col_U_Bucket"] = new_bucket
+                
+                try:
+                    res["Col_X_Aging_Days"] = float(new_aging) if pd.notna(new_aging) else 0
+                except:
+                    res["Col_X_Aging_Days"] = 0
+
+                res["source"] = "CM Tracker (Open Site Auto-Scan)"
+
+    for k, v in res.items():
+        if str(v).lower() == 'nan' or str(v) == 'nat':
+            res[k] = ""
+    return res
+
 def archive_current_fault_to_previous(row_idx, df_target):
-    # ⚡ SHIFT CURRENT ACTIVE DOCKET TO PREVIOUS (COL Z, AA, AB) BEFORE CLOSING/RESETTING
     r = df_target.loc[row_idx]
     pres_doc = str(r.get('Present Docket No.', '')).strip()
     pres_date = str(r.get('Present Docket raise Date', '')).strip()
@@ -313,7 +389,6 @@ def archive_current_fault_to_previous(row_idx, df_target):
         df_target.at[row_idx, 'Previous Docket No.'] = pres_doc
         df_target.at[row_idx, 'Previous Docket raise Date'] = pres_date
         df_target.at[row_idx, 'Previous Remarks'] = pres_rem
-    
     return df_target
 
 def clear_site_active_fault_data(site_id, df_target):
@@ -324,10 +399,7 @@ def clear_site_active_fault_data(site_id, df_target):
     match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
     if not match_idx.empty:
         i = match_idx[0]
-        # Shift to previous history first
         updated = archive_current_fault_to_previous(i, updated)
-        
-        # Reset current active fault columns
         if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
         if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
         if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
@@ -815,7 +887,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             st.rerun()
 
 # ---------------------------------------------------------
-# 6. IN-PORTAL MASTER TRACKER EDITOR (WITH TT CLOSED & REMOVAL)
+# 6. IN-PORTAL MASTER TRACKER EDITOR (WITH OPEN DOCKET AUTO-SCAN & TT CLOSED)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
@@ -841,24 +913,46 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     else:
                         row_idx = match_idx[0]
                         s_row = df_status.loc[row_idx]
-                        st.success(f"Site Found: **{s_row.get('SAIP ID')}** | Current Status: **{s_row.get('DG Automation Status')}**")
+                        
+                        # ⚡ AUTOMATICALLY SCAN CM TRACKER OPEN DOCKET ON SITE SELECTION
+                        auto_scanned_data = ai_capture_o_to_ab(search_edit_site, df_open_cm, df_status, None)
+                        
+                        default_stat = s_row.get('DG Automation Status', 'Automation Ok')
+                        if auto_scanned_data["source"] != "None" and default_stat == "Automation Ok":
+                            default_stat = auto_scanned_data["Col_S_DG_Automation_Status"]
+
+                        default_bkt = s_row.get('Bucket')
+                        if not default_bkt or pd.isna(default_bkt):
+                            default_bkt = auto_scanned_data["Col_U_Bucket"]
+
+                        default_docket = str(s_row.get('Present Docket No.', ''))
+                        if (not default_docket or default_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_V_Present_Docket_No"]:
+                            default_docket = auto_scanned_data["Col_V_Present_Docket_No"]
+
+                        default_rem = str(s_row.get('Present Remarks', ''))
+                        if (not default_rem or default_rem.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_T_Present_Remarks"]:
+                            default_rem = auto_scanned_data["Col_T_Present_Remarks"]
+
+                        st.success(f"Site Found: **{s_row.get('SAIP ID')}** | Auto-Scanned Source: **{auto_scanned_data['source']}**")
 
                         with st.form("single_site_inline_edit_form"):
                             se1, se2 = st.columns(2)
                             with se1:
-                                edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(s_row.get('DG Automation Status')) if s_row.get('DG Automation Status') in STATUS_CHOICES else 0)
-                                edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(s_row.get('Bucket')) + 1 if s_row.get('Bucket') in BUCKET_LIST else 0)
-                                edit_docket = st.text_input("Present Docket No:", value=str(s_row.get('Present Docket No.', '')) if pd.notna(s_row.get('Present Docket No.')) else "")
+                                edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
+                                edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
+                                edit_docket = st.text_input("Present Docket No:", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
-                                existing_raise_date = to_date_obj(s_row.get('Present Docket raise Date'))
+                                raw_date_val = s_row.get('Present Docket raise Date')
+                                if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
+                                    raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
+                                existing_raise_date = to_date_obj(raw_date_val)
                                 edit_raise_date = st.date_input("Present Docket raise Date (Faulty Date):", value=existing_raise_date)
 
                             with se2:
-                                edit_rem = st.text_area("Present Remarks / Complaint:", value=str(s_row.get('Present Remarks', '')) if pd.notna(s_row.get('Present Remarks')) else "")
+                                edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
 
                             submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                             if submit_single_edit:
-                                # ⚡ AUTO ARCHIVE TO PREVIOUS IF DOCKET CHANGED OR SAVED WITH NEW FAULT
                                 old_docket = str(s_row.get('Present Docket No.', '')).strip()
                                 if edit_docket and old_docket and old_docket.lower() not in ['', 'nan', 'none'] and old_docket != edit_docket:
                                     st.session_state.master_tracker_df = archive_current_fault_to_previous(row_idx, st.session_state.master_tracker_df)
