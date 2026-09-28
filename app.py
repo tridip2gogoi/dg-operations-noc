@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Perfect Sidebar Download Alignment
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -125,16 +125,21 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* ⚡ SIDEBAR DOWNLOAD BUTTON FULL WIDTH ALIGNMENT */
-    section[data-testid="stSidebar"] .stDownloadButton button {
+    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] {
+        width: 100% !important;
+        margin-top: 5px !important;
+        margin-bottom: 10px !important;
+    }
+    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] button {
         width: 100% !important;
         background-color: #0f172a !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         border-radius: 8px !important;
         border: 1px solid #38bdf8 !important;
+        padding: 8px 12px !important;
     }
-    section[data-testid="stSidebar"] .stDownloadButton button:hover {
+    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] button:hover {
         background-color: #0284c7 !important;
         color: #ffffff !important;
     }
@@ -530,7 +535,20 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# Data Pipeline Uploads
+# ⚡ NAVIGATION RADIO MOVED TO TOP OF SIDEBAR
+page = st.sidebar.radio("NOC Operations Navigation:", [
+    "📊 Executive Control Center",
+    "⚙️ Fleet Analytics & Problem Buckets",
+    "⛽ Fuel Sensor Telemetry",
+    "⏳ Critical Aging Escalation Monitor",
+    "📈 ILA-AG1 Operations Tracker",
+    "✏️ In-Portal Master Tracker Editor",
+    "🔍 AI Site Diagnostics"
+])
+
+st.sidebar.markdown("---")
+
+# Data Pipeline Uploads (Moved to bottom of sidebar)
 st.sidebar.markdown("### 📂 Data Pipeline Synchronization")
 uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"])
 uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
@@ -601,16 +619,6 @@ if not df_status.empty:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True
     )
-
-page = st.sidebar.radio("NOC Operations Navigation:", [
-    "📊 Executive Control Center",
-    "⚙️ Fleet Analytics & Problem Buckets",
-    "⛽ Fuel Sensor Telemetry",
-    "⏳ Critical Aging Escalation Monitor",
-    "📈 ILA-AG1 Operations Tracker",
-    "✏️ In-Portal Master Tracker Editor",
-    "🔍 AI Site Diagnostics"
-])
 
 # ---------------------------------------------------------
 # 1. EXECUTIVE CONTROL CENTER
