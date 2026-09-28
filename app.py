@@ -323,6 +323,8 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             
             if 'JC' in df_status.columns:
                 df_status['JC'] = df_status['JC'].astype(str).str.strip()
+            if 'State' in df_status.columns:
+                df_status['State'] = df_status['State'].astype(str).str.strip()
             
             for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date']:
                 if d_col in df_status.columns:
@@ -587,28 +589,41 @@ if page == "📊 Executive Control Center":
         auto_ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
         manual_mode = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
 
-        # ⚡ CALCULATE DG BREAKDOWN, DG BER, DG OVERLOAD COUNTS
-        dg_breakdown_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg breakdown']) if 'DG Automation Status' in df_status.columns else 0
-        dg_ber_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
-        dg_overload_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
+        # ⚡ SPECIFIC PROBLEM BUCKET COUNTS (DG Battery, GCU, OEM Spare Parts)
+        dg_battery_count = len(df_status[df_status['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if 'Bucket' in df_status.columns else 0
+        gcu_count = len(df_status[df_status['Bucket'].astype(str).str.strip().str.lower() == 'gcu']) if 'Bucket' in df_status.columns else 0
+        oem_parts_count = len(df_status[df_status['Bucket'].astype(str).str.strip().str.lower() == 'oem spare parts']) if 'Bucket' in df_status.columns else 0
 
         k1, k2, k3, k4, k5, k6 = st.columns(6)
         k1.metric("Total Sites", f"{total_sites:,}")
         k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%")
         k3.metric("Manual Mode", manual_mode)
-        k4.metric("DG Breakdown", dg_breakdown_count)
-        k5.metric("DG BER", dg_ber_count)
-        k6.metric("DG Overload", dg_overload_count)
+        k4.metric("DG Battery", dg_battery_count)
+        k5.metric("GCU Faults", gcu_count)
+        k6.metric("OEM Spare Parts", oem_parts_count)
 
         st.markdown("---")
+        
+        # ⚡ STATE-WISE FILTER & BREAKDOWN SECTION
+        if 'State' in df_status.columns:
+            state_options = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
+            selected_state = st.selectbox("🌐 Filter Circle by State:", state_options)
+            
+            if selected_state != "All States":
+                state_filtered_df = df_status[df_status['State'].astype(str).str.strip() == selected_state]
+                st.info(f"Showing telemetry stats for State: **{selected_state}** ({len(state_filtered_df)} Sites Active)")
+            else:
+                state_filtered_df = df_status
+
         c1, c2 = st.columns([3, 2])
         
         with c1:
             with st.container(border=True):
-                st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>Circle JC Wise Automation Health</h4>", unsafe_allow_html=True)
-                if "JC" in df_status.columns and "DG Automation Status" in df_status.columns:
+                st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>JC / State Wise Automation Health</h4>", unsafe_allow_html=True)
+                target_df_for_chart = state_filtered_df if 'State' in df_status.columns else df_status
+                if "JC" in target_df_for_chart.columns and "DG Automation Status" in target_df_for_chart.columns:
                     fig_bar = px.histogram(
-                        df_status, x="JC", color="DG Automation Status", barmode="group",
+                        target_df_for_chart, x="JC", color="DG Automation Status", barmode="group",
                         color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
                     )
                     fig_bar.update_layout(
@@ -624,8 +639,9 @@ if page == "📊 Executive Control Center":
         with c2:
             with st.container(border=True):
                 st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>DG Make Fleet Allocation</h4>", unsafe_allow_html=True)
-                if "DG Make" in df_status.columns:
-                    valid_makes = df_status[df_status['DG Make'].notna() & (df_status['DG Make'].astype(str).str.strip() != '')]
+                target_df_for_chart = state_filtered_df if 'State' in df_status.columns else df_status
+                if "DG Make" in target_df_for_chart.columns:
+                    valid_makes = target_df_for_chart[target_df_for_chart['DG Make'].notna() & (target_df_for_chart['DG Make'].astype(str).str.strip() != '')]
                     fig_donut = px.pie(valid_makes, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
                     fig_donut.update_layout(
                         height=350, margin=dict(l=10, r=10, t=10, b=10),
