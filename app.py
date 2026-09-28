@@ -981,17 +981,22 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
                             with se2:
                                 edit_rem = st.text_area("Present Remarks / Complaint:", value=str(s_row.get('Present Remarks', '')) if pd.notna(s_row.get('Present Remarks')) else "")
-                                edit_aging = st.number_input("Aging (Days):", value=int(s_row.get("Aging (Day's)", 0)) if pd.notna(s_row.get("Aging (Day's)")) else 0)
 
-                            submit_single_edit = st.form_submit_button("💾 Save Site Updates to Master Tracker", type="primary", use_container_width=True)
+                            submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                             if submit_single_edit:
+                                # ⚡ AUTOMATIC AGING CALCULATION BASED ON FAULTY DATE VS CURRENT DATE (2026-09-28)
+                                current_eval_date = date(2026, 9, 28)
+                                calc_aging = (current_eval_date - edit_raise_date).days
+                                if calc_aging < 0:
+                                    calc_aging = 0
+
                                 st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
                                 st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_raise_date.strftime('%Y-%m-%d')
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
-                                st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = edit_aging
-                                st.success(f"Site `{search_edit_site}` updated successfully!")
+                                st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
+                                st.success(f"Site `{search_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
                                 st.rerun()
 
                         st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
