@@ -972,8 +972,9 @@ elif page == "🔍 AI Site Diagnostics":
             </div>
             """, unsafe_allow_html=True)
 
-            diag_t1, diag_t2 = st.tabs([
+            diag_t1, diag_t2, diag_t3 = st.tabs([
                 "📋 Technical Asset Specifications",
+                "⚡ Master Tracker (Live) Telemetry",
                 "⏳ Resolution History & Previous Dockets (Col Y to AB)"
             ])
 
@@ -994,6 +995,30 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown(f"**Last Closed Date:** `{clean_date_str(site_row.get('Last Closed date', 'N/A'))}`")
 
             with diag_t2:
+                with st.container(border=True):
+                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to X)</p>", unsafe_allow_html=True)
+                    master_telemetry_df = pd.DataFrame({
+                        "Field": [
+                            "Col O: Fuel Sensor Status", "Col P: Docket No", "Col Q: Open Date",
+                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Problem Bucket",
+                            "Col V: Present Docket No", "Col W: Present Docket Raise Date",
+                            "Col X: Aging (Days)"
+                        ],
+                        "Master Tracker (Live)": [
+                            str(site_row.get("Fuel Sensor Status", "")),
+                            str(site_row.get("Docket no.", "")),
+                            clean_date_str(site_row.get("Open Date", "")),
+                            str(site_row.get("DG Automation Status", "")),
+                            str(site_row.get("Present Remarks", "")),
+                            str(site_row.get("Bucket", "")),
+                            str(site_row.get("Present Docket No.", "")),
+                            clean_date_str(site_row.get("Present Docket raise Date", "")),
+                            str(site_row.get("Aging (Day's)", ""))
+                        ]
+                    })
+                    st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
+
+            with diag_t3:
                 with st.container(border=True):
                     h1, h2, h3 = st.columns(3)
                     h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
