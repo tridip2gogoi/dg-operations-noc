@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Guaranteed Visible Text & Full Master Editor Support
+# Custom Corporate Professional NOC Styling with Explicit Form Label Visibility Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -125,9 +125,12 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    .stTextInput label, .stSelectbox label, .stDateInput label {
+    /* ⚡ ENSURE ALL INPUT & FORM LABELS ARE VISIBLE (WHITE COLLAR) */
+    .stTextInput label, .stSelectbox label, .stDateInput label, .stTextArea label, .stNumberInput label {
         color: #ffffff !important;
         font-weight: 700 !important;
+        font-size: 14px !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
 
     [data-testid="stFileUploadDropzone"] * {
