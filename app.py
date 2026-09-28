@@ -148,7 +148,6 @@ st.markdown("""
         color: #0f172a !important;
     }
 
-    /* ⚡ CUSTOM STYLING FOR PREVIOUS REMARKS BOX WITH WHITE TEXT */
     .previous-remarks-box {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid #38bdf8 !important;
@@ -1139,13 +1138,14 @@ elif page == "🔍 AI Site Diagnostics":
             st_type = str(site_row.get('Site Type', 'N/A'))
             fac_5g = str(site_row.get('5G facality', 'N/A'))
 
+            # ⚡ UPDATED HEADER BANNER WITH GUARANTEED WHITE TEXT STYLING
             st.markdown(f"""
             <div style="background-color: #0f172a !important; background: #0f172a !important; border: 2px solid #38bdf8 !important; border-radius: 12px !important; padding: 22px 26px !important; margin-top: 14px !important; margin-bottom: 16px !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
                         <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
                         <div style="margin-top: 8px !important; color: #ffffff !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
-                            Circle Territory: <span style="color: #38bdf8 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
+                            Territory: <span style="color: #38bdf8 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 10px;">
@@ -1246,7 +1246,6 @@ elif page == "🔍 AI Site Diagnostics":
                     h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
                     st.markdown("<hr style='margin: 10px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
-                    # ⚡ APPLIED WHITE COLOR STYLING CONTAINER FOR PREVIOUS REMARKS
                     prev_rem_text = str(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
                     st.markdown(f"""
                     <div class="previous-remarks-box">
