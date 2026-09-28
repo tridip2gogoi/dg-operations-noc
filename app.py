@@ -403,9 +403,9 @@ def archive_current_fault_to_previous(row_idx, df_target):
     pres_rem = str(r.get('Present Remarks', '')).strip()
     
     if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
-        df_target.at[row_idx, 'Previous Docket No.'] = pres_doc
-        df_target.at[row_idx, 'Previous Docket raise Date'] = pres_date
-        df_target.at[row_idx, 'Previous Remarks'] = pres_rem
+        df_target.at[row_idx, 'Previous Docket No.'] = str(pres_doc)
+        df_target.at[row_idx, 'Previous Docket raise Date'] = str(pres_date)
+        df_target.at[row_idx, 'Previous Remarks'] = str(pres_rem)
     return df_target
 
 def clear_site_active_fault_data(site_id, df_target):
@@ -428,7 +428,6 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
         if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
         
-        # ⚡ AUTO-FILL LAST CLOSED DATE AUTOMATICALLY AFTER PREVIOUS DOCKET RAISE DATE
         today_date_str = datetime.now().strftime('%Y-%m-%d')
         target_closed_col = None
         for col in updated.columns:
@@ -436,9 +435,9 @@ def clear_site_active_fault_data(site_id, df_target):
                 target_closed_col = col
                 break
         if target_closed_col:
-            updated.at[i, target_closed_col] = today_date_str
+            updated.at[i, target_closed_col] = str(today_date_str)
         else:
-            updated.at[i, 'Last Closed date'] = today_date_str
+            updated.at[i, 'Last Closed date'] = str(today_date_str)
 
     return updated
 
@@ -948,14 +947,14 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
                                         submit_ila_edit = st.form_submit_button("💾 Update ILA Record", type="primary", use_container_width=True)
                                         if submit_ila_edit:
-                                            st.session_state.ila_tracker_df.at[i_idx, 'Facality'] = new_fac
-                                            st.session_state.ila_tracker_df.at[i_idx, 'JC'] = new_jc
-                                            st.session_state.ila_tracker_df.at[i_idx, 'State'] = new_state
-                                            st.session_state.ila_tracker_df.at[i_idx, 'Supervisors'] = new_sup
-                                            st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = new_status
-                                            st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = new_rem
-                                            st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = new_bkt
-                                            st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = new_docket
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Facality'] = str(new_fac)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'JC'] = str(new_jc)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'State'] = str(new_state)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Supervisors'] = str(new_sup)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = str(new_status)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = str(new_rem)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = str(new_bkt)
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = str(new_docket)
                                             st.success(f"Record `{selected_ila_sap}` updated successfully!")
                                             st.rerun()
 
@@ -1129,16 +1128,16 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                         except:
                                             calc_aging = int(s_row.get("Aging (Day's)", 0)) if pd.notna(s_row.get("Aging (Day's)")) else 0
 
-                                    st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
-                                    st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
-                                    st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
-                                    st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_fuel_docket.strip()
-                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
-                                    st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date_str.strip()
-                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_faulty_date_str.strip()
-                                    st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
-                                    st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
-                                    st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = calc_aging
+                                    st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = str(edit_stat)
+                                    st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else str(edit_bkt)
+                                    st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = str(edit_fuel_status)
+                                    st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = str(edit_fuel_docket).strip()
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = str(edit_docket)
+                                    st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = str(edit_open_date_str).strip()
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = str(edit_faulty_date_str).strip()
+                                    st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = str(edit_rem)
+                                    st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = int(calc_aging)
+                                    st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = int(calc_aging)
                                     st.success(f"Site `{selected_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
                                     st.rerun()
 
