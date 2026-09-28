@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Flexible CM Tracker Mapping
+# Custom Corporate Professional NOC Styling with Guaranteed Visible Form Labels
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -285,20 +285,14 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
     if is_valid_source(cm_file):
         try:
             xls_cm = pd.ExcelFile(cm_file)
-            if "Open Site" in xls_cm.sheet_names:
-                df_open_cm = pd.read_excel(xls_cm, sheet_name="Open Site")
-            elif "CM Tracket" in xls_cm.sheet_names:
-                temp_cm = pd.read_excel(xls_cm, sheet_name="CM Tracket")
-                df_open_cm = temp_cm[temp_cm['STATUS'].astype(str).str.lower() == 'open']
-            else:
-                df_open_cm = pd.read_excel(xls_cm, sheet_name=0)
+            target_cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
+            df_open_cm = pd.read_excel(xls_cm, sheet_name=target_cm_sheet)
             
             if not df_open_cm.empty:
-                # Normalize column names for robust matching
                 df_open_cm.columns = [str(c).strip() for c in df_open_cm.columns]
-                date_cols = [c for c in df_open_cm.columns if 'date' in c.lower() or 'loggin' in c.lower() or 'time' in c.lower()]
-                for d_col in date_cols:
-                    df_open_cm[d_col] = df_open_cm[d_col].apply(clean_date_str)
+                for d_c in df_open_cm.columns:
+                    if any(term in d_c.lower() for term in ['date', 'loggin', 'time']):
+                        df_open_cm[d_c] = df_open_cm[d_c].apply(clean_date_str)
         except Exception as e:
             st.warning(f"Note on CM tracker: {e}")
 
@@ -349,7 +343,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res["source"] = "DG Master Tracker"
 
     if not df_open_cm.empty:
-        # Flexible column identification for CM Tracker
+        # Flexible column mapping for CM Tracker
         cols = {c.lower(): c for c in df_open_cm.columns}
         site_col = cols.get('site id') or cols.get('site_id') or cols.get('sap id') or cols.get('saip id')
         docket_col = cols.get('docket number') or cols.get('docket no') or cols.get('docket')
@@ -1009,7 +1003,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
                             submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                             if submit_single_edit:
-                                # ⚡ AUTOMATIC AGING CALCULATION BASED ON FAULTY DATE VS CURRENT DATE (2026-09-28)
                                 current_eval_date = date(2026, 9, 28)
                                 calc_aging = (current_eval_date - edit_raise_date).days
                                 if calc_aging < 0:
@@ -1105,7 +1098,6 @@ elif page == "🔍 AI Site Diagnostics":
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
-            # ⚡ HIGH CONTRAST DARK STYLING WITH PURE WHITE TEXT FOR ABSOLUTE CLARITY
             jc_str = str(site_row.get('JC', 'N/A'))
             state_str = str(site_row.get('State', 'N/A'))
             st_type = str(site_row.get('Site Type', 'N/A'))
