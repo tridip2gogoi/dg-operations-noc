@@ -589,17 +589,18 @@ if page == "📊 Executive Control Center":
         auto_ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
         manual_mode = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
 
-        dg_battery_count = len(df_status[df_status['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if 'Bucket' in df_status.columns else 0
-        gcu_count = len(df_status[df_status['Bucket'].astype(str).str.strip().str.lower() == 'gcu']) if 'Bucket' in df_status.columns else 0
-        oem_parts_count = len(df_status[df_status['Bucket'].astype(str).str.strip().str.lower() == 'oem spare parts']) if 'Bucket' in df_status.columns else 0
+        # ⚡ UPDATED METRIC COUNTS: DG Breakdown, DG BER, DG Overload
+        dg_breakdown_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg breakdown']) if 'DG Automation Status' in df_status.columns else 0
+        dg_ber_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
+        dg_overload_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
 
         k1, k2, k3, k4, k5, k6 = st.columns(6)
         k1.metric("Total Sites", f"{total_sites:,}")
         k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%")
         k3.metric("Manual Mode", manual_mode)
-        k4.metric("DG Battery", dg_battery_count)
-        k5.metric("GCU Faults", gcu_count)
-        k6.metric("OEM Spare Parts", oem_parts_count)
+        k4.metric("DG Breakdown", dg_breakdown_count)
+        k5.metric("DG BER", dg_ber_count)
+        k6.metric("DG Overload", dg_overload_count)
 
         st.markdown("---")
         
@@ -788,7 +789,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected in Master Tracker.")
 
 # ---------------------------------------------------------
-# 4. DAILY FAULT SUMMARY (WITH DAILY DATE FILTER & MULTI-METRICS)
+# 4. DAILY FAULT SUMMARY
 # ---------------------------------------------------------
 elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
@@ -805,14 +806,12 @@ elif page == "⏳ Daily Fault Summary":
         if selected_date_filter != "All Dates":
             filtered_date_df = filtered_date_df[filtered_date_df['Present Docket raise Date'].astype(str).str.startswith(selected_date_filter)]
 
-    # ⚡ STATE-WISE FILTER FOR DAILY FAULT SUMMARY
     if not filtered_date_df.empty and 'State' in filtered_date_df.columns:
         summary_state_opts = ["All States"] + sorted([str(x) for x in filtered_date_df['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
         chosen_summary_state = st.selectbox("🌐 Filter by State:", summary_state_opts, key="summary_state_filter")
         if chosen_summary_state != "All States":
             filtered_date_df = filtered_date_df[filtered_date_df['State'].astype(str).str.strip() == chosen_summary_state]
 
-    # Calculate metrics for the filtered selection
     p_fuel_sensor = len(filtered_date_df[(filtered_date_df['Bucket'].astype(str).str.strip().str.upper() == 'FUEL SENSOR') | (filtered_date_df['Fuel Sensor Status'].astype(str).str.strip().str.upper() == 'FUEL SENSOR FAULTY')]) if not filtered_date_df.empty else 0
     p_dg_battery = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
     p_gcu = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'gcu']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
