@@ -1018,17 +1018,32 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab2:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.caption("Here you can directly edit any cell, add rows, or modify the complete master dataset like an Excel sheet.")
+                st.caption("Use the search box below to filter rows by SAIP ID, JC, State, or any keyword before editing.")
                 
+                # ⚡ ADDED SEARCH / FILTER OPTION
+                search_grid_query = st.text_input("🔍 Filter Master Grid Rows (by SAIP ID, JC, State, Supervisor etc.):", "").strip().upper()
+                
+                filtered_grid_df = st.session_state.master_tracker_df.copy()
+                if search_grid_query:
+                    mask = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query, case=False, na=False)).any(axis=1)
+                    filtered_grid_df = filtered_grid_df[mask]
+                    st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
+
                 edited_full_master = st.data_editor(
-                    st.session_state.master_tracker_df, 
+                    filtered_grid_df, 
                     use_container_width=True, 
-                    height=550, 
+                    height=500, 
                     num_rows="dynamic"
                 )
                 
                 if st.button("💾 Commit & Save Full Master Grid Changes", type="primary", use_container_width=True):
-                    st.session_state.master_tracker_df = edited_full_master.copy()
+                    if search_grid_query:
+                        # Merge back edited rows into master dataframe
+                        full_df = st.session_state.master_tracker_df.copy()
+                        full_df.update(edited_full_master)
+                        st.session_state.master_tracker_df = full_df
+                    else:
+                        st.session_state.master_tracker_df = edited_full_master.copy()
                     st.success("Full Master Tracker dataset updated and saved successfully across all modules!")
                     st.rerun()
 
