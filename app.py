@@ -257,14 +257,6 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-def to_date_obj(val, fallback=None):
-    if pd.isna(val) or val is None or str(val).strip().lower() in ['', 'nat', 'nan', 'none', '0']:
-        return None
-    try:
-        return pd.to_datetime(val).date()
-    except Exception:
-        return fallback
-
 USER_CREDENTIALS = {
     "admin": {
         "password_hash": hashlib.sha256("admin@123".encode()).hexdigest(),
@@ -306,6 +298,9 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
+            for col in df_status.columns:
+                df_status[col] = df_status[col].astype(object)
+            
             if 'SAIP ID' in df_status.columns:
                 df_status = df_status[df_status['SAIP ID'].notna()]
                 df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
@@ -323,7 +318,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             
             for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date', 'Last Closed date.1']:
                 if d_col in df_status.columns:
-                    df_status[d_col] = df_status[d_col].apply(clean_date_str)
+                    df_status[d_col] = df_status[d_col].apply(clean_date_str).astype(str)
             
             aging_col_target = None
             for col in df_status.columns:
@@ -350,6 +345,8 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
         try:
             xls_ila = pd.ExcelFile(ila_file)
             df_ila = pd.read_excel(xls_ila, sheet_name=xls_ila.sheet_names[0])
+            for col in df_ila.columns:
+                df_ila[col] = df_ila[col].astype(object)
             if 'Sap ID' in df_ila.columns:
                 df_ila = df_ila[df_ila['Sap ID'].notna()]
                 df_ila['Sap ID'] = df_ila['Sap ID'].astype(str).str.strip()
