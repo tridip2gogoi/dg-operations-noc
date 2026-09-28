@@ -848,7 +848,7 @@ elif page == "⏳ Daily Fault Summary":
         st.info(f"No fault records found matching date filter (`{selected_date_filter}`).")
 
 # ---------------------------------------------------------
-# 5. ILA-AG1 OPERATIONS TRACKER
+# 5. ILA-AG1 OPERATIONS TRACKER (WITH FAULT DATE FIELD)
 # ---------------------------------------------------------
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
@@ -880,6 +880,8 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                 else:
                     edited_ila_data = st.data_editor(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450)
                     if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
+                        for col in st.session_state.ila_tracker_df.columns:
+                            st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
                         if ila_search_query:
                             full_ila = df_ila.copy()
                             full_ila.update(edited_ila_data)
@@ -943,6 +945,10 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                             new_status = st.text_input("DG Automation Status:", value=str(i_row.get('DG Automation Status', '')) if pd.notna(i_row.get('DG Automation Status')) else "")
                                             new_rem = st.text_input("Present Remarks:", value=str(i_row.get('Present Remarks', '')) if pd.notna(i_row.get('Present Remarks')) else "")
                                             new_bkt = st.text_input("Bucket:", value=str(i_row.get('Bucket', '')) if pd.notna(i_row.get('Bucket')) else "")
+                                            
+                                            # ⚡ ADDED FAULT DATE INPUT FIELD IN ILA QUICK EDITOR
+                                            existing_fault_date = clean_date_str(i_row.get('Present Docket raise Date', i_row.get('Fault Date', '')))
+                                            new_fault_date = st.text_input("Fault Date (Present Docket raise Date):", value=existing_fault_date)
                                             new_docket = st.text_input("Docket No:", value=str(i_row.get('Docket No.', '')) if pd.notna(i_row.get('Docket No.')) else "")
 
                                         submit_ila_edit = st.form_submit_button("💾 Update ILA Record", type="primary", use_container_width=True)
@@ -957,6 +963,10 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                             st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = str(new_status)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = str(new_rem)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = str(new_bkt)
+                                            if 'Present Docket raise Date' in st.session_state.ila_tracker_df.columns:
+                                                st.session_state.ila_tracker_df.at[i_idx, 'Present Docket raise Date'] = str(new_fault_date)
+                                            elif 'Fault Date' in st.session_state.ila_tracker_df.columns:
+                                                st.session_state.ila_tracker_df.at[i_idx, 'Fault Date'] = str(new_fault_date)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = str(new_docket)
                                             st.success(f"Record `{selected_ila_sap}` updated successfully!")
                                             st.rerun()
@@ -997,6 +1007,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             new_rate_c = st.text_input("DG Rating:")
                             new_stat_c = st.selectbox("DG Automation Status:", STATUS_CHOICES)
                             new_rem_c = st.text_input("Present Remarks:")
+                            new_fault_date_c = st.text_input("Fault Date (Present Docket raise Date):")
                             new_bkt_c = st.selectbox("Bucket:", ["None"] + BUCKET_LIST)
 
                         submit_new_case = st.form_submit_button("➕ Add New Case Entry", type="primary", use_container_width=True)
@@ -1014,6 +1025,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                     'DG Rating': str(new_rate_c),
                                     'DG Automation Status': str(new_stat_c),
                                     'Present Remarks': str(new_rem_c),
+                                    'Present Docket raise Date': str(new_fault_date_c),
                                     'Bucket': None if new_bkt_c == "None" else str(new_bkt_c)
                                 }
                                 new_df_row = pd.DataFrame([new_row_data])
