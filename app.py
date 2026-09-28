@@ -839,14 +839,26 @@ elif page == "📈 ILA-AG1 Operations Tracker":
             with st.container(border=True):
                 st.markdown(f"<h3 style='margin:0 0 10px 0; color: #0f172a;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
                 
-                # ⚡ VIEWER LOCK FOR ILA GRID EDITOR
+                # ⚡ MULTIPLE SITE ID SEARCH BAR FOR ILA-AG1 GRID
+                ila_search_query = st.text_input("🔍 Search / Filter ILA Registry by Sap ID, JC, Facility etc.:", "").strip().upper()
+                filtered_ila_df = df_ila.copy()
+                if ila_search_query:
+                    ila_mask = filtered_ila_df.astype(str).apply(lambda col: col.str.contains(ila_search_query, case=False, na=False)).any(axis=1)
+                    filtered_ila_df = filtered_ila_df[ila_mask]
+                    st.info(f"Showing {len(filtered_ila_df):,} matching rows out of {len(df_ila):,} total records.")
+
                 if is_viewer:
                     st.warning("🔒 Viewer Account: Read-only access. Editing is disabled.")
-                    st.dataframe(df_ila, use_container_width=True, height=450)
+                    st.dataframe(filtered_ila_df, use_container_width=True, height=450)
                 else:
-                    edited_ila_data = st.data_editor(df_ila, use_container_width=True, height=450)
+                    edited_ila_data = st.data_editor(filtered_ila_df, use_container_width=True, height=450)
                     if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
-                        st.session_state.ila_tracker_df = edited_ila_data.copy()
+                        if ila_search_query:
+                            full_ila = df_ila.copy()
+                            full_ila.update(edited_ila_data)
+                            st.session_state.ila_tracker_df = full_ila
+                        else:
+                            st.session_state.ila_tracker_df = edited_ila_data.copy()
                         st.success("ILA-AG1 grid updates saved successfully!")
                         st.rerun()
 
@@ -868,64 +880,71 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                 if is_viewer:
                     st.warning("🔒 Viewer Account: Single site modification and fault clearance are disabled.")
                 else:
-                    target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:").strip().upper()
+                    target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
                     
                     if target_sap_id and 'Sap ID' in df_ila.columns:
-                        match_ila_idx = df_ila[df_ila['Sap ID'].astype(str).str.strip().str.upper() == target_sap_id].index
-                        if match_ila_idx.empty:
-                            st.error(f"Sap ID `{target_sap_id}` not found in ILA-AG1 tracker.")
+                        matches_ila = df_ila[df_ila['Sap ID'].astype(str).str.contains(target_sap_id, case=False, na=False)]
+                        if matches_ila.empty:
+                            st.error(f"Sap ID matching `{target_sap_id}` not found in ILA-AG1 tracker.")
                         else:
-                            i_idx = match_ila_idx[0]
-                            i_row = df_ila.loc[i_idx]
-                            st.info(f"Selected Record: **{i_row.get('Sap ID')}** | Facality: **{i_row.get('Facality', 'N/A')}** | JC: **{i_row.get('JC', 'N/A')}**")
+                            if len(matches_ila) > 1:
+                                selected_ila_sap = st.selectbox("Multiple Sites Found:", matches_ila['Sap ID'].tolist())
+                            else:
+                                selected_ila_sap = matches_ila.iloc[0]['Sap ID']
 
-                            ila_action = st.radio(
-                                "Select Action:",
-                                ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
-                                horizontal=True
-                            )
+                            match_ila_idx = df_ila[df_ila['Sap ID'].astype(str).str.strip().str.upper() == str(selected_ila_sap).strip().upper()].index
+                            if not match_ila_idx.empty:
+                                i_idx = match_ila_idx[0]
+                                i_row = df_ila.loc[i_idx]
+                                st.info(f"Selected Record: **{selected_ila_sap}** | Facality: **{i_row.get('Facality', 'N/A')}** | JC: **{i_row.get('JC', 'N/A')}**")
 
-                            if ila_action == "📝 Edit Record Fields":
-                                with st.form("ila_edit_form"):
-                                    e1, e2 = st.columns(2)
-                                    with e1:
-                                        new_fac = st.text_input("Facality:", value=str(i_row.get('Facality', '')) if pd.notna(i_row.get('Facality')) else "")
-                                        new_jc = st.text_input("JC:", value=str(i_row.get('JC', '')) if pd.notna(i_row.get('JC')) else "")
-                                        new_state = st.text_input("State:", value=str(i_row.get('State', '')) if pd.notna(i_row.get('State')) else "")
-                                        new_sup = st.text_input("Supervisors:", value=str(i_row.get('Supervisors', '')) if pd.notna(i_row.get('Supervisors')) else "")
-                                    with e2:
-                                        new_status = st.text_input("DG Automation Status:", value=str(i_row.get('DG Automation Status', '')) if pd.notna(i_row.get('DG Automation Status')) else "")
-                                        new_rem = st.text_input("Present Remarks:", value=str(i_row.get('Present Remarks', '')) if pd.notna(i_row.get('Present Remarks')) else "")
-                                        new_bkt = st.text_input("Bucket:", value=str(i_row.get('Bucket', '')) if pd.notna(i_row.get('Bucket')) else "")
-                                        new_docket = st.text_input("Docket No:", value=str(i_row.get('Docket No.', '')) if pd.notna(i_row.get('Docket No.')) else "")
+                                ila_action = st.radio(
+                                    "Select Action:",
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
+                                    horizontal=True
+                                )
 
-                                    submit_ila_edit = st.form_submit_button("💾 Update ILA Record", type="primary", use_container_width=True)
-                                    if submit_ila_edit:
-                                        st.session_state.ila_tracker_df.at[i_idx, 'Facality'] = new_fac
-                                        st.session_state.ila_tracker_df.at[i_idx, 'JC'] = new_jc
-                                        st.session_state.ila_tracker_df.at[i_idx, 'State'] = new_state
-                                        st.session_state.ila_tracker_df.at[i_idx, 'Supervisors'] = new_sup
-                                        st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = new_status
-                                        st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = new_rem
-                                        st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = new_bkt
-                                        st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = new_docket
-                                        st.success(f"Record `{target_sap_id}` updated successfully!")
+                                if ila_action == "📝 Edit Record Fields":
+                                    with st.form("ila_edit_form"):
+                                        e1, e2 = st.columns(2)
+                                        with e1:
+                                            new_fac = st.text_input("Facality:", value=str(i_row.get('Facality', '')) if pd.notna(i_row.get('Facality')) else "")
+                                            new_jc = st.text_input("JC:", value=str(i_row.get('JC', '')) if pd.notna(i_row.get('JC')) else "")
+                                            new_state = st.text_input("State:", value=str(i_row.get('State', '')) if pd.notna(i_row.get('State')) else "")
+                                            new_sup = st.text_input("Supervisors:", value=str(i_row.get('Supervisors', '')) if pd.notna(i_row.get('Supervisors')) else "")
+                                        with e2:
+                                            new_status = st.text_input("DG Automation Status:", value=str(i_row.get('DG Automation Status', '')) if pd.notna(i_row.get('DG Automation Status')) else "")
+                                            new_rem = st.text_input("Present Remarks:", value=str(i_row.get('Present Remarks', '')) if pd.notna(i_row.get('Present Remarks')) else "")
+                                            new_bkt = st.text_input("Bucket:", value=str(i_row.get('Bucket', '')) if pd.notna(i_row.get('Bucket')) else "")
+                                            new_docket = st.text_input("Docket No:", value=str(i_row.get('Docket No.', '')) if pd.notna(i_row.get('Docket No.')) else "")
+
+                                        submit_ila_edit = st.form_submit_button("💾 Update ILA Record", type="primary", use_container_width=True)
+                                        if submit_ila_edit:
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Facality'] = new_fac
+                                            st.session_state.ila_tracker_df.at[i_idx, 'JC'] = new_jc
+                                            st.session_state.ila_tracker_df.at[i_idx, 'State'] = new_state
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Supervisors'] = new_sup
+                                            st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = new_status
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = new_rem
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = new_bkt
+                                            st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = new_docket
+                                            st.success(f"Record `{selected_ila_sap}` updated successfully!")
+                                            st.rerun()
+
+                                elif ila_action == "🧹 Clear Fault Status & Reset":
+                                    if st.button("🧹 Clear & Reset Status to OK", type="primary", use_container_width=True):
+                                        st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = "Automation Ok"
+                                        st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = "OK"
+                                        st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = None
+                                        st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = None
+                                        st.success(f"Fault cleared for `{selected_ila_sap}`!")
                                         st.rerun()
 
-                            elif ila_action == "🧹 Clear Fault Status & Reset":
-                                if st.button("🧹 Clear & Reset Status to OK", type="primary", use_container_width=True):
-                                    st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = "Automation Ok"
-                                    st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = "OK"
-                                    st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = None
-                                    st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = None
-                                    st.success(f"Fault cleared for `{target_sap_id}`!")
-                                    st.rerun()
-
-                            else:
-                                if st.button(f"🚨 Confirm Delete Record `{target_sap_id}`", type="primary", use_container_width=True):
-                                    st.session_state.ila_tracker_df = st.session_state.ila_tracker_df.drop(index=i_idx).reset_index(drop=True)
-                                    st.success(f"Record `{target_sap_id}` deleted successfully!")
-                                    st.rerun()
+                                else:
+                                    if st.button(f"🚨 Confirm Delete Record `{selected_ila_sap}`", type="primary", use_container_width=True):
+                                        st.session_state.ila_tracker_df = st.session_state.ila_tracker_df.drop(index=i_idx).reset_index(drop=True)
+                                        st.success(f"Record `{selected_ila_sap}` deleted successfully!")
+                                        st.rerun()
 
         with ila_tab3:
             with st.container(border=True):
