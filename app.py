@@ -535,7 +535,7 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# ⚡ NAVIGATION RADIO MOVED TO TOP OF SIDEBAR
+# ⚡ NAVIGATION RADIO PLACED AT THE TOP OF SIDEBAR
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
     "⚙️ Fleet Analytics & Problem Buckets",
@@ -548,7 +548,7 @@ page = st.sidebar.radio("NOC Operations Navigation:", [
 
 st.sidebar.markdown("---")
 
-# Data Pipeline Uploads (Moved to bottom of sidebar)
+# Data Pipeline Uploads (Placed below Navigation)
 st.sidebar.markdown("### 📂 Data Pipeline Synchronization")
 uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"])
 uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
