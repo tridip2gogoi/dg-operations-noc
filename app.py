@@ -213,11 +213,11 @@ def clean_date_str(val):
 
 def to_date_obj(val, fallback=None):
     if pd.isna(val) or val is None or str(val).strip().lower() in ['', 'nat', 'nan', 'none', '0']:
-        return fallback or date.today()
+        return None  # Return None if not mandatory/blank
     try:
         return pd.to_datetime(val).date()
     except Exception:
-        return fallback or date.today()
+        return fallback
 
 USER_CREDENTIALS = {
     "admin": {
@@ -937,7 +937,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                         if (not default_rem or default_rem.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_T_Present_Remarks"]:
                             default_rem = auto_scanned_data["Col_T_Present_Remarks"]
 
-                        # Fuel Sensor Status default
                         default_fuel_status = str(s_row.get('Fuel Sensor Status', 'Ok'))
                         if auto_scanned_data["Col_O_Fuel_Sensor_Status"] and auto_scanned_data["Col_O_Fuel_Sensor_Status"] != "Ok":
                             default_fuel_status = auto_scanned_data["Col_O_Fuel_Sensor_Status"]
@@ -950,21 +949,31 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
                                 
-                                # ⚡ FUEL SENSOR STATUS (Col O) & PRESENT DOCKET NO (Col V) & OPEN DATE (Col Q)
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
                                 edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
                                 
+                                # ⚡ NON-COMPULSORY OPEN DATE & FAULTY DATE HANDLING IF STATUS/REMARKS ARE OK
                                 raw_open_date_val = s_row.get('Open Date')
                                 if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
                                     raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
+                                
                                 existing_open_date = to_date_obj(raw_open_date_val)
-                                edit_open_date = st.date_input("Open Date (Col Q):", value=existing_open_date)
+                                if edit_fuel_status == "Ok":
+                                    open_date_input = st.text_input("Open Date (Col Q) [Optional as Fuel Status is Ok]:", value=clean_date_str(raw_open_date_val))
+                                    edit_open_date = datetime.strptime(open_date_input, '%Y-%m-%d').date() if open_date_input else None
+                                else:
+                                    edit_open_date = st.date_input("Open Date (Col Q):", value=existing_open_date or date.today())
 
                                 raw_date_val = s_row.get('Present Docket raise Date')
                                 if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
                                     raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
+                                
                                 existing_raise_date = to_date_obj(raw_date_val)
-                                edit_raise_date = st.date_input("Present Docket raise Date (Faulty Date - Col W):", value=existing_raise_date)
+                                if not default_rem or default_rem.strip().lower() in ['ok', '']:
+                                    faulty_date_input = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=clean_date_str(raw_date_val))
+                                    edit_raise_date = datetime.strptime(faulty_date_input, '%Y-%m-%d').date() if faulty_date_input else None
+                                else:
+                                    edit_raise_date = st.date_input("Present Docket raise Date (Faulty Date - Col W):", value=existing_raise_date or date.today())
 
                             with se2:
                                 edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
@@ -975,18 +984,20 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 if edit_docket and old_docket and old_docket.lower() not in ['', 'nan', 'none'] and old_docket != edit_docket:
                                     st.session_state.master_tracker_df = archive_current_fault_to_previous(row_idx, st.session_state.master_tracker_df)
 
-                                current_eval_date = date(2026, 9, 28)
-                                calc_aging = (current_eval_date - edit_raise_date).days
-                                if calc_aging < 0:
-                                    calc_aging = 0
+                                calc_aging = 0
+                                if edit_raise_date:
+                                    current_eval_date = date(2026, 9, 28)
+                                    calc_aging = (current_eval_date - edit_raise_date).days
+                                    if calc_aging < 0:
+                                        calc_aging = 0
 
                                 st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
                                 st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
                                 st.session_state.master_tracker_df.at[row_idx, 'Fuel Sensor Status'] = edit_fuel_status
                                 st.session_state.master_tracker_df.at[row_idx, 'Docket no.'] = edit_docket
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
-                                st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date.strftime('%Y-%m-%d')
-                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_raise_date.strftime('%Y-%m-%d')
+                                st.session_state.master_tracker_df.at[row_idx, 'Open Date'] = edit_open_date.strftime('%Y-%m-%d') if edit_open_date else ""
+                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_raise_date.strftime('%Y-%m-%d') if edit_raise_date else ""
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
                                 st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = calc_aging
                                 st.success(f"Site `{search_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
