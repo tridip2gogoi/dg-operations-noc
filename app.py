@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Explicit Form Label Visibility Fix
+# Custom Corporate Professional NOC Styling with Flexible CM Tracker Mapping
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -293,8 +293,12 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             else:
                 df_open_cm = pd.read_excel(xls_cm, sheet_name=0)
             
-            if not df_open_cm.empty and 'COMPLAINT LOGGIN DATE' in df_open_cm.columns:
-                df_open_cm['COMPLAINT LOGGIN DATE'] = df_open_cm['COMPLAINT LOGGIN DATE'].apply(clean_date_str)
+            if not df_open_cm.empty:
+                # Normalize column names for robust matching
+                df_open_cm.columns = [str(c).strip() for c in df_open_cm.columns]
+                date_cols = [c for c in df_open_cm.columns if 'date' in c.lower() or 'loggin' in c.lower() or 'time' in c.lower()]
+                for d_col in date_cols:
+                    df_open_cm[d_col] = df_open_cm[d_col].apply(clean_date_str)
         except Exception as e:
             st.warning(f"Note on CM tracker: {e}")
 
@@ -344,52 +348,73 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
             res["source"] = "DG Master Tracker"
 
-    if not df_open_cm.empty and 'SITE ID' in df_open_cm.columns:
-        cm_match = df_open_cm[df_open_cm['SITE ID'].astype(str).str.strip().str.upper() == clean_id]
-        if not cm_match.empty:
-            cm_row = cm_match.iloc[0]
-            if not res["JC"] and pd.notna(cm_row.get("JC")):
-                res["JC"] = str(cm_row.get("JC")).strip()
-            
-            new_docket = str(cm_row.get("DOCKET NUMBER", "")).strip()
-            new_complaint = str(cm_row.get("NATURE OF COMPLAINT", "")).strip()
-            new_bucket = str(cm_row.get("Bucket", "")).strip()
-            new_timeline = str(cm_row.get("Timeline", "")).strip()
-            new_aging = cm_row.get("Ageing ", 0)
-            date_str = clean_date_str(cm_row.get("COMPLAINT LOGGIN DATE", ""))
+    if not df_open_cm.empty:
+        # Flexible column identification for CM Tracker
+        cols = {c.lower(): c for c in df_open_cm.columns}
+        site_col = cols.get('site id') or cols.get('site_id') or cols.get('sap id') or cols.get('saip id')
+        docket_col = cols.get('docket number') or cols.get('docket no') or cols.get('docket')
+        complaint_col = cols.get('nature of complaint') or cols.get('complaint') or cols.get('remarks')
+        bucket_col = cols.get('bucket') or cols.get('root cause')
+        timeline_col = cols.get('timeline')
+        aging_col = cols.get('ageing') or cols.get('aging')
+        date_col = cols.get('complaint loggin date') or cols.get('open date') or cols.get('date')
 
-            if res["Col_V_Present_Docket_No"] and res["Col_V_Present_Docket_No"] != new_docket and res["Col_V_Present_Docket_No"].lower() != 'nan':
-                res["Col_AA_Previous_Docket_No"] = res["Col_V_Present_Docket_No"]
-                res["Col_AB_Previous_Docket_raise_Date"] = res["Col_W_Present_Docket_raise_Date"]
-                res["Col_Z_Previous_Remarks"] = res["Col_T_Present_Remarks"]
+        if site_col:
+            cm_match = df_open_cm[df_open_cm[site_col].astype(str).str.strip().str.upper() == clean_id]
+            if not cm_match.empty:
+                cm_row = cm_match.iloc[0]
+                if not res["JC"] and 'jc' in cols and pd.notna(cm_row.get(cols['jc'])):
+                    res["JC"] = str(cm_row.get(cols['jc'])).strip()
+                
+                new_docket = str(cm_row.get(docket_col, "")).strip() if docket_col else ""
+                new_complaint = str(cm_row.get(complaint_col, "")).strip() if complaint_col else ""
+                new_bucket = str(cm_row.get(bucket_col, "")).strip() if bucket_col else ""
+                new_timeline = str(cm_row.get(timeline_col, "")).strip() if timeline_col else ""
+                new_aging = cm_row.get(aging_col, 0) if aging_col else 0
+                date_str = clean_date_str(cm_row.get(date_col, "")) if date_col else ""
 
-            res["Col_V_Present_Docket_No"] = new_docket
-            res["Col_W_Present_Docket_raise_Date"] = date_str
-            res["Col_T_Present_Remarks"] = new_complaint
-            res["Col_X_Aging_Days"] = new_aging
-            res["Col_Y_Timeline"] = new_timeline if new_timeline.lower() != 'nan' else ""
-            
-            if "FUEL" in new_complaint.upper() or "FUEL" in new_bucket.upper():
-                res["Col_U_Bucket"] = "Fuel Sensor"
-            elif "GCU" in new_complaint.upper() or "GCU" in new_bucket.upper():
-                res["Col_U_Bucket"] = "GCU"
-            elif "BATTERY" in new_complaint.upper():
-                res["Col_U_Bucket"] = "DG battery"
-            elif "AMF" in new_complaint.upper() or "AMF" in new_bucket.upper():
-                res["Col_U_Bucket"] = "AMF Req"
-            elif new_bucket and new_bucket.lower() != 'nan':
-                res["Col_U_Bucket"] = new_bucket
-            else:
-                res["Col_U_Bucket"] = "DG Breakdown"
+                if res["Col_V_Present_Docket_No"] and res["Col_V_Present_Docket_No"] != new_docket and res["Col_V_Present_Docket_No"].lower() != 'nan':
+                    res["Col_AA_Previous_Docket_No"] = res["Col_V_Present_Docket_No"]
+                    res["Col_AB_Previous_Docket_raise_Date"] = res["Col_W_Present_Docket_raise_Date"]
+                    res["Col_Z_Previous_Remarks"] = res["Col_T_Present_Remarks"]
 
-            is_fuel = "fuel" in new_complaint.lower() or "fuel" in new_bucket.lower()
-            if is_fuel:
-                res["Col_O_Fuel_Sensor_Status"] = "Fuel Sensor faulty"
-                res["Col_P_Docket_no"] = new_docket
-                res["Col_Q_Open_Date"] = date_str
-            
-            res["Col_S_DG_Automation_Status"] = "DG Breakdown" if "breakdown" in new_complaint.lower() else "Manual Mode"
-            res["source"] = "CM Tracker (Open Site)"
+                if new_docket and new_docket.lower() != 'nan':
+                    res["Col_V_Present_Docket_No"] = new_docket
+                if date_str:
+                    res["Col_W_Present_Docket_raise_Date"] = date_str
+                if new_complaint and new_complaint.lower() != 'nan':
+                    res["Col_T_Present_Remarks"] = new_complaint
+                
+                try:
+                    res["Col_X_Aging_Days"] = float(new_aging) if pd.notna(new_aging) else 0
+                except:
+                    res["Col_X_Aging_Days"] = 0
+
+                res["Col_Y_Timeline"] = new_timeline if new_timeline.lower() != 'nan' else ""
+                
+                up_comp = new_complaint.upper()
+                up_bkt = new_bucket.upper()
+                if "FUEL" in up_comp or "FUEL" in up_bkt:
+                    res["Col_U_Bucket"] = "Fuel Sensor"
+                elif "GCU" in up_comp or "GCU" in up_bkt:
+                    res["Col_U_Bucket"] = "GCU"
+                elif "BATTERY" in up_comp:
+                    res["Col_U_Bucket"] = "DG battery"
+                elif "AMF" in up_comp or "AMF" in up_bkt:
+                    res["Col_U_Bucket"] = "AMF Req"
+                elif new_bucket and new_bucket.lower() != 'nan':
+                    res["Col_U_Bucket"] = new_bucket
+                else:
+                    res["Col_U_Bucket"] = "DG Breakdown"
+
+                is_fuel = "fuel" in up_comp or "fuel" in up_bkt
+                if is_fuel:
+                    res["Col_O_Fuel_Sensor_Status"] = "Fuel Sensor faulty"
+                    res["Col_P_Docket_no"] = new_docket
+                    res["Col_Q_Open_Date"] = date_str
+                
+                res["Col_S_DG_Automation_Status"] = "DG Breakdown" if "breakdown" in up_comp else "Manual Mode"
+                res["source"] = "CM Tracker (Open Site)"
 
     for k, v in res.items():
         if str(v).lower() == 'nan' or str(v) == 'nat':
