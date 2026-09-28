@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling with Perfect Sidebar Download Alignment
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -123,6 +123,20 @@ st.markdown("""
     section[data-testid="stSidebar"] span {
         color: #1e293b !important;
         font-weight: 600 !important;
+    }
+
+    /* ⚡ SIDEBAR DOWNLOAD BUTTON FULL WIDTH ALIGNMENT */
+    section[data-testid="stSidebar"] .stDownloadButton button {
+        width: 100% !important;
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        border: 1px solid #38bdf8 !important;
+    }
+    section[data-testid="stSidebar"] .stDownloadButton button:hover {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
     }
 
     .stTextInput label, .stSelectbox label, .stDateInput label, .stTextArea label, .stNumberInput label {
@@ -1000,7 +1014,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
                                 edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
                                 
-                                # ⚡ REORDERED POSITION AS REQUESTED: OPEN DATE (COL Q) UNDER FUEL SENSOR DOCKET NO (COL P)
                                 raw_open_date_val = s_row.get('Open Date')
                                 if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
                                     raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
@@ -1011,7 +1024,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                             with se2:
                                 edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
                                 
-                                # ⚡ REORDERED POSITION AS REQUESTED: PRESENT DOCKET NO (COL V) & FAULTY DATE (COL W) UNDER REMARKS
                                 edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
 
                                 raw_date_val = s_row.get('Present Docket raise Date')
