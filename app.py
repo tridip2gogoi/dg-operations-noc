@@ -302,6 +302,20 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
 
+def archive_current_fault_to_previous(row_idx, df_target):
+    # ⚡ SHIFT CURRENT ACTIVE DOCKET TO PREVIOUS (COL Z, AA, AB) BEFORE CLOSING/RESETTING
+    r = df_target.loc[row_idx]
+    pres_doc = str(r.get('Present Docket No.', '')).strip()
+    pres_date = str(r.get('Present Docket raise Date', '')).strip()
+    pres_rem = str(r.get('Present Remarks', '')).strip()
+    
+    if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
+        df_target.at[row_idx, 'Previous Docket No.'] = pres_doc
+        df_target.at[row_idx, 'Previous Docket raise Date'] = pres_date
+        df_target.at[row_idx, 'Previous Remarks'] = pres_rem
+    
+    return df_target
+
 def clear_site_active_fault_data(site_id, df_target):
     if df_target.empty or not site_id:
         return df_target
@@ -310,6 +324,10 @@ def clear_site_active_fault_data(site_id, df_target):
     match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
     if not match_idx.empty:
         i = match_idx[0]
+        # Shift to previous history first
+        updated = archive_current_fault_to_previous(i, updated)
+        
+        # Reset current active fault columns
         if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
         if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
         if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
@@ -319,6 +337,7 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
         if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
+        if "Last Closed date" in updated.columns: updated.at[i, "Last Closed date"] = date.today().strftime('%Y-%m-%d')
     return updated
 
 # --- AUTHENTICATION GATEWAY ---
@@ -839,6 +858,11 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
                             submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                             if submit_single_edit:
+                                # ⚡ AUTO ARCHIVE TO PREVIOUS IF DOCKET CHANGED OR SAVED WITH NEW FAULT
+                                old_docket = str(s_row.get('Present Docket No.', '')).strip()
+                                if edit_docket and old_docket and old_docket.lower() not in ['', 'nan', 'none'] and old_docket != edit_docket:
+                                    st.session_state.master_tracker_df = archive_current_fault_to_previous(row_idx, st.session_state.master_tracker_df)
+
                                 current_eval_date = date(2026, 9, 28)
                                 calc_aging = (current_eval_date - edit_raise_date).days
                                 if calc_aging < 0:
@@ -860,7 +884,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                         with col_bt1:
                             if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
                                 st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df)
-                                st.success(f"TT closed and site `{search_edit_site}` reset to Automation Ok successfully!")
+                                st.success(f"TT closed and site `{search_edit_site}` reset to Automation Ok successfully! Previous fault archived.")
                                 st.rerun()
                         with col_bt2:
                             if st.button(f"🚨 Permanently Remove Site `{search_edit_site}`", type="secondary", use_container_width=True):
