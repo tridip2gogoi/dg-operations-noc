@@ -1177,7 +1177,7 @@ elif page == "🔍 AI Site Diagnostics":
                             clean_date_str(site_row.get("Open Date", "")),
                             clean_date_str(site_row.get("Last Closed date", "")),
                             str(site_row.get("DG Automation Status", "")),
-                            str(site_row.get("Present Remarks", "")),
+                            str(site_row.get("Presentation Remarks", "") if "Presentation Remarks" in site_row else site_row.get("Present Remarks", "")),
                             str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
