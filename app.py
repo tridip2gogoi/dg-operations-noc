@@ -260,7 +260,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
-            # Completely remove Last Closed Date column if exists
             if 'Last Closed date' in df_status.columns:
                 df_status = df_status.drop(columns=['Last Closed date'])
             if 'Last Closed date.1' in df_status.columns:
@@ -895,7 +894,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             st.rerun()
 
 # ---------------------------------------------------------
-# 6. IN-PORTAL MASTER TRACKER EDITOR (WITH OPEN DOCKET AUTO-SCAN & TT CLOSED)
+# 6. IN-PORTAL MASTER TRACKER EDITOR (FULL MASTER EDITING & SPREADSHEET GRID)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
@@ -906,7 +905,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
     else:
         edit_tab1, edit_tab2 = st.tabs([
             "📝 Single Site Quick Editor, TT Closure & Removal",
-            "📊 Bulk Inline Grid Editor (Spreadsheet View)"
+            "📊 Full Master Tracker Spreadsheet Inline Grid Editor"
         ])
 
         with edit_tab1:
@@ -1018,11 +1017,19 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
         with edit_tab2:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Bulk Inline Grid Editor</h3>", unsafe_allow_html=True)
-                edited_master_grid = st.data_editor(df_status, use_container_width=True, height=450)
-                if st.button("💾 Save Bulk Grid Changes", type="primary", use_container_width=True):
-                    st.session_state.master_tracker_df = edited_master_grid.copy()
-                    st.success("Master Tracker grid changes saved successfully!")
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
+                st.caption("Here you can directly edit any cell, add rows, or modify the complete master dataset like an Excel sheet.")
+                
+                edited_full_master = st.data_editor(
+                    st.session_state.master_tracker_df, 
+                    use_container_width=True, 
+                    height=550, 
+                    num_rows="dynamic"
+                )
+                
+                if st.button("💾 Commit & Save Full Master Grid Changes", type="primary", use_container_width=True):
+                    st.session_state.master_tracker_df = edited_full_master.copy()
+                    st.success("Full Master Tracker dataset updated and saved successfully across all modules!")
                     st.rerun()
 
 # ---------------------------------------------------------
