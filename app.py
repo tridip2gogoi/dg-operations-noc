@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with TT Closure & Removal
+# Custom Corporate Professional NOC Styling with Explicit Form Label Visibility Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -974,6 +974,11 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(s_row.get('DG Automation Status')) if s_row.get('DG Automation Status') in STATUS_CHOICES else 0)
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(s_row.get('Bucket')) + 1 if s_row.get('Bucket') in BUCKET_LIST else 0)
                                 edit_docket = st.text_input("Present Docket No:", value=str(s_row.get('Present Docket No.', '')) if pd.notna(s_row.get('Present Docket No.')) else "")
+                                
+                                # Faulty / Docket Raise Date
+                                existing_raise_date = to_date_obj(s_row.get('Present Docket raise Date'))
+                                edit_raise_date = st.date_input("Present Docket raise Date (Faulty Date):", value=existing_raise_date)
+
                             with se2:
                                 edit_rem = st.text_area("Present Remarks / Complaint:", value=str(s_row.get('Present Remarks', '')) if pd.notna(s_row.get('Present Remarks')) else "")
                                 edit_aging = st.number_input("Aging (Days):", value=int(s_row.get("Aging (Day's)", 0)) if pd.notna(s_row.get("Aging (Day's)")) else 0)
@@ -983,6 +988,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 st.session_state.master_tracker_df.at[row_idx, 'DG Automation Status'] = edit_stat
                                 st.session_state.master_tracker_df.at[row_idx, 'Bucket'] = None if edit_bkt == "None" else edit_bkt
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Docket No.'] = edit_docket
+                                st.session_state.master_tracker_df.at[row_idx, 'Present Docket raise Date'] = edit_raise_date.strftime('%Y-%m-%d')
                                 st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = edit_rem
                                 st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = edit_aging
                                 st.success(f"Site `{search_edit_site}` updated successfully!")
