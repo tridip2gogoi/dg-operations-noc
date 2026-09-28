@@ -260,6 +260,12 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
+            # Completely remove Last Closed Date column if exists
+            if 'Last Closed date' in df_status.columns:
+                df_status = df_status.drop(columns=['Last Closed date'])
+            if 'Last Closed date.1' in df_status.columns:
+                df_status = df_status.drop(columns=['Last Closed date.1'])
+            
             if 'SAIP ID' in df_status.columns:
                 df_status = df_status[df_status['SAIP ID'].notna()]
                 df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
@@ -273,7 +279,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             if 'JC' in df_status.columns:
                 df_status['JC'] = df_status['JC'].astype(str).str.strip()
             
-            for d_col in ['Open Date', 'Last Closed date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date.1']:
+            for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date']:
                 if d_col in df_status.columns:
                     df_status[d_col] = df_status[d_col].apply(clean_date_str)
                     
@@ -308,7 +314,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     clean_id = str(site_id).strip().upper() if site_id else ""
     res = {
         "JC": "", "Col_O_Fuel_Sensor_Status": "Ok", "Col_P_Docket_no": "",
-        "Col_Q_Open_Date": "", "Col_R_Last_Closed_date": "", "Col_S_DG_Automation_Status": "Automation Ok",
+        "Col_Q_Open_Date": "", "Col_S_DG_Automation_Status": "Automation Ok",
         "Col_T_Present_Remarks": "", "Col_U_Bucket": "", "Col_V_Present_Docket_No": "",
         "Col_W_Present_Docket_raise_Date": "", "Col_X_Aging_Days": 0, "Col_Y_Timeline": "",
         "Col_Z_Previous_Remarks": "", "Col_AA_Previous_Docket_No": "", "Col_AB_Previous_Docket_raise_Date": "",
@@ -325,7 +331,6 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res["Col_O_Fuel_Sensor_Status"] = str(prev_row.get("Fuel Sensor Status", "Ok")).strip()
             res["Col_P_Docket_no"] = str(prev_row.get("Docket no.", "")).strip()
             res["Col_Q_Open_Date"] = clean_date_str(prev_row.get("Open Date", ""))
-            res["Col_R_Last_Closed_date"] = clean_date_str(prev_row.get("Last Closed date", ""))
             res["Col_S_DG_Automation_Status"] = str(prev_row.get("DG Automation Status", "Manual Mode")).strip()
             res["Col_T_Present_Remarks"] = str(prev_row.get("Present Remarks", "")).strip()
             res["Col_U_Bucket"] = str(prev_row.get("Bucket", "")).strip()
@@ -395,7 +400,7 @@ def archive_current_fault_to_previous(row_idx, df_target):
         df_target.at[row_idx, 'Previous Remarks'] = pres_rem
     return df_target
 
-def clear_site_active_fault_data(site_id, df_target, is_fuel_sensor_only=False):
+def clear_site_active_fault_data(site_id, df_target):
     if df_target.empty or not site_id:
         return df_target
     updated = df_target.copy()
@@ -404,27 +409,15 @@ def clear_site_active_fault_data(site_id, df_target, is_fuel_sensor_only=False):
     if not match_idx.empty:
         i = match_idx[0]
         updated = archive_current_fault_to_previous(i, updated)
-        
-        today_str = date.today().strftime('%Y-%m-%d')
-        
-        if is_fuel_sensor_only:
-            # ⚡ ONLY FUEL SENSOR FAULT CLOSED -> UPDATE COL R (Last Closed date)
-            if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
-            if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
-            if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
-            if "Last Closed date" in updated.columns: updated.at[i, "Last Closed date"] = today_str
-        else:
-            # FULL TT CLOSURE & RESET
-            if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
-            if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
-            if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
-            if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
-            if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
-            if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
-            if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
-            if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
-            if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
-            if "Last Closed date" in updated.columns: updated.at[i, "Last Closed date"] = today_str
+        if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
+        if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
+        if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
+        if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
+        if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
+        if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
+        if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
+        if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
+        if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
     return updated
 
 # --- AUTHENTICATION GATEWAY ---
@@ -1011,21 +1004,16 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                         st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                         st.markdown("<h4 style='color: #0f172a; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
                         
-                        col_bt1, col_bt2, col_bt3 = st.columns(3)
+                        col_bt1, col_bt2 = st.columns(2)
                         with col_bt1:
-                            if st.button("✅ Close Full TT & Reset", type="primary", use_container_width=True):
-                                st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df, is_fuel_sensor_only=False)
-                                st.success(f"Full TT closed and site `{search_edit_site}` reset successfully!")
+                            if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
+                                st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df)
+                                st.success(f"TT closed and site `{search_edit_site}` reset to Automation Ok successfully! Previous fault archived.")
                                 st.rerun()
                         with col_bt2:
-                            if st.button("⛽ Close Fuel Sensor Fault Only (Col R)", type="primary", use_container_width=True):
-                                st.session_state.master_tracker_df = clear_site_active_fault_data(search_edit_site, st.session_state.master_tracker_df, is_fuel_sensor_only=True)
-                                st.success(f"Fuel sensor fault closed for `{search_edit_site}`! Col R updated with today's date.")
-                                st.rerun()
-                        with col_bt3:
-                            if st.button(f"🚨 Remove Site `{search_edit_site}`", type="secondary", use_container_width=True):
+                            if st.button(f"🚨 Permanently Remove Site `{search_edit_site}`", type="secondary", use_container_width=True):
                                 st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
-                                st.success(f"Site `{search_edit_site}` removed successfully!")
+                                st.success(f"Site `{search_edit_site}` removed from Master Tracker successfully!")
                                 st.rerun()
 
         with edit_tab2:
@@ -1172,7 +1160,6 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown(f"**TRT Personnel:** `{site_row.get('TRT Name', 'N/A')}`")
                         st.markdown(f"**Contact Number:** `{site_row.get('Contact No.', 'N/A')}`")
                         st.markdown(f"**Dependent Sites:** `{site_row.get('Dependent Site', 'None')}`")
-                        st.markdown(f"**Last Closed Date:** `{clean_date_str(site_row.get('Last Closed date', 'N/A'))}`")
 
             with diag_t2:
                 with st.container(border=True):
@@ -1180,7 +1167,7 @@ elif page == "🔍 AI Site Diagnostics":
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
-                            "Col R: Last Closed date", "Col S: DG Automation Status", "Col T: Present Remarks",
+                            "Col S: DG Automation Status", "Col T: Present Remarks",
                             "Col U: Bucket", "Col V: Present Docket No.", "Col W: Present Docket raise Date",
                             "Col X: Aging (Day's)", "Col Y: Timeline"
                         ],
@@ -1188,7 +1175,6 @@ elif page == "🔍 AI Site Diagnostics":
                             str(site_row.get("Fuel Sensor Status", "")),
                             str(site_row.get("Docket no.", "")),
                             clean_date_str(site_row.get("Open Date", "")),
-                            clean_date_str(site_row.get("Last Closed date", "")),
                             str(site_row.get("DG Automation Status", "")),
                             str(site_row.get("Present Remarks", "")),
                             str(site_row.get("Bucket", "")),
@@ -1202,10 +1188,9 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t3:
                 with st.container(border=True):
-                    h1, h2, h3 = st.columns(3)
+                    h1, h2 = st.columns(2)
                     h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
                     h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
-                    h3.metric("Last Closure Date (Col R)", clean_date_str(site_row.get('Last Closed date', 'None')))
                     st.markdown("<hr style='margin: 10px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
                     st.info(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
