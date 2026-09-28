@@ -762,18 +762,28 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected.")
 
 # ---------------------------------------------------------
-# 4. CRITICAL AGING ESCALATIONS (DIRECT FROM MASTER TRACKER)
+# 4. CRITICAL AGING ESCALATIONS (DIRECTLY FROM MASTER TRACKER WITH DAILY LIVE COUNT)
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
-    st.caption("Delayed site distribution directly from Master Tracker, cross-tabulated by JC and Problem Buckets.")
+    st.caption("Delayed site distribution directly from Master Tracker, cross-tabulated by JC and Problem Buckets with daily added count.")
 
     aging_valid = df_status[df_status['Aging_Num'] > 0].copy() if 'Aging_Num' in df_status.columns else pd.DataFrame()
     crit_df = aging_valid[aging_valid['Aging_Num'] > 90].copy() if not aging_valid.empty else pd.DataFrame()
 
-    m1, m2 = st.columns(2)
-    m1.metric("Total Delayed Sites (Master Tracker)", len(aging_valid))
+    # ⚡ PER DAY ADDED LIVE COUNT CALCULATION (Based on Present Docket raise Date or Open Date matching today 2026-09-28)
+    today_str = "2026-09-28"
+    daily_added_count = 0
+    if not aging_valid.empty:
+        for d_col in ['Present Docket raise Date', 'Open Date']:
+            if d_col in aging_valid.columns:
+                matched_today = aging_valid[aging_valid[d_col].astype(str).str.startswith(today_str)]
+                daily_added_count = max(daily_added_count, len(matched_today))
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total Delayed Sites (Master)", len(aging_valid))
     m2.metric("Severe Delays (>90 Days)", len(crit_df))
+    m3.metric("Per Day Added (Today)", daily_added_count, "Live Daily Count")
 
     if not aging_valid.empty:
         st.markdown("---")
