@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling with Guaranteed Visible Form Labels
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -287,12 +287,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             xls_cm = pd.ExcelFile(cm_file)
             target_cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
             df_open_cm = pd.read_excel(xls_cm, sheet_name=target_cm_sheet)
-            
-            if not df_open_cm.empty:
-                df_open_cm.columns = [str(c).strip() for c in df_open_cm.columns]
-                for d_c in df_open_cm.columns:
-                    if any(term in d_c.lower() for term in ['date', 'loggin', 'time']):
-                        df_open_cm[d_c] = df_open_cm[d_c].apply(clean_date_str)
         except Exception as e:
             st.warning(f"Note on CM tracker: {e}")
 
@@ -307,113 +301,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             st.warning(f"Note on ILA-AG1 tracker: {e}")
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
-
-def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
-    clean_id = str(site_id).strip().upper() if site_id else ""
-    res = {
-        "JC": "", "Col_O_Fuel_Sensor_Status": "Ok", "Col_P_Docket_no": "",
-        "Col_Q_Open_Date": "", "Col_R_Last_Closed_date": "", "Col_S_DG_Automation_Status": "Automation Ok",
-        "Col_T_Present_Remarks": "", "Col_U_Bucket": "", "Col_V_Present_Docket_No": "",
-        "Col_W_Present_Docket_raise_Date": "", "Col_X_Aging_Days": 0, "Col_Y_Timeline": "",
-        "Col_Z_Previous_Remarks": "", "Col_AA_Previous_Docket_No": "", "Col_AB_Previous_Docket_raise_Date": "",
-        "source": "None"
-    }
-    if not clean_id:
-        return res
-
-    if not df_status.empty and 'SAIP ID' in df_status.columns:
-        dg_match = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == clean_id]
-        if not dg_match.empty:
-            prev_row = dg_match.iloc[0]
-            res["JC"] = str(prev_row.get("JC", "")).strip()
-            res["Col_O_Fuel_Sensor_Status"] = str(prev_row.get("Fuel Sensor Status", "Ok")).strip()
-            res["Col_P_Docket_no"] = str(prev_row.get("Docket no.", "")).strip()
-            res["Col_Q_Open_Date"] = clean_date_str(prev_row.get("Open Date", ""))
-            res["Col_R_Last_Closed_date"] = clean_date_str(prev_row.get("Last Closed date", ""))
-            res["Col_S_DG_Automation_Status"] = str(prev_row.get("DG Automation Status", "Manual Mode")).strip()
-            res["Col_T_Present_Remarks"] = str(prev_row.get("Present Remarks", "")).strip()
-            res["Col_U_Bucket"] = str(prev_row.get("Bucket", "")).strip()
-            res["Col_V_Present_Docket_No"] = str(prev_row.get("Present Docket No.", "")).strip()
-            res["Col_W_Present_Docket_raise_Date"] = clean_date_str(prev_row.get("Present Docket raise Date", ""))
-            res["Col_X_Aging_Days"] = prev_row.get("Aging (Day's)", 0)
-            res["Col_Y_Timeline"] = str(prev_row.get("Timeline", "")).strip()
-            res["Col_Z_Previous_Remarks"] = str(prev_row.get("Previous Remarks", "")).strip()
-            res["Col_AA_Previous_Docket_No"] = str(prev_row.get("Previous Docket No.", "")).strip()
-            res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
-            res["source"] = "DG Master Tracker"
-
-    if not df_open_cm.empty:
-        # Flexible column mapping for CM Tracker
-        cols = {c.lower(): c for c in df_open_cm.columns}
-        site_col = cols.get('site id') or cols.get('site_id') or cols.get('sap id') or cols.get('saip id')
-        docket_col = cols.get('docket number') or cols.get('docket no') or cols.get('docket')
-        complaint_col = cols.get('nature of complaint') or cols.get('complaint') or cols.get('remarks')
-        bucket_col = cols.get('bucket') or cols.get('root cause')
-        timeline_col = cols.get('timeline')
-        aging_col = cols.get('ageing') or cols.get('aging')
-        date_col = cols.get('complaint loggin date') or cols.get('open date') or cols.get('date')
-
-        if site_col:
-            cm_match = df_open_cm[df_open_cm[site_col].astype(str).str.strip().str.upper() == clean_id]
-            if not cm_match.empty:
-                cm_row = cm_match.iloc[0]
-                if not res["JC"] and 'jc' in cols and pd.notna(cm_row.get(cols['jc'])):
-                    res["JC"] = str(cm_row.get(cols['jc'])).strip()
-                
-                new_docket = str(cm_row.get(docket_col, "")).strip() if docket_col else ""
-                new_complaint = str(cm_row.get(complaint_col, "")).strip() if complaint_col else ""
-                new_bucket = str(cm_row.get(bucket_col, "")).strip() if bucket_col else ""
-                new_timeline = str(cm_row.get(timeline_col, "")).strip() if timeline_col else ""
-                new_aging = cm_row.get(aging_col, 0) if aging_col else 0
-                date_str = clean_date_str(cm_row.get(date_col, "")) if date_col else ""
-
-                if res["Col_V_Present_Docket_No"] and res["Col_V_Present_Docket_No"] != new_docket and res["Col_V_Present_Docket_No"].lower() != 'nan':
-                    res["Col_AA_Previous_Docket_No"] = res["Col_V_Present_Docket_No"]
-                    res["Col_AB_Previous_Docket_raise_Date"] = res["Col_W_Present_Docket_raise_Date"]
-                    res["Col_Z_Previous_Remarks"] = res["Col_T_Present_Remarks"]
-
-                if new_docket and new_docket.lower() != 'nan':
-                    res["Col_V_Present_Docket_No"] = new_docket
-                if date_str:
-                    res["Col_W_Present_Docket_raise_Date"] = date_str
-                if new_complaint and new_complaint.lower() != 'nan':
-                    res["Col_T_Present_Remarks"] = new_complaint
-                
-                try:
-                    res["Col_X_Aging_Days"] = float(new_aging) if pd.notna(new_aging) else 0
-                except:
-                    res["Col_X_Aging_Days"] = 0
-
-                res["Col_Y_Timeline"] = new_timeline if new_timeline.lower() != 'nan' else ""
-                
-                up_comp = new_complaint.upper()
-                up_bkt = new_bucket.upper()
-                if "FUEL" in up_comp or "FUEL" in up_bkt:
-                    res["Col_U_Bucket"] = "Fuel Sensor"
-                elif "GCU" in up_comp or "GCU" in up_bkt:
-                    res["Col_U_Bucket"] = "GCU"
-                elif "BATTERY" in up_comp:
-                    res["Col_U_Bucket"] = "DG battery"
-                elif "AMF" in up_comp or "AMF" in up_bkt:
-                    res["Col_U_Bucket"] = "AMF Req"
-                elif new_bucket and new_bucket.lower() != 'nan':
-                    res["Col_U_Bucket"] = new_bucket
-                else:
-                    res["Col_U_Bucket"] = "DG Breakdown"
-
-                is_fuel = "fuel" in up_comp or "fuel" in up_bkt
-                if is_fuel:
-                    res["Col_O_Fuel_Sensor_Status"] = "Fuel Sensor faulty"
-                    res["Col_P_Docket_no"] = new_docket
-                    res["Col_Q_Open_Date"] = date_str
-                
-                res["Col_S_DG_Automation_Status"] = "DG Breakdown" if "breakdown" in up_comp else "Manual Mode"
-                res["source"] = "CM Tracker (Open Site)"
-
-    for k, v in res.items():
-        if str(v).lower() == 'nan' or str(v) == 'nat':
-            res[k] = ""
-    return res
 
 def clear_site_active_fault_data(site_id, df_target):
     if df_target.empty or not site_id:
@@ -511,7 +398,7 @@ ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
 df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
-# ⚡ ROBUST PERSISTENT SESSION STATE INITIALIZATION FOR ALL TRACKERS
+# ⚡ PERSISTENT SESSION STATE INITIALIZATION
 if "master_tracker_df" not in st.session_state:
     st.session_state.master_tracker_df = pd.DataFrame()
 if "fuel_tracker_df" not in st.session_state:
@@ -540,15 +427,11 @@ if not df_status.empty:
 else:
     st.sidebar.warning("⚠️ No data loaded. Upload Master Tracker.")
 
-if not df_open_cm.empty:
-    st.sidebar.success(f"CM Tracker: {len(df_open_cm)} Open Incidents Synced")
-
 if not df_ila.empty:
     st.sidebar.success(f"ILA-AG1: {len(df_ila)} Records Loaded")
 
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
-    "⚡ O to AB Automated Sync Engine",
     "⚙️ Fleet Analytics & Problem Buckets",
     "⛽ Fuel Sensor Telemetry",
     "⏳ Critical Aging Escalation Monitor",
@@ -612,73 +495,7 @@ if page == "📊 Executive Control Center":
         st.info("No data loaded. Please upload the Master Tracker from the sidebar.")
 
 # ---------------------------------------------------------
-# 2. O TO AB AUTOMATED SYNC ENGINE
-# ---------------------------------------------------------
-elif page == "⚡ O to AB Automated Sync Engine":
-    st.markdown("## ⚡ Master Automation Tracker: Col O to AB Auto-Update Engine")
-    st.caption("AI-driven pipeline mapping CM Tracker (`Open Site`) directly into Col O to AB of `Automation Status`.")
-
-    if df_status.empty:
-        st.warning("Please verify that the DG Master Tracker is uploaded.")
-    else:
-        st.markdown(f"""
-        <div class="auto-docket-box">
-            <b>Pipeline Diagnostic:</b> Master Tracker: <b>{len(df_status):,} sites</b> | CM Open Incidents: <b>{len(df_open_cm)} records detected</b>.<br>
-            ⚡ <b>Live Integration Active:</b> All edits committed from the <i>In-Portal Master Tracker Editor</i> reflect here automatically in real-time.
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("🚀 Execute Col O to AB Batch Synchronization", type="primary", use_container_width=True):
-            with st.spinner("Processing telemetry reconciliation and populating Col O to AB..."):
-                updated_df = df_status.copy()
-                sync_count = 0
-                for idx, row in updated_df.iterrows():
-                    s_id = row.get("SAIP ID")
-                    cap = ai_capture_o_to_ab(s_id, df_open_cm, df_status, None)
-                    if cap["source"] != "None":
-                        sync_count += 1
-                        updated_df.at[idx, "Fuel Sensor Status"] = cap["Col_O_Fuel_Sensor_Status"]
-                        if cap["Col_P_Docket_no"]: updated_df.at[idx, "Docket no."] = cap["Col_P_Docket_no"]
-                        if cap["Col_Q_Open_Date"]: updated_df.at[idx, "Open Date"] = clean_date_str(cap["Col_Q_Open_Date"])
-                        if cap["Col_S_DG_Automation_Status"]: updated_df.at[idx, "DG Automation Status"] = cap["Col_S_DG_Automation_Status"]
-                        if cap["Col_T_Present_Remarks"]: updated_df.at[idx, "Present Remarks"] = cap["Col_T_Present_Remarks"]
-                        if cap["Col_U_Bucket"]: updated_df.at[idx, "Bucket"] = cap["Col_U_Bucket"]
-                        if cap["Col_V_Present_Docket_No"]: updated_df.at[idx, "Present Docket No."] = cap["Col_V_Present_Docket_No"]
-                        if cap["Col_W_Present_Docket_raise_Date"]: updated_df.at[idx, "Present Docket raise Date"] = clean_date_str(cap["Col_W_Present_Docket_raise_Date"])
-                        if cap["Col_X_Aging_Days"]: updated_df.at[idx, "Aging (Day's)"] = cap["Col_X_Aging_Days"]
-                        if cap["Col_Y_Timeline"]: updated_df.at[idx, "Timeline"] = cap["Col_Y_Timeline"]
-                        if cap["Col_Z_Previous_Remarks"]: updated_df.at[idx, "Previous Remarks"] = cap["Col_Z_Previous_Remarks"]
-                        if cap["Col_AA_Previous_Docket_No"]: updated_df.at[idx, "Previous Docket No."] = cap["Col_AA_Previous_Docket_No"]
-                        if cap["Col_AB_Previous_Docket_raise_Date"]: updated_df.at[idx, "Previous Docket raise Date"] = clean_date_str(cap["Col_AB_Previous_Docket_raise_Date"])
-
-                st.session_state.master_tracker_df = updated_df
-                st.success(f"Batch Sync Completed! Reconciled {sync_count} sites matching CM Tracker entries.")
-
-        display_cols = [
-            'SAIP ID', 'Fuel Sensor Status', 'Docket no.', 'Open Date', 
-            'DG Automation Status', 'Present Remarks', 'Bucket', 
-            'Present Docket No.', 'Present Docket raise Date', "Aging (Day's)", 'Timeline',
-            'Previous Remarks', 'Previous Docket No.', 'Previous Docket raise Date'
-        ]
-        valid_cols = [c for c in display_cols if c in df_status.columns]
-        st.markdown("#### Live Master Tracker Pipeline Status (Col O to AB)")
-        st.dataframe(df_status[valid_cols].head(50), use_container_width=True)
-
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_status.to_excel(writer, sheet_name="Automation Status", index=False)
-            if not df_fuel.empty:
-                df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
-        st.download_button(
-            label="📥 Download Master Updated Tracker (Col O to AB Synced .xlsx)",
-            data=output.getvalue(),
-            file_name=f"Updated_DG_Automation_Tracker_{datetime.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
-
-# ---------------------------------------------------------
-# 3. FLEET ANALYTICS & ROOT-CAUSE
+# 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
@@ -770,7 +587,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 st.warning("JC column not found in dataset.")
 
 # ---------------------------------------------------------
-# 4. FUEL SENSOR TELEMETRY
+# 3. FUEL SENSOR TELEMETRY
 # ---------------------------------------------------------
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
@@ -805,7 +622,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
         st.info("No active fuel sensor faults detected.")
 
 # ---------------------------------------------------------
-# 5. CRITICAL AGING ESCALATIONS
+# 4. CRITICAL AGING ESCALATIONS
 # ---------------------------------------------------------
 elif page == "⏳ Critical Aging Escalation Monitor":
     st.markdown("## ⏳ Critical Aging Escalation Radar & JC-Wise Breakdown")
@@ -820,7 +637,7 @@ elif page == "⏳ Critical Aging Escalation Monitor":
             st.dataframe(crit_df.sort_values(by='Aging_Num', ascending=False), use_container_width=True)
 
 # ---------------------------------------------------------
-# 6. ILA-AG1 OPERATIONS TRACKER
+# 5. ILA-AG1 OPERATIONS TRACKER
 # ---------------------------------------------------------
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
@@ -959,7 +776,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             st.rerun()
 
 # ---------------------------------------------------------
-# 7. IN-PORTAL MASTER TRACKER EDITOR (WITH TT CLOSED & REMOVAL)
+# 6. IN-PORTAL MASTER TRACKER EDITOR (WITH TT CLOSED & REMOVAL)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
@@ -994,7 +811,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(s_row.get('Bucket')) + 1 if s_row.get('Bucket') in BUCKET_LIST else 0)
                                 edit_docket = st.text_input("Present Docket No:", value=str(s_row.get('Present Docket No.', '')) if pd.notna(s_row.get('Present Docket No.')) else "")
                                 
-                                # Faulty / Docket Raise Date
                                 existing_raise_date = to_date_obj(s_row.get('Present Docket raise Date'))
                                 edit_raise_date = st.date_input("Present Docket raise Date (Faulty Date):", value=existing_raise_date)
 
@@ -1042,7 +858,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     st.rerun()
 
 # ---------------------------------------------------------
-# 8. AI SITE DIAGNOSTICS (PROFESSIONAL ENTERPRISE EDITION)
+# 7. AI SITE DIAGNOSTICS (PROFESSIONAL ENTERPRISE EDITION)
 # ---------------------------------------------------------
 elif page == "🔍 AI Site Diagnostics":
     st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
@@ -1094,7 +910,6 @@ elif page == "🔍 AI Site Diagnostics":
                 site_row = matches.iloc[0]
                 selected_site = site_row['SAIP ID']
 
-            cap_data = ai_capture_o_to_ab(selected_site, df_open_cm, df_status, None)
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit" if "Breakdown" in status_val else "badge-warn"
 
@@ -1157,9 +972,8 @@ elif page == "🔍 AI Site Diagnostics":
             </div>
             """, unsafe_allow_html=True)
 
-            diag_t1, diag_t2, diag_t3 = st.tabs([
+            diag_t1, diag_t2 = st.tabs([
                 "📋 Technical Asset Specifications",
-                "⚡ Active Dockets & Pipeline Reconciliation",
                 "⏳ Resolution History & Previous Dockets (Col Y to AB)"
             ])
 
@@ -1180,43 +994,6 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown(f"**Last Closed Date:** `{clean_date_str(site_row.get('Last Closed date', 'N/A'))}`")
 
             with diag_t2:
-                with st.container(border=True):
-                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Live Master Tracker vs CM Open Docket Comparison</p>", unsafe_allow_html=True)
-                    rec_table = pd.DataFrame({
-                        "Field": [
-                            "Col O: Fuel Sensor Status", "Col P: Docket No", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Problem Bucket",
-                            "Col V: Present Docket No", "Col W: Present Docket Raise Date",
-                            "Col X: Aging (Days)", "Col Y: Timeline"
-                        ],
-                        "Master Tracker (Live)": [
-                            str(site_row.get("Fuel Sensor Status", "")),
-                            str(site_row.get("Docket no.", "")),
-                            clean_date_str(site_row.get("Open Date", "")),
-                            str(site_row.get("DG Automation Status", "")),
-                            str(site_row.get("Present Remarks", "")),
-                            str(site_row.get("Bucket", "")),
-                            str(site_row.get("Present Docket No.", "")),
-                            clean_date_str(site_row.get("Present Docket raise Date", "")),
-                            str(site_row.get("Aging (Day's)", "")),
-                            str(site_row.get("Timeline", ""))
-                        ],
-                        "CM Tracker (Open Incidents)": [
-                            cap_data.get("Col_O_Fuel_Sensor_Status", ""),
-                            cap_data.get("Col_P_Docket_no", ""),
-                            clean_date_str(cap_data.get("Col_Q_Open_Date", "")),
-                            cap_data.get("Col_S_DG_Automation_Status", ""),
-                            cap_data.get("Col_T_Present_Remarks", ""),
-                            cap_data.get("Col_U_Bucket", ""),
-                            cap_data.get("Col_V_Present_Docket_No", ""),
-                            clean_date_str(cap_data.get("Col_W_Present_Docket_raise_Date", "")),
-                            str(cap_data.get("Col_X_Aging_Days", "")),
-                            str(cap_data.get("Col_Y_Timeline", ""))
-                        ]
-                    })
-                    st.dataframe(rec_table, use_container_width=True, hide_index=True)
-
-            with diag_t3:
                 with st.container(border=True):
                     h1, h2, h3 = st.columns(3)
                     h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
