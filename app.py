@@ -410,40 +410,110 @@ admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
 
-# --- ULTRA COMPACT TOP HEADER BAR ---
-top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
-with top_c1:
-    st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
-with top_c2:
-    if st.button("🔄 Refresh", use_container_width=True, type="secondary"):
-        st.cache_data.clear()
-        for key in list(st.session_state.keys()):
-            if key != "authenticated" and key != "user_info" and key != "username":
-                del st.session_state[key]
-        st.success("Cache cleared!")
-        st.rerun()
-with top_c3:
-    if st.button("🚪 Log Out", use_container_width=True, type="primary"):
-        st.session_state.authenticated = False
-        st.session_state.user_info = None
+# --- SESSION STATE INITIALIZATION FOR TOGGLE ---
+if "show_control_panel" not in st.session_state:
+    st.session_state.show_control_panel = False
+
+# --- CLICKABLE TOGGLE BUTTON FOR TOP DASHBOARD ---
+c_btn1, c_btn2, c_btn3 = st.columns([1, 2, 1])
+with c_btn2:
+    toggle_label = "🔼 Hide Control Panel & File Pipeline" if st.session_state.show_control_panel else "🔽 Click here to Open Control Panel & File Pipeline"
+    if st.button(toggle_label, use_container_width=True, type="secondary"):
+        st.session_state.show_control_panel = not st.session_state.show_control_panel
         st.rerun()
 
-st.markdown("<hr style='margin:2px 0;'>", unsafe_allow_html=True)
+# --- EXPANDED / COLLAPSED TOP CONTROL PANEL ---
+if st.session_state.show_control_panel:
+    with st.container(border=True):
+        top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
+        with top_c1:
+            st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
+        with top_c2:
+            if st.button("🔄 Refresh Data", use_container_width=True, type="secondary"):
+                st.cache_data.clear()
+                for key in list(st.session_state.keys()):
+                    if key != "authenticated" and key != "user_info" and key != "username":
+                        del st.session_state[key]
+                st.success("Cache cleared!")
+                st.rerun()
+        with top_c3:
+            if st.button("🚪 Log Out", use_container_width=True, type="primary"):
+                st.session_state.authenticated = False
+                st.session_state.user_info = None
+                st.rerun()
 
-# --- FILE UPLOADERS EXPANDER (LOCKED FOR VIEWER) ---
-with st.expander("📂 Click here to Upload / Sync Data Pipeline & Download Master Tracker", expanded=False):
-    if is_viewer:
-        st.info("🔒 Viewer Mode: File uploading & data syncing is restricted. You can download the report below.")
-        uploaded_cm, uploaded_dg, uploaded_ila = None, None, None
-    else:
-        up_c1, up_c2, up_c3 = st.columns(3)
-        with up_c1:
-            uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
-        with up_c2:
-            uploaded_dg = st.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"], key="top_dg")
-        with up_c3:
-            uploaded_ila = st.file_uploader("3. ILA-AG1 Tracker", type=["xlsx", "xls"], key="top_ila")
+        st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
 
+        if is_viewer:
+            st.info("🔒 Viewer Mode: File uploading is locked. You can download reports below.")
+            uploaded_cm, uploaded_dg, uploaded_ila = None, None, None
+        else:
+            up_c1, up_c2, up_c3 = st.columns(3)
+            with up_c1:
+                uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
+            with up_c2:
+                uploaded_dg = st.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"], key="top_dg")
+            with up_c3:
+                uploaded_ila = st.file_uploader("3. ILA-AG1 Tracker", type=["xlsx", "xls"], key="top_ila")
+
+        detected_excel = DEFAULT_EXCEL
+        if not os.path.exists(DEFAULT_EXCEL):
+            local_files = [f for f in os.listdir('.') if f.endswith(('.xlsx', '.xls')) and not f.startswith('~$')]
+            for lf in local_files:
+                if "CM" not in lf.upper() and "ILA" not in lf.upper():
+                    detected_excel = lf
+                    break
+
+        cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
+        dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
+        ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
+
+        with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
+            df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
+
+        if "master_tracker_df" not in st.session_state:
+            st.session_state.master_tracker_df = pd.DataFrame()
+        if "fuel_tracker_df" not in st.session_state:
+            st.session_state.fuel_tracker_df = pd.DataFrame()
+        if "ila_tracker_df" not in st.session_state:
+            st.session_state.ila_tracker_df = pd.DataFrame()
+
+        if st.session_state.master_tracker_df.empty and not df_status_raw.empty:
+            st.session_state.master_tracker_df = df_status_raw.copy()
+        if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
+            st.session_state.fuel_tracker_df = df_fuel_raw.copy()
+        if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
+            st.session_state.ila_tracker_df = df_ila_raw.copy()
+
+        if uploaded_dg is not None and not df_status_raw.empty:
+            st.session_state.master_tracker_df = df_status_raw.copy()
+        if uploaded_ila is not None and not df_ila_raw.empty:
+            st.session_state.ila_tracker_df = df_ila_raw.copy()
+
+        df_status = st.session_state.master_tracker_df
+        df_fuel = st.session_state.fuel_tracker_df
+        df_ila = st.session_state.ila_tracker_df
+
+        if not df_status.empty:
+            full_output = BytesIO()
+            with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
+                df_status.to_excel(writer, sheet_name="Automation Status", index=False)
+                if not df_fuel.empty:
+                    df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
+                if not df_ila.empty:
+                    df_ila.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
+            
+            dc1, dc2, dc3 = st.columns([1, 2, 1])
+            with dc2:
+                st.download_button(
+                    label="📥 Download Complete Master & Operations Report (.xlsx)",
+                    data=full_output.getvalue(),
+                    file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+
+# Fallback loaders if panel is closed
 detected_excel = DEFAULT_EXCEL
 if not os.path.exists(DEFAULT_EXCEL):
     local_files = [f for f in os.listdir('.') if f.endswith(('.xlsx', '.xls')) and not f.startswith('~$')]
@@ -452,55 +522,13 @@ if not os.path.exists(DEFAULT_EXCEL):
             detected_excel = lf
             break
 
-cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
-dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
-ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
-
-with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
-    df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
-
-if "master_tracker_df" not in st.session_state:
-    st.session_state.master_tracker_df = pd.DataFrame()
-if "fuel_tracker_df" not in st.session_state:
-    st.session_state.fuel_tracker_df = pd.DataFrame()
-if "ila_tracker_df" not in st.session_state:
-    st.session_state.ila_tracker_df = pd.DataFrame()
-
-if st.session_state.master_tracker_df.empty and not df_status_raw.empty:
-    st.session_state.master_tracker_df = df_status_raw.copy()
-if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
-    st.session_state.fuel_tracker_df = df_fuel_raw.copy()
-if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
-    st.session_state.ila_tracker_df = df_ila_raw.copy()
-
-if uploaded_dg is not None and not df_status_raw.empty:
-    st.session_state.master_tracker_df = df_status_raw.copy()
-if uploaded_ila is not None and not df_ila_raw.empty:
-    st.session_state.ila_tracker_df = df_ila_raw.copy()
+if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
+    df_status_raw, _, _, df_ila_raw, _ = load_all_trackers(detected_excel, DEFAULT_CM_TRACKER, DEFAULT_ILA)
+    st.session_state.master_tracker_df = df_status_raw
+    st.session_state.ila_tracker_df = df_ila_raw
 
 df_status = st.session_state.master_tracker_df
-df_fuel = st.session_state.fuel_tracker_df
 df_ila = st.session_state.ila_tracker_df
-
-# --- DOWNLOAD MASTER BUTTON (ACCESSIBLE TO VIEWER) ---
-if not df_status.empty:
-    full_output = BytesIO()
-    with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
-        df_status.to_excel(writer, sheet_name="Automation Status", index=False)
-        if not df_fuel.empty:
-            df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
-        if not df_ila.empty:
-            df_ila.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
-    
-    dc1, dc2, dc3 = st.columns([1, 2, 1])
-    with dc2:
-        st.download_button(
-            label="📥 Download Complete Master & Operations Report (.xlsx)",
-            data=full_output.getvalue(),
-            file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
 
 # --- TOP HORIZONTAL NAVIGATION MENU ---
 page = st.radio(
@@ -592,13 +620,13 @@ if page == "📊 Executive Control Center":
                     )
                     st.plotly_chart(fig_donut, use_container_width=True)
     else:
-        st.info("No data loaded. Please upload the Master Tracker from the top pipeline section.")
+        st.info("No data loaded. Please open the top toggle panel to upload the Master Tracker.")
 
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
-    st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
+    st.markdown("## ⚙️️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
     jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()]) if 'JC' in df_status.columns else ["All JCs"]
@@ -791,7 +819,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     st.caption("Integrated tracking, editing, fault clearance, removal, and new case entries for ILA-AG1 operational logs.")
 
     if df_ila.empty:
-        st.info("📂 Please upload the **ILA-AG1 Tracker** file from the top expander section to initialize this module.")
+        st.info("📂 Please open the top toggle panel and upload the **ILA-AG1 Tracker** file to initialize this module.")
     else:
         if is_viewer:
             st.info("🔒 Viewer Mode: Read-only grid view.")
