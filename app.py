@@ -6,7 +6,6 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
-from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -15,9 +14,6 @@ st.set_page_config(
     page_icon="⚡",
     initial_sidebar_state="expanded"
 )
-
-# --- AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
-count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
 
 # Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
@@ -277,7 +273,7 @@ USER_CREDENTIALS = {
         "password_hash": hashlib.sha256("viewer@123".encode()).hexdigest(),
         "role": "NOC Viewer / Executive",
         "name": "Circle Audit Desk",
-        "access": ["read_only"]  # ⚡ Viewer account set to Read-only (Editing Locked)
+        "access": ["read_only"]
     }
 }
 
@@ -498,7 +494,7 @@ admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
 
-st.sidebar.markdown(f"### 🛡️️ Enterprise NOC Hub")
+st.sidebar.markdown(f"### 🛡️ Enterprise NOC Hub")
 st.sidebar.markdown(f"**Operator:** `{admin_name}`")
 st.sidebar.markdown(f"**Role:** `{admin_role}`")
 if st.sidebar.button("Log Out Session", use_container_width=True):
@@ -1416,7 +1412,13 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
                     prev_rem_text = str(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
                     st.markdown(f"""
-                    <div class="previous-remarks-box">
-                        {prev_rem_text}
-                    </div>
-                    """, unsafe_allow_html=True)
+                    .previous-remarks-box {{
+                        background-color: rgba(15, 23, 42, 0.85) !important;
+                        border: 1px solid #38bdf8 !important;
+                        border-radius: 10px !important;
+                        padding: 16px 20px !important;
+                        color: #ffffff !important;
+                        font-size: 15px !important;
+                        font-weight: 600 !important;
+                    }}
+                    """)
