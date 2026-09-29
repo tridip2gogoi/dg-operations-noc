@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling with White Expander Title Fix
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -40,7 +40,6 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* WHITE COLOR FIX FOR EXPANDER TITLE & RADIO BUTTONS */
     div[data-testid="stExpander"] summary p,
     div[data-testid="stExpander"] summary span,
     div[data-testid="stExpander"] summary {
@@ -424,8 +423,8 @@ with top_c3:
 
 st.markdown("---")
 
-# --- FILE UPLOADERS EXPANDER WITH WHITE TITLE FIX ---
-with st.expander("📂 Click here to Upload / Sync Data Pipeline (CM, Master, & ILA Trackers)", expanded=False):
+# --- FILE UPLOADERS & DOWNLOAD MASTER TRACKER EXPANDER ---
+with st.expander("📂 Click here to Upload / Sync Data Pipeline & Download Master Tracker", expanded=False):
     up_c1, up_c2, up_c3 = st.columns(3)
     with up_c1:
         uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
@@ -471,6 +470,23 @@ if uploaded_ila is not None and not df_ila_raw.empty:
 df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
 df_ila = st.session_state.ila_tracker_df
+
+# --- MASTER TRACKER DOWNLOAD BUTTON ON TOP ---
+if not df_status.empty:
+    full_output = BytesIO()
+    with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
+        df_status.to_excel(writer, sheet_name="Automation Status", index=False)
+        if not df_fuel.empty:
+            df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
+        if not df_ila.empty:
+            df_ila.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
+    st.download_button(
+        label="📥 Download Complete Master & Operations Report (.xlsx)",
+        data=full_output.getvalue(),
+        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
 # --- TOP HORIZONTAL NAVIGATION MENU ---
 st.markdown("### 🌐 NOC Operations Navigation")
@@ -1231,7 +1247,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
