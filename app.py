@@ -11,7 +11,7 @@ from io import BytesIO
 IST = timezone(timedelta(hours=5, minutes=30))
 current_ist_time = datetime.now(IST)
 
-# --- PAGE CONFIGURATION (MOBILE SIDEBAR EXPANDED FIX) ---
+# --- PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="NE Circle Telecom DG Ops Center | Enterprise NOC",
     layout="wide",
@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
+# Custom Corporate Professional NOC Styling & Permanent Sidebar Fix for Laptop & Mobile
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -31,6 +31,17 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
+
+    /* PERMANENT SIDEBAR FIX FOR LAPTOP & MOBILE */
+    section[data-testid="stSidebar"] {
+        transform: translateX(0px) !important;
+        visibility: visible !important;
+        display: block !important;
+    }
+    
+    button[kind="header"] {
+        display: none !important;
+    }
 
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
@@ -1339,7 +1350,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
