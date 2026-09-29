@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling with Compact Gaps & Padding Fix
+# Custom Corporate Professional NOC Styling (Original Theme Maintained with Reduced Gaps)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -30,7 +30,7 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;
+    .viewerBadge_container__1QSob {display: none !important;}
 
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
@@ -40,18 +40,10 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* REDUCE GAP & COMPACT SPACING */
+    /* REDUCE GAP / PADDING */
     .block-container {
-        padding-top: 1.2rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 1rem !important;
-    }
-
-    hr {
-        margin: 10px 0px !important;
-    }
-
-    div[data-testid="stExpander"] {
-        margin-bottom: 5px !important;
     }
 
     div[data-testid="stExpander"] summary p,
@@ -59,7 +51,7 @@ st.markdown("""
     div[data-testid="stExpander"] summary {
         color: #ffffff !important;
         font-weight: 800 !important;
-        font-size: 14px !important;
+        font-size: 15px !important;
     }
 
     div[data-testid="stRadio"] label,
@@ -69,15 +61,15 @@ st.markdown("""
     div[data-testid="stRadio"] div[role="radiogroup"] label span {
         color: #ffffff !important;
         font-weight: 700 !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] label {
         background: rgba(30, 41, 59, 0.85);
-        padding: 4px 12px;
-        border-radius: 6px;
+        padding: 5px 14px;
+        border-radius: 8px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        margin-right: 6px;
+        margin-right: 8px;
     }
 
     h1, h2, h3, h4, h5, h6,
@@ -108,9 +100,9 @@ st.markdown("""
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
-        padding: 12px 16px;
-        border-radius: 8px;
-        margin-bottom: 10px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        margin-bottom: 15px;
         color: #0f172a !important;
     }
     .auto-docket-box * {
@@ -120,28 +112,28 @@ st.markdown("""
     .previous-remarks-box {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid #38bdf8 !important;
-        border-radius: 8px !important;
-        padding: 12px 16px !important;
+        border-radius: 10px !important;
+        padding: 16px 20px !important;
         color: #ffffff !important;
-        font-size: 14px !important;
+        font-size: 15px !important;
         font-weight: 600 !important;
     }
 
     .custom-header-banner {
         background-color: #0f172a !important;
         border: 2px solid #38bdf8 !important;
-        border-radius: 10px !important;
-        padding: 16px 20px !important;
+        border-radius: 12px !important;
+        padding: 22px 26px !important;
         margin-top: 10px !important;
         margin-bottom: 12px !important;
-        box-shadow: 0 8px 20px -5px rgba(0,0,0,0.6) !important;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;
     }
 
     .status-badge {
-        padding: 4px 12px;
+        padding: 6px 16px;
         border-radius: 9999px;
         font-weight: 800;
-        font-size: 12px;
+        font-size: 13px;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         display: inline-block;
@@ -417,7 +409,7 @@ user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
 
-# --- COMPACT TOP HEADER BAR FOR OPERATOR INFO, LOGOUT & REFRESH ---
+# --- COMPACT TOP HEADER BAR ---
 top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
 with top_c1:
     st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
@@ -435,7 +427,7 @@ with top_c3:
         st.session_state.user_info = None
         st.rerun()
 
-st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
 
 # --- FILE UPLOADERS EXPANDER ---
 with st.expander("📂 Click here to Upload / Sync Data Pipeline & Download Master Tracker", expanded=False):
@@ -485,7 +477,7 @@ df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
-# --- COMPACT MASTER TRACKER DOWNLOAD BUTTON ---
+# --- DOWNLOAD MASTER BUTTON ---
 if not df_status.empty:
     full_output = BytesIO()
     with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
@@ -506,7 +498,6 @@ if not df_status.empty:
         )
 
 # --- TOP HORIZONTAL NAVIGATION MENU ---
-st.markdown("### 🌐 NOC Operations Navigation")
 page = st.radio(
     "Select Operation View:", 
     [
@@ -522,7 +513,7 @@ page = st.radio(
     label_visibility="collapsed"
 )
 
-st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 1. EXECUTIVE CONTROL CENTER
@@ -1264,7 +1255,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
