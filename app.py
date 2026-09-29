@@ -6,6 +6,7 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
+from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -14,6 +15,9 @@ st.set_page_config(
     page_icon="⚡",
     initial_sidebar_state="expanded"
 )
+
+# --- ROBUST AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
+count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
 
 # Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
@@ -262,12 +266,26 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- DIRECT LOGIN VERIFICATION (CASE-INSENSITIVE) ---
+# --- USER CREDENTIALS ---
+USER_CREDENTIALS = {
+    "tridip2.gogoi": {
+        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
+        "access": ["all"]
+    },
+    "all": {
+        "password_hash": hashlib.sha256("Viewer@2026".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "Circle Audit Desk",
+        "access": ["read_only"]
+    }
+}
+
 def verify_login(username, password):
     clean_user = username.strip()
     clean_pass = password.strip()
     
-    # Admin Credentials Check
     if clean_user.lower() == "tridip2.gogoi" and clean_pass == "Gogoi@6095":
         return {
             "role": "Super Admin / Operations Head",
@@ -275,7 +293,6 @@ def verify_login(username, password):
             "access": ["all"]
         }
     
-    # Viewer Credentials Check
     if clean_user.lower() == "all" and clean_pass == "Viewer@2026":
         return {
             "role": "NOC Viewer / Executive",
