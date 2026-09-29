@@ -504,7 +504,6 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# ⚡ NAVIGATION RADIO PLACED AT THE TOP OF SIDEBAR
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
     "⚙️ Fleet Analytics & Problem Buckets",
@@ -517,7 +516,6 @@ page = st.sidebar.radio("NOC Operations Navigation:", [
 
 st.sidebar.markdown("---")
 
-# Data Pipeline Uploads (Placed below Navigation)
 st.sidebar.markdown("### 📂 Data Pipeline Synchronization")
 uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"])
 uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
@@ -535,11 +533,9 @@ cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
 dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
 ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
-# ⚡ LOADER SPINNER FOR SMOOTH DATA SYNCHRONIZATION
 with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
     df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
-# ⚡ PERSISTENT SESSION STATE INITIALIZATION
 if "master_tracker_df" not in st.session_state:
     st.session_state.master_tracker_df = pd.DataFrame()
 if "fuel_tracker_df" not in st.session_state:
@@ -934,7 +930,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
@@ -1412,13 +1408,7 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
                     prev_rem_text = str(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
                     st.markdown(f"""
-                    .previous-remarks-box {{
-                        background-color: rgba(15, 23, 42, 0.85) !important;
-                        border: 1px solid #38bdf8 !important;
-                        border-radius: 10px !important;
-                        padding: 16px 20px !important;
-                        color: #ffffff !important;
-                        font-size: 15px !important;
-                        font-weight: 600 !important;
-                    }}
-                    """)
+                    <div class="previous-remarks-box">
+                        {prev_rem_text}
+                    </div>
+                    """, unsafe_allow_html=True)
