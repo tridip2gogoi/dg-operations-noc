@@ -848,7 +848,7 @@ elif page == "⏳ Daily Fault Summary":
         st.info(f"No fault records found matching date filter (`{selected_date_filter}`).")
 
 # ---------------------------------------------------------
-# 5. ILA-AG1 OPERATIONS TRACKER (WITH FAULT DATE FIELD)
+# 5. ILA-AG1 OPERATIONS TRACKER
 # ---------------------------------------------------------
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
@@ -946,7 +946,6 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                             new_rem = st.text_input("Present Remarks:", value=str(i_row.get('Present Remarks', '')) if pd.notna(i_row.get('Present Remarks')) else "")
                                             new_bkt = st.text_input("Bucket:", value=str(i_row.get('Bucket', '')) if pd.notna(i_row.get('Bucket')) else "")
                                             
-                                            # ⚡ ADDED FAULT DATE INPUT FIELD IN ILA QUICK EDITOR
                                             existing_fault_date = clean_date_str(i_row.get('Present Docket raise Date', i_row.get('Fault Date', '')))
                                             new_fault_date = st.text_input("Fault Date (Present Docket raise Date):", value=existing_fault_date)
                                             new_docket = st.text_input("Docket No:", value=str(i_row.get('Docket No.', '')) if pd.notna(i_row.get('Docket No.')) else "")
@@ -1039,7 +1038,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                 st.rerun()
 
 # ---------------------------------------------------------
-# 6. IN-PORTAL MASTER TRACKER EDITOR (FULL MASTER EDITING & SPREADSHEET GRID)
+# 6. IN-PORTAL MASTER TRACKER EDITOR (FULL MASTER EDITING & DUAL SEARCH LINES)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
@@ -1184,14 +1183,24 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab2:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.caption("Use the search box below to filter rows by SAIP ID, JC, State, or any keyword before editing.")
+                st.caption("Use the search boxes below to filter rows by SAIP ID, JC, State, or any keyword before editing[cite: 10].")
                 
-                search_grid_query = st.text_input("🔍 Filter Master Grid Rows (by SAIP ID, JC, State, Supervisor etc.):", "").strip().upper()
+                # ⚡ DUAL SEARCH LINES ADDED HERE FOR ENHANCED FILTERING
+                sc1, sc2 = st.columns(2)
+                with sc1:
+                    search_grid_query_1 = st.text_input("🔍 Primary Search Filter (SAIP ID, JC, State etc.):", "").strip().upper()
+                with sc2:
+                    search_grid_query_2 = st.text_input("🔍 Secondary Keyword Search Filter (Supervisor, Make etc.):", "").strip().upper()
                 
                 filtered_grid_df = st.session_state.master_tracker_df.copy()
-                if search_grid_query:
-                    mask = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query, case=False, na=False)).any(axis=1)
-                    filtered_grid_df = filtered_grid_df[mask]
+                if search_grid_query_1:
+                    mask1 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_1, case=False, na=False)).any(axis=1)
+                    filtered_grid_df = filtered_grid_df[mask1]
+                if search_grid_query_2:
+                    mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
+                    filtered_grid_df = filtered_grid_df[mask2]
+
+                if search_grid_query_1 or search_grid_query_2:
                     st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
 
                 edited_full_master = st.data_editor(
@@ -1205,7 +1214,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     for col in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
 
-                    if search_grid_query:
+                    if search_grid_query_1 or search_grid_query_2:
                         full_df = st.session_state.master_tracker_df.copy()
                         full_df.update(edited_full_master)
                         st.session_state.master_tracker_df = full_df
