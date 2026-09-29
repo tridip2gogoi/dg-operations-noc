@@ -6,7 +6,6 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
-from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -16,16 +15,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
-count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
-
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
+
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .viewerBadge_container__1QSob {display: none !important;}
 
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
