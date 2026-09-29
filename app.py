@@ -1038,7 +1038,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                 st.rerun()
 
 # ---------------------------------------------------------
-# 6. IN-PORTAL MASTER TRACKER EDITOR (FULL MASTER EDITING & DUAL SEARCH LINES)
+# 6. IN-PORTAL MASTER TRACKER EDITOR (FULL MASTER EDITING & DUAL SEARCH LINES WITH SPECIFIC FILTERS)
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
@@ -1183,22 +1183,33 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab2:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.caption("Use the search boxes below to filter rows by SAIP ID, JC, State, or any keyword before editing[cite: 10].")
+                st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing[cite: 10].")
                 
-                # ⚡ DUAL SEARCH LINES ADDED HERE FOR ENHANCED FILTERING
+                # ⚡ DUAL SEARCH LINES WITH SPECIFIC FILTER OPTIONS FOR BUCKET, AUTOMATION STATUS, AND PRESENT DOCKET RAISE DATE
                 sc1, sc2 = st.columns(2)
                 with sc1:
-                    search_grid_query_1 = st.text_input("🔍 Primary Search Filter (SAIP ID, JC, State etc.):", "").strip().upper()
+                    search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State, JC etc.):", "").strip().upper()
                 with sc2:
-                    search_grid_query_2 = st.text_input("🔍 Secondary Keyword Search Filter (Supervisor, Make etc.):", "").strip().upper()
+                    filter_col_choice = st.selectbox("🎯 Secondary Filter Field:", ["All Fields", "Bucket (Col U)", "Automation Status (Col S)", "Present Docket raise Date (Col W)"])
+                
+                search_grid_query_2 = st.text_input("🔍 Secondary Keyword / Value Search:", "").strip().upper()
                 
                 filtered_grid_df = st.session_state.master_tracker_df.copy()
+                
                 if search_grid_query_1:
                     mask1 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_1, case=False, na=False)).any(axis=1)
                     filtered_grid_df = filtered_grid_df[mask1]
+                
                 if search_grid_query_2:
-                    mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
-                    filtered_grid_df = filtered_grid_df[mask2]
+                    if filter_col_choice == "Bucket (Col U)" and 'Bucket' in filtered_grid_df.columns:
+                        filtered_grid_df = filtered_grid_df[filtered_grid_df['Bucket'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
+                    elif filter_col_choice == "Automation Status (Col S)" and 'DG Automation Status' in filtered_grid_df.columns:
+                        filtered_grid_df = filtered_grid_df[filtered_grid_df['DG Automation Status'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
+                    elif filter_col_choice == "Present Docket raise Date (Col W)" and 'Present Docket raise Date' in filtered_grid_df.columns:
+                        filtered_grid_df = filtered_grid_df[filtered_grid_df['Present Docket raise Date'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
+                    else:
+                        mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
+                        filtered_grid_df = filtered_grid_df[mask2]
 
                 if search_grid_query_1 or search_grid_query_2:
                     st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
