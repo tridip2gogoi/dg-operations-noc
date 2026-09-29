@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling (Original Theme Maintained with Reduced Gaps)
+# Custom Corporate Professional NOC Styling (Minimal Gaps for Maximum Dashboard Space)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -40,10 +40,14 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* REDUCE GAP / PADDING */
+    /* MINIMAL GAP & ULTRA COMPACT PADDING */
     .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
+        padding-top: 0.4rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    div[data-testid="stExpander"] {
+        margin-bottom: 2px !important;
     }
 
     div[data-testid="stExpander"] summary p,
@@ -51,7 +55,7 @@ st.markdown("""
     div[data-testid="stExpander"] summary {
         color: #ffffff !important;
         font-weight: 800 !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
     }
 
     div[data-testid="stRadio"] label,
@@ -61,15 +65,15 @@ st.markdown("""
     div[data-testid="stRadio"] div[role="radiogroup"] label span {
         color: #ffffff !important;
         font-weight: 700 !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] label {
         background: rgba(30, 41, 59, 0.85);
-        padding: 5px 14px;
-        border-radius: 8px;
+        padding: 3px 10px;
+        border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        margin-right: 8px;
+        margin-right: 6px;
     }
 
     h1, h2, h3, h4, h5, h6,
@@ -100,9 +104,9 @@ st.markdown("""
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
-        padding: 14px 18px;
-        border-radius: 10px;
-        margin-bottom: 15px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 8px;
         color: #0f172a !important;
     }
     .auto-docket-box * {
@@ -112,28 +116,28 @@ st.markdown("""
     .previous-remarks-box {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid #38bdf8 !important;
-        border-radius: 10px !important;
-        padding: 16px 20px !important;
+        border-radius: 8px !important;
+        padding: 10px 14px !important;
         color: #ffffff !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
         font-weight: 600 !important;
     }
 
     .custom-header-banner {
         background-color: #0f172a !important;
         border: 2px solid #38bdf8 !important;
-        border-radius: 12px !important;
-        padding: 22px 26px !important;
-        margin-top: 10px !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;
+        border-radius: 8px !important;
+        padding: 12px 18px !important;
+        margin-top: 6px !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 6px 15px -5px rgba(0,0,0,0.6) !important;
     }
 
     .status-badge {
-        padding: 6px 16px;
+        padding: 4px 10px;
         border-radius: 9999px;
         font-weight: 800;
-        font-size: 13px;
+        font-size: 12px;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         display: inline-block;
@@ -409,12 +413,12 @@ user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
 
-# --- COMPACT TOP HEADER BAR ---
+# --- ULTRA COMPACT TOP HEADER BAR ---
 top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
 with top_c1:
     st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
 with top_c2:
-    if st.button("🔄 Refresh Data", use_container_width=True, type="secondary"):
+    if st.button("🔄 Refresh", use_container_width=True, type="secondary"):
         st.cache_data.clear()
         for key in list(st.session_state.keys()):
             if key != "authenticated" and key != "user_info" and key != "username":
@@ -427,7 +431,7 @@ with top_c3:
         st.session_state.user_info = None
         st.rerun()
 
-st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:2px 0;'>", unsafe_allow_html=True)
 
 # --- FILE UPLOADERS EXPANDER ---
 with st.expander("📂 Click here to Upload / Sync Data Pipeline & Download Master Tracker", expanded=False):
@@ -513,7 +517,7 @@ page = st.radio(
     label_visibility="collapsed"
 )
 
-st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:2px 0;'>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 1. EXECUTIVE CONTROL CENTER
