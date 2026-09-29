@@ -6,6 +6,7 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
+from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -14,6 +15,9 @@ st.set_page_config(
     page_icon="⚡",
     initial_sidebar_state="expanded"
 )
+
+# --- AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
+count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
 
 # Custom Corporate Professional NOC Styling
 st.markdown("""
@@ -1185,7 +1189,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
                 st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing[cite: 10].")
                 
-                # ⚡ DUAL SEARCH LINES WITH SPECIFIC FILTER OPTIONS FOR BUCKET, AUTOMATION STATUS, AND PRESENT DOCKET RAISE DATE
                 sc1, sc2 = st.columns(2)
                 with sc1:
                     search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State, JC etc.):", "").strip().upper()
