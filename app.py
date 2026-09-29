@@ -11,7 +11,7 @@ from io import BytesIO
 IST = timezone(timedelta(hours=5, minutes=30))
 current_ist_time = datetime.now(IST)
 
-# --- PAGE CONFIGURATION ---
+# --- PAGE CONFIGURATION (MOBILE SIDEBAR EXPANDED FIX) ---
 st.set_page_config(
     page_title="NE Circle Telecom DG Ops Center | Enterprise NOC",
     layout="wide",
@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling & Mobile/Sidebar Fix
+# Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -32,39 +32,12 @@ st.markdown("""
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
 
-    /* MOBILE & APP FULL SCROLL FIX */
-    html, body, [data-testid="stAppViewContainer"], .main, .block-container {
-        height: auto !important;
-        min-height: 100vh !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
-
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-        overflow-y: auto !important;
-    }
-
-    /* FORCE SHOW SIDEBAR ON MOBILE & WEBVIEW */
-    @media (max-width: 768px) {
-        section[data-testid="stSidebar"] {
-            transform: translateX(0% !important);
-            visibility: visible !important;
-            display: block !important;
-        }
-    }
-    
-    section[data-testid="stSidebar"] {
-        overflow-y: auto !important;
-        background-color: #ffffff !important;
-    }
-
-    section[data-testid="stSidebar"] * {
-        color: #0f172a !important;
     }
 
     div[data-testid="stRadio"] label,
@@ -110,6 +83,12 @@ st.markdown("""
         background-color: #0284c7 !important;
         border-bottom: 3px solid #38bdf8 !important;
     }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] div {
+        color: #ffffff !important;
+        font-weight: 900 !important;
+    }
 
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
@@ -136,6 +115,12 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
+    section[data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #0f172a !important;
+    }
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3 {
@@ -162,6 +147,10 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid #38bdf8 !important;
         padding: 8px 12px !important;
+    }
+    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] button:hover {
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
     }
 
     .stTextInput label, .stSelectbox label, .stDateInput label, .stTextArea label, .stNumberInput label {
@@ -214,6 +203,7 @@ st.markdown("""
         text-shadow: none !important;
     }
 
+    /* PROFESSIONAL BADGES */
     .status-badge {
         padding: 6px 16px;
         border-radius: 9999px;
@@ -224,9 +214,21 @@ st.markdown("""
         display: inline-block;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    .badge-ok { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #38bdf8; }
-    .badge-warn { background-color: #ca8a04 !important; color: #ffffff !important; border: 1px solid #facc15; }
-    .badge-crit { background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #f87171; }
+    .badge-ok { 
+        background-color: #0284c7 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #38bdf8; 
+    }
+    .badge-warn { 
+        background-color: #ca8a04 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #facc15; 
+    }
+    .badge-crit { 
+        background-color: #dc2626 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #f87171; 
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -264,7 +266,6 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- CONFIGURED USER CREDENTIALS ---
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
@@ -1389,7 +1390,7 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=``)
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
