@@ -16,10 +16,10 @@ st.set_page_config(
     page_title="NE Circle Telecom DG Ops Center | Enterprise NOC",
     layout="wide",
     page_icon="⚡",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling & Permanent Sidebar Fix for Laptop & Mobile
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -32,73 +32,12 @@ st.markdown("""
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
 
-    /* PERMANENT SIDEBAR FIX FOR LAPTOP & MOBILE */
-    section[data-testid="stSidebar"] {
-        transform: translateX(0px) !important;
-        visibility: visible !important;
-        display: block !important;
-    }
-    
-    button[kind="header"] {
-        display: none !important;
-    }
-
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
                     url("https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1920&q=80");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-    }
-
-    div[data-testid="stRadio"] label,
-    div[data-testid="stRadio"] div[role="radiogroup"] label,
-    div[data-testid="stRadio"] div[role="radiogroup"] label div p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label span {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
-    }
-    div[data-testid="stRadio"] div[role="radiogroup"] label {
-        background: rgba(30, 41, 59, 0.85);
-        padding: 6px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        margin-right: 8px;
-    }
-
-    div[data-testid="stTabs"] {
-        background: rgba(15, 23, 42, 0.75);
-        padding: 10px 10px 0px 10px;
-        border-radius: 12px 12px 0 0;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-    div[data-testid="stTabs"] button[role="tab"] {
-        background-color: rgba(30, 41, 59, 0.9) !important;
-        border-radius: 8px 8px 0px 0px !important;
-        padding: 10px 22px !important;
-        margin-right: 6px !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"] p,
-    div[data-testid="stTabs"] button[role="tab"] span,
-    div[data-testid="stTabs"] button[role="tab"] div {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: 14px !important;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
-        background-color: #0284c7 !important;
-        border-bottom: 3px solid #38bdf8 !important;
-    }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] div {
-        color: #ffffff !important;
-        font-weight: 900 !important;
     }
 
     h1, h2, h3, h4, h5, h6,
@@ -132,48 +71,6 @@ st.markdown("""
     section[data-testid="stSidebar"] * {
         color: #0f172a !important;
     }
-    section[data-testid="stSidebar"] h1,
-    section[data-testid="stSidebar"] h2,
-    section[data-testid="stSidebar"] h3 {
-        color: #0f172a !important;
-        text-shadow: none !important;
-    }
-    section[data-testid="stSidebar"] .stMarkdown p,
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] span {
-        color: #1e293b !important;
-        font-weight: 600 !important;
-    }
-
-    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] {
-        width: 100% !important;
-        margin-top: 5px !important;
-        margin-bottom: 10px !important;
-    }
-    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] button {
-        width: 100% !important;
-        background-color: #0f172a !important;
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        border-radius: 8px !important;
-        border: 1px solid #38bdf8 !important;
-        padding: 8px 12px !important;
-    }
-    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] button:hover {
-        background-color: #0284c7 !important;
-        color: #ffffff !important;
-    }
-
-    .stTextInput label, .stSelectbox label, .stDateInput label, .stTextArea label, .stNumberInput label {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    }
-
-    [data-testid="stFileUploadDropzone"] * {
-        color: #0f172a !important;
-    }
 
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
@@ -196,9 +93,6 @@ st.markdown("""
         font-size: 15px !important;
         font-weight: 600 !important;
     }
-    .previous-remarks-box p, .previous-remarks-box span, .previous-remarks-box div {
-        color: #ffffff !important;
-    }
 
     .custom-header-banner {
         background-color: #0f172a !important;
@@ -209,12 +103,7 @@ st.markdown("""
         margin-bottom: 16px !important;
         box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;
     }
-    .custom-header-banner, .custom-header-banner *, .custom-header-banner span, .custom-header-banner div, .custom-header-banner h2 {
-        color: #ffffff !important;
-        text-shadow: none !important;
-    }
 
-    /* PROFESSIONAL BADGES */
     .status-badge {
         padding: 6px 16px;
         border-radius: 9999px;
@@ -225,21 +114,9 @@ st.markdown("""
         display: inline-block;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    .badge-ok { 
-        background-color: #0284c7 !important; 
-        color: #ffffff !important; 
-        border: 1px solid #38bdf8; 
-    }
-    .badge-warn { 
-        background-color: #ca8a04 !important; 
-        color: #ffffff !important; 
-        border: 1px solid #facc15; 
-    }
-    .badge-crit { 
-        background-color: #dc2626 !important; 
-        color: #ffffff !important; 
-        border: 1px solid #f87171; 
-    }
+    .badge-ok { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #38bdf8; }
+    .badge-warn { background-color: #ca8a04 !important; color: #ffffff !important; border: 1px solid #facc15; }
+    .badge-crit { background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #f87171; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -528,19 +405,6 @@ if st.sidebar.button("🔄 Refresh All Data", use_container_width=True, type="pr
     st.rerun()
 
 st.sidebar.markdown("---")
-
-page = st.sidebar.radio("NOC Operations Navigation:", [
-    "📊 Executive Control Center",
-    "⚙️ Fleet Analytics & Problem Buckets",
-    "⛽ Fuel Sensor Telemetry",
-    "⏳ Daily Fault Summary",
-    "📈 ILA-AG1 Operations Tracker",
-    "✏️ In-Portal Master Tracker Editor",
-    "🔍 AI Site Diagnostics"
-])
-
-st.sidebar.markdown("---")
-
 st.sidebar.markdown("### 📂 Data Pipeline Synchronization")
 uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"])
 uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
@@ -609,6 +473,25 @@ if not df_status.empty:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True
     )
+
+# --- TOP HORIZONTAL NAVIGATION MENU (PERMANENT FIX FOR MOBILE & LAPTOP) ---
+st.markdown("### 🌐 NOC Operations Navigation")
+page = st.radio(
+    "Select Operation View:", 
+    [
+        "📊 Executive Control Center",
+        "⚙️ Fleet Analytics & Problem Buckets",
+        "⛽ Fuel Sensor Telemetry",
+        "⏳ Daily Fault Summary",
+        "📈 ILA-AG1 Operations Tracker",
+        "✏️ In-Portal Master Tracker Editor",
+        "🔍 AI Site Diagnostics"
+    ],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+st.markdown("---")
 
 # ---------------------------------------------------------
 # 1. EXECUTIVE CONTROL CENTER
