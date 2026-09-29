@@ -2,14 +2,13 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, date
-import pytz
+from datetime import datetime, date, timezone, timedelta
 import os
 import hashlib
 from io import BytesIO
 
-# --- TIMEZONE CONFIGURATION FOR IST ---
-IST = pytz.timezone('Asia/Kolkata')
+# --- TIMEZONE CONFIGURATION FOR IST (UTC+5:30) ---
+IST = timezone(timedelta(hours=5, minutes=30))
 current_ist_time = datetime.now(IST)
 
 # --- PAGE CONFIGURATION ---
@@ -509,7 +508,6 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# ⚡ ONE CLICK DATA REFRESH BUTTON WITH IST TIME SYNC
 if st.sidebar.button("🔄 Refresh All Data", use_container_width=True, type="primary"):
     st.cache_data.clear()
     for key in list(st.session_state.keys()):
@@ -1356,7 +1354,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
