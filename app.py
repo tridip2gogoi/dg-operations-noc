@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 import os
 import hashlib
 from io import BytesIO
@@ -26,6 +26,11 @@ current_time = time.time()
 if current_time - st.session_state.last_refresh > refresh_interval:
     st.session_state.last_refresh = current_time
     st.rerun()
+
+# --- ACCURATE IST TIME HELPER ---
+def get_ist_time_str():
+    ist_zone = timezone(timedelta(hours=5, minutes=30))
+    return datetime.now(ist_zone).strftime('%d %b %Y, %I:%M %p')
 
 # Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
@@ -274,7 +279,22 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- UPDATED USER CREDENTIALS VERIFICATION ---
+# --- USER CREDENTIALS ---
+USER_CREDENTIALS = {
+    "tridip2.gogoi": {
+        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
+        "access": ["all"]
+    },
+    "all": {
+        "password_hash": hashlib.sha256("Viewer@2026".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "Circle Audit Desk",
+        "access": ["read_only"]
+    }
+}
+
 def verify_login(username, password):
     clean_user = username.strip()
     clean_pass = password.strip()
@@ -444,7 +464,8 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
         if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
         
-        today_date_str = datetime.now().strftime('%Y-%m-%d')
+        ist_zone = timezone(timedelta(hours=5, minutes=30))
+        today_date_str = datetime.now(ist_zone).strftime('%Y-%m-%d')
         target_closed_col = None
         for col in updated.columns:
             if 'last closed' in col.lower():
@@ -605,7 +626,7 @@ if not df_status.empty:
 # ---------------------------------------------------------
 if page == "📊 Executive Control Center":
     st.markdown("## ⚡ North East Circle - DG Operations Control Center")
-    st.caption(f"System State: Operational | Active Operator: **{admin_name} ({admin_role})** | Refreshed: {datetime.now().strftime('%d %b %Y, %I:%M %p')}")
+    st.caption(f"System State: Operational | Active Operator: **{admin_name} ({admin_role})** | Refreshed: {get_ist_time_str()}")
 
     if not df_status.empty:
         total_sites = len(df_status)
@@ -1161,7 +1182,8 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     if edit_faulty_date_str.strip():
                                         try:
                                             parsed_faulty_date = pd.to_datetime(edit_faulty_date_str.strip()).date()
-                                            current_eval_date = date(2026, 9, 28)
+                                            ist_zone = timezone(timedelta(hours=5, minutes=30))
+                                            current_eval_date = datetime.now(ist_zone).date()
                                             calc_aging = (current_eval_date - parsed_faulty_date).days
                                             if calc_aging < 0:
                                                 calc_aging = 0
@@ -1199,7 +1221,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab2:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing[cite: 10].")
+                st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing.")
                 
                 sc1, sc2 = st.columns(2)
                 with sc1:
