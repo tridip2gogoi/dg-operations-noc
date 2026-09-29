@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling with Compact Gaps & Padding Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -30,7 +30,7 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;}
+    .viewerBadge_container__1QSob {display: none !important;
 
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
@@ -40,12 +40,26 @@ st.markdown("""
         background-attachment: fixed;
     }
 
+    /* REDUCE GAP & COMPACT SPACING */
+    .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    hr {
+        margin: 10px 0px !important;
+    }
+
+    div[data-testid="stExpander"] {
+        margin-bottom: 5px !important;
+    }
+
     div[data-testid="stExpander"] summary p,
     div[data-testid="stExpander"] summary span,
     div[data-testid="stExpander"] summary {
         color: #ffffff !important;
         font-weight: 800 !important;
-        font-size: 16px !important;
+        font-size: 14px !important;
     }
 
     div[data-testid="stRadio"] label,
@@ -55,15 +69,15 @@ st.markdown("""
     div[data-testid="stRadio"] div[role="radiogroup"] label span {
         color: #ffffff !important;
         font-weight: 700 !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] label {
         background: rgba(30, 41, 59, 0.85);
-        padding: 6px 14px;
-        border-radius: 8px;
+        padding: 4px 12px;
+        border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        margin-right: 8px;
+        margin-right: 6px;
     }
 
     h1, h2, h3, h4, h5, h6,
@@ -94,9 +108,9 @@ st.markdown("""
     .auto-docket-box {
         background-color: rgba(239, 246, 255, 0.98);
         border: 1px solid #93c5fd;
-        padding: 14px 18px;
-        border-radius: 10px;
-        margin-bottom: 15px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 10px;
         color: #0f172a !important;
     }
     .auto-docket-box * {
@@ -106,28 +120,28 @@ st.markdown("""
     .previous-remarks-box {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid #38bdf8 !important;
-        border-radius: 10px !important;
-        padding: 16px 20px !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
         color: #ffffff !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
         font-weight: 600 !important;
     }
 
     .custom-header-banner {
         background-color: #0f172a !important;
         border: 2px solid #38bdf8 !important;
-        border-radius: 12px !important;
-        padding: 22px 26px !important;
-        margin-top: 14px !important;
-        margin-bottom: 16px !important;
-        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.6) !important;
+        border-radius: 10px !important;
+        padding: 16px 20px !important;
+        margin-top: 10px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 8px 20px -5px rgba(0,0,0,0.6) !important;
     }
 
     .status-badge {
-        padding: 6px 16px;
+        padding: 4px 12px;
         border-radius: 9999px;
         font-weight: 800;
-        font-size: 13px;
+        font-size: 12px;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         display: inline-block;
@@ -403,7 +417,7 @@ user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
 
-# --- TOP HEADER BAR FOR OPERATOR INFO, LOGOUT & REFRESH ---
+# --- COMPACT TOP HEADER BAR FOR OPERATOR INFO, LOGOUT & REFRESH ---
 top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
 with top_c1:
     st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
@@ -421,9 +435,9 @@ with top_c3:
         st.session_state.user_info = None
         st.rerun()
 
-st.markdown("---")
+st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 
-# --- FILE UPLOADERS & DOWNLOAD MASTER TRACKER EXPANDER ---
+# --- FILE UPLOADERS EXPANDER ---
 with st.expander("📂 Click here to Upload / Sync Data Pipeline & Download Master Tracker", expanded=False):
     up_c1, up_c2, up_c3 = st.columns(3)
     with up_c1:
@@ -471,7 +485,7 @@ df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
-# --- MASTER TRACKER DOWNLOAD BUTTON ON TOP ---
+# --- COMPACT MASTER TRACKER DOWNLOAD BUTTON ---
 if not df_status.empty:
     full_output = BytesIO()
     with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
@@ -480,13 +494,16 @@ if not df_status.empty:
             df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
         if not df_ila.empty:
             df_ila.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
-    st.download_button(
-        label="📥 Download Complete Master & Operations Report (.xlsx)",
-        data=full_output.getvalue(),
-        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
-    )
+    
+    dc1, dc2, dc3 = st.columns([1, 2, 1])
+    with dc2:
+        st.download_button(
+            label="📥 Download Complete Master & Operations Report (.xlsx)",
+            data=full_output.getvalue(),
+            file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
 
 # --- TOP HORIZONTAL NAVIGATION MENU ---
 st.markdown("### 🌐 NOC Operations Navigation")
@@ -505,7 +522,7 @@ page = st.radio(
     label_visibility="collapsed"
 )
 
-st.markdown("---")
+st.markdown("<hr style='margin:5px 0;'>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 1. EXECUTIVE CONTROL CENTER
