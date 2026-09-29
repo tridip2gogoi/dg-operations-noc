@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling with White Expander Title Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -40,7 +40,15 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    /* WHITE COLOR FIX FOR TOP NAVIGATION RADIO BUTTONS */
+    /* WHITE COLOR FIX FOR EXPANDER TITLE & RADIO BUTTONS */
+    div[data-testid="stExpander"] summary p,
+    div[data-testid="stExpander"] summary span,
+    div[data-testid="stExpander"] summary {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+    }
+
     div[data-testid="stRadio"] label,
     div[data-testid="stRadio"] div[role="radiogroup"] label,
     div[data-testid="stRadio"] div[role="radiogroup"] label div p,
@@ -416,7 +424,7 @@ with top_c3:
 
 st.markdown("---")
 
-# --- FILE UPLOADERS MOVED TO TOP EXPANDER FOR CONVENIENCE ---
+# --- FILE UPLOADERS EXPANDER WITH WHITE TITLE FIX ---
 with st.expander("📂 Click here to Upload / Sync Data Pipeline (CM, Master, & ILA Trackers)", expanded=False):
     up_c1, up_c2, up_c3 = st.columns(3)
     with up_c1:
