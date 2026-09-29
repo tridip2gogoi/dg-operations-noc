@@ -262,15 +262,16 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
+# --- UPDATED USER CREDENTIALS ---
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin",
-        "name": "Circle MIS",
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
         "access": ["all"]
     },
     "all": {
-        "password_hash": hashlib.sha256("viewer@123".encode()).hexdigest(),
+        "password_hash": hashlib.sha256("Viewer@2026".encode()).hexdigest(),
         "role": "NOC Viewer / Executive",
         "name": "Circle Audit Desk",
         "access": ["read_only"]
@@ -480,8 +481,8 @@ if not st.session_state.authenticated:
 
         st.markdown("""
         <div style="background: rgba(241, 245, 249, 0.95); border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 13px; color: #334155; text-align: center;">
-            👁️ <b>NOC Viewer (Read-only) Access:</b><br>
-            Username: <code style="color: #0369a1; font-weight: 600;">viewer</code> | Password: <code style="color: #0369a1; font-weight: 600;">viewer@123</code>
+            👁️ <b>Viewer (Read-only) Access:</b><br>
+            Username: <code style="color: #0369a1; font-weight: 600;">all</code> | Password: <code style="color: #0369a1; font-weight: 600;">Viewer@2026</code>
         </div>
         </div>
         """, unsafe_allow_html=True)
