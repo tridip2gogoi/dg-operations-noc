@@ -576,7 +576,7 @@ df_ila = st.session_state.ila_tracker_df
 if not df_status.empty:
     st.sidebar.success(f"Master: {len(df_status)} Monitored Sites Active")
 else:
-    st.sidebar.warning("⚠️ No data loaded. Upload Master Tracker.")
+    st.sidebar.warning("⚠️️ No data loaded. Upload Master Tracker.")
 
 if not df_ila.empty:
     st.sidebar.success(f"ILA-AG1: {len(df_ila)} Records Loaded")
@@ -1390,7 +1390,7 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=``)
+                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=True)
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
