@@ -262,27 +262,27 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- UPDATED USER CREDENTIALS ---
-USER_CREDENTIALS = {
-    "tridip2.gogoi": {
-        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin / Operations Head",
-        "name": "Tridip Gogoi (Operations Head)",
-        "access": ["all"]
-    },
-    "all": {
-        "password_hash": hashlib.sha256("Viewer@2026".encode()).hexdigest(),
-        "role": "NOC Viewer / Executive",
-        "name": "Circle Audit Desk",
-        "access": ["read_only"]
-    }
-}
-
+# --- DIRECT LOGIN VERIFICATION (CASE-INSENSITIVE) ---
 def verify_login(username, password):
-    if username in USER_CREDENTIALS:
-        hashed_pwd = hashlib.sha256(password.encode()).hexdigest()
-        if hashed_pwd == USER_CREDENTIALS[username]["password_hash"]:
-            return USER_CREDENTIALS[username]
+    clean_user = username.strip()
+    clean_pass = password.strip()
+    
+    # Admin Credentials Check
+    if clean_user.lower() == "tridip2.gogoi" and clean_pass == "Gogoi@6095":
+        return {
+            "role": "Super Admin / Operations Head",
+            "name": "Tridip Gogoi (Operations Head)",
+            "access": ["all"]
+        }
+    
+    # Viewer Credentials Check
+    if clean_user.lower() == "all" and clean_pass == "Viewer@2026":
+        return {
+            "role": "NOC Viewer / Executive",
+            "name": "Circle Audit Desk",
+            "access": ["read_only"]
+        }
+        
     return None
 
 def is_valid_source(src):
@@ -469,11 +469,11 @@ if not st.session_state.authenticated:
             login_btn = st.form_submit_button("Authenticate & Access Dashboard", use_container_width=True, type="primary")
 
             if login_btn:
-                user_record = verify_login(input_user.strip().lower(), input_pass)
+                user_record = verify_login(input_user, input_pass)
                 if user_record:
                     st.session_state.authenticated = True
                     st.session_state.user_info = user_record
-                    st.session_state.username = input_user.strip().lower()
+                    st.session_state.username = input_user.strip()
                     st.success("Access Granted! Loading Console...")
                     st.rerun()
                 else:
