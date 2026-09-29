@@ -1404,7 +1404,7 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown(f"**Supervisor Name:** `{site_row.get('Supervisor Name', 'N/A')}`")
                         st.markdown(f"**TRT Personnel:** `{site_row.get('TRT Name', 'N/A')}`")
                         st.markdown(f"**Contact Number:** `{site_row.get('Contact No.', 'N/A')}`")
-                        st.markdown(f"**Dependent Sites:** `{site_pop if 'Dependent Site' in site_row else 'None'}`")
+                        st.markdown(f"**Dependent Sites:** `{site_row.get('Dependent Site', 'None')}`")
 
             with diag_t2:
                 with st.container(border=True):
@@ -1418,7 +1418,7 @@ elif page == "🔍 AI Site Diagnostics":
                         ],
                         "Master Tracker (Live)": [
                             str(site_row.get("Fuel Sensor Status", "")),
-                            str(site_row.get("`, '')),
+                            str(site_row.get("Docket no.", "")),
                             clean_date_str(site_row.get("Open Date", "")),
                             str(site_row.get("DG Automation Status", "")),
                             str(site_row.get("Present Remarks", "")),
@@ -1431,7 +1431,6 @@ elif page == "🔍 AI Site Diagnostics":
                     })
                     st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
 
-            with_diag_t3_flag = True
             with diag_t3:
                 with st.container(border=True):
                     h1, h2 = st.columns(2)
