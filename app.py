@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling with White Radio Menu Text
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -82,13 +82,6 @@ st.markdown("""
     [data-testid="stMetricLabel"] * {
         color: #cbd5e1 !important;
         font-weight: 600 !important;
-    }
-
-    section[data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-    }
-    section[data-testid="stSidebar"] * {
-        color: #0f172a !important;
     }
 
     .auto-docket-box {
@@ -402,32 +395,36 @@ if not st.session_state.authenticated:
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
-user_perms = user_data.get("access", ["all"])
-is_viewer = False
 
-st.sidebar.markdown(f"### 🛡️ Enterprise NOC Hub")
-st.sidebar.markdown(f"**Operator:** `{admin_name}`")
-st.sidebar.markdown(f"**Role:** `{admin_role}`")
-if st.sidebar.button("Log Out Session", use_container_width=True):
-    st.session_state.authenticated = False
-    st.session_state.user_info = None
-    st.rerun()
+# --- TOP HEADER BAR FOR OPERATOR INFO, LOGOUT & REFRESH ---
+top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
+with top_c1:
+    st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
+with top_c2:
+    if st.button("🔄 Refresh Data", use_container_width=True, type="secondary"):
+        st.cache_data.clear()
+        for key in list(st.session_state.keys()):
+            if key != "authenticated" and key != "user_info" and key != "username":
+                del st.session_state[key]
+        st.success("Cache cleared!")
+        st.rerun()
+with top_c3:
+    if st.button("🚪 Log Out", use_container_width=True, type="primary"):
+        st.session_state.authenticated = False
+        st.session_state.user_info = None
+        st.rerun()
 
-st.sidebar.markdown("---")
+st.markdown("---")
 
-if st.sidebar.button("🔄 Refresh All Data", use_container_width=True, type="primary"):
-    st.cache_data.clear()
-    for key in list(st.session_state.keys()):
-        if key != "authenticated" and key != "user_info" and key != "username":
-            del st.session_state[key]
-    st.success("Cache cleared and data successfully refreshed (IST Time Synced)!")
-    st.rerun()
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 📂 Data Pipeline Synchronization")
-uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"])
-uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
-uploaded_ila = st.sidebar.file_uploader("3. ILA-AG1 Tracker", type=["xlsx", "xls"])
+# --- FILE UPLOADERS MOVED TO TOP EXPANDER FOR CONVENIENCE ---
+with st.expander("📂 Click here to Upload / Sync Data Pipeline (CM, Master, & ILA Trackers)", expanded=False):
+    up_c1, up_c2, up_c3 = st.columns(3)
+    with up_c1:
+        uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
+    with up_c2:
+        uploaded_dg = st.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"], key="top_dg")
+    with up_c3:
+        uploaded_ila = st.file_uploader("3. ILA-AG1 Tracker", type=["xlsx", "xls"], key="top_ila")
 
 detected_excel = DEFAULT_EXCEL
 if not os.path.exists(DEFAULT_EXCEL):
@@ -467,33 +464,7 @@ df_status = st.session_state.master_tracker_df
 df_fuel = st.session_state.fuel_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
-if not df_status.empty:
-    st.sidebar.success(f"Master: {len(df_status)} Monitored Sites Active")
-else:
-    st.sidebar.warning("⚠️ No data loaded. Upload Master Tracker.")
-
-if not df_ila.empty:
-    st.sidebar.success(f"ILA-AG1: {len(df_ila)} Records Loaded")
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 📥 Complete Data Download")
-if not df_status.empty:
-    full_output = BytesIO()
-    with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
-        df_status.to_excel(writer, sheet_name="Automation Status", index=False)
-        if not df_fuel.empty:
-            df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
-        if not df_ila.empty:
-            df_ila.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
-    st.sidebar.download_button(
-        label="📥 Download Complete Trackers (.xlsx)",
-        data=full_output.getvalue(),
-        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        use_container_width=True
-    )
-
-# --- TOP HORIZONTAL NAVIGATION MENU WITH WHITE TEXT COLOR ---
+# --- TOP HORIZONTAL NAVIGATION MENU ---
 st.markdown("### 🌐 NOC Operations Navigation")
 page = st.radio(
     "Select Operation View:", 
@@ -584,7 +555,7 @@ if page == "📊 Executive Control Center":
                     )
                     st.plotly_chart(fig_donut, use_container_width=True)
     else:
-        st.info("No data loaded. Please upload the Master Tracker from the sidebar.")
+        st.info("No data loaded. Please upload the Master Tracker from the top pipeline section.")
 
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
@@ -783,7 +754,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     st.caption("Integrated tracking, editing, fault clearance, removal, and new case entries for ILA-AG1 operational logs.")
 
     if df_ila.empty:
-        st.info("📂 Please upload the **ILA-AG1 Tracker** file from the sidebar upload section to initialize this module.")
+        st.info("📂 Please upload the **ILA-AG1 Tracker** file from the top expander section to initialize this module.")
     else:
         ila_tab1, ila_tab2, ila_tab3 = st.tabs([
             "📊 Registry & Spreadsheet Grid",
