@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling & Mobile Scroll Fix
+# Custom Corporate Professional NOC Styling & Mobile/Sidebar Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -49,8 +49,22 @@ st.markdown("""
         overflow-y: auto !important;
     }
 
+    /* FORCE SHOW SIDEBAR ON MOBILE & WEBVIEW */
+    @media (max-width: 768px) {
+        section[data-testid="stSidebar"] {
+            transform: translateX(0% !important);
+            visibility: visible !important;
+            display: block !important;
+        }
+    }
+    
     section[data-testid="stSidebar"] {
         overflow-y: auto !important;
+        background-color: #ffffff !important;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #0f172a !important;
     }
 
     div[data-testid="stRadio"] label,
@@ -96,12 +110,6 @@ st.markdown("""
         background-color: #0284c7 !important;
         border-bottom: 3px solid #38bdf8 !important;
     }
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span,
-    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] div {
-        color: #ffffff !important;
-        font-weight: 900 !important;
-    }
 
     h1, h2, h3, h4, h5, h6,
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4,
@@ -128,12 +136,6 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    section[data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-    }
-    section[data-testid="stSidebar"] * {
-        color: #0f172a !important;
-    }
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3 {
@@ -160,10 +162,6 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid #38bdf8 !important;
         padding: 8px 12px !important;
-    }
-    section[data-testid="stSidebar"] div[data-testid="stDownloadButton"] button:hover {
-        background-color: #0284c7 !important;
-        color: #ffffff !important;
     }
 
     .stTextInput label, .stSelectbox label, .stDateInput label, .stTextArea label, .stNumberInput label {
@@ -216,7 +214,6 @@ st.markdown("""
         text-shadow: none !important;
     }
 
-    /* PROFESSIONAL BADGES */
     .status-badge {
         padding: 6px 16px;
         border-radius: 9999px;
@@ -227,21 +224,9 @@ st.markdown("""
         display: inline-block;
         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    .badge-ok { 
-        background-color: #0284c7 !important; 
-        color: #ffffff !important; 
-        border: 1px solid #38bdf8; 
-    }
-    .badge-warn { 
-        background-color: #ca8a04 !important; 
-        color: #ffffff !important; 
-        border: 1px solid #facc15; 
-    }
-    .badge-crit { 
-        background-color: #dc2626 !important; 
-        color: #ffffff !important; 
-        border: 1px solid #f87171; 
-    }
+    .badge-ok { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #38bdf8; }
+    .badge-warn { background-color: #ca8a04 !important; color: #ffffff !important; border: 1px solid #facc15; }
+    .badge-crit { background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #f87171; }
 </style>
 """, unsafe_allow_html=True)
 
