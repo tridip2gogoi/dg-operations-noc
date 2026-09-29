@@ -6,7 +6,7 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
-import time
+from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -15,6 +15,9 @@ st.set_page_config(
     page_icon="⚡",
     initial_sidebar_state="expanded"
 )
+
+# --- AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
+count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
 
 # Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
@@ -274,7 +277,7 @@ USER_CREDENTIALS = {
         "password_hash": hashlib.sha256("viewer@123".encode()).hexdigest(),
         "role": "NOC Viewer / Executive",
         "name": "Circle Audit Desk",
-        "access": ["read_only"]
+        "access": ["read_only"]  # ⚡ Viewer account set to Read-only (Editing Locked)
     }
 }
 
@@ -495,7 +498,7 @@ admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
 
-st.sidebar.markdown(f"### 🛡️ Enterprise NOC Hub")
+st.sidebar.markdown(f"### 🛡️️ Enterprise NOC Hub")
 st.sidebar.markdown(f"**Operator:** `{admin_name}`")
 st.sidebar.markdown(f"**Role:** `{admin_role}`")
 if st.sidebar.button("Log Out Session", use_container_width=True):
@@ -505,6 +508,7 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
+# ⚡ NAVIGATION RADIO PLACED AT THE TOP OF SIDEBAR
 page = st.sidebar.radio("NOC Operations Navigation:", [
     "📊 Executive Control Center",
     "⚙️ Fleet Analytics & Problem Buckets",
@@ -517,6 +521,7 @@ page = st.sidebar.radio("NOC Operations Navigation:", [
 
 st.sidebar.markdown("---")
 
+# Data Pipeline Uploads (Placed below Navigation)
 st.sidebar.markdown("### 📂 Data Pipeline Synchronization")
 uploaded_cm = st.sidebar.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"])
 uploaded_dg = st.sidebar.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"])
@@ -534,9 +539,11 @@ cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
 dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
 ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
+# ⚡ LOADER SPINNER FOR SMOOTH DATA SYNCHRONIZATION
 with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
     df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
 
+# ⚡ PERSISTENT SESSION STATE INITIALIZATION
 if "master_tracker_df" not in st.session_state:
     st.session_state.master_tracker_df = pd.DataFrame()
 if "fuel_tracker_df" not in st.session_state:
