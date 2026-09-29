@@ -6,7 +6,7 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
-from streamlit_autorefresh import st_autorefresh
+import time
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -16,8 +16,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ROBUST AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
-count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
+# --- PURE PYTHON AUTO REFRESH LOGIC (Every 30 Seconds) ---
+if 'last_refresh' not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+refresh_interval = 30  # 30 Seconds
+current_time = time.time()
+
+if current_time - st.session_state.last_refresh > refresh_interval:
+    st.session_state.last_refresh = current_time
+    st.rerun()
 
 # Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
@@ -266,22 +274,7 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- USER CREDENTIALS ---
-USER_CREDENTIALS = {
-    "tridip2.gogoi": {
-        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin / Operations Head",
-        "name": "Tridip Gogoi (Operations Head)",
-        "access": ["all"]
-    },
-    "all": {
-        "password_hash": hashlib.sha256("Viewer@2026".encode()).hexdigest(),
-        "role": "NOC Viewer / Executive",
-        "name": "Circle Audit Desk",
-        "access": ["read_only"]
-    }
-}
-
+# --- UPDATED USER CREDENTIALS VERIFICATION ---
 def verify_login(username, password):
     clean_user = username.strip()
     clean_pass = password.strip()
