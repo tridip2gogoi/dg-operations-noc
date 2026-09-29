@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
+# Custom Corporate Professional NOC Styling & Mobile Scroll Fix
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -31,6 +31,23 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
+
+    /* MOBILE & DESKTOP SMOOTH SCROLLING FIX */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .main .block-container {
+        overflow-y: visible !important;
+        height: auto !important;
+        padding-bottom: 5rem !important;
+    }
+
+    [data-testid="stDataFrame"], div[data-testid="stVerticalBlock"] {
+        overflow-visible !important;
+    }
 
     .stApp {
         background: linear-gradient(rgba(15, 23, 42, 0.90), rgba(15, 23, 42, 0.90)), 
@@ -266,7 +283,7 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- UPDATED USER CREDENTIALS ---
+# --- CONFIGURED USER CREDENTIALS ---
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
@@ -462,7 +479,7 @@ if not st.session_state.authenticated:
         st.markdown("""
         <div style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #0f172a; font-red: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ DG NOC Portal</h2>
+                <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ DG NOC Portal</h2>
                 <p style="color: #64748b; font-size: 0.9rem;">North East Circle Operations Gateway</p>
             </div>
         """, unsafe_allow_html=True)
@@ -1355,7 +1372,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
@@ -1378,7 +1395,7 @@ elif page == "🔍 AI Site Diagnostics":
                 with st.container(border=True):
                     c_s1, c_s2 = st.columns(2)
                     with c_s1:
-                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/Key')}`" if 'DG Make' in site_row else "**DG Make:** `N/A`")
+                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/A')}`")
                         st.markdown(f"**DG Rating:** `{site_row.get('DG Rating', 'N/A')}`")
                         st.markdown(f"**OEM Vendor:** `{site_row.get('OEM Vendor', 'N/A')}`")
                         st.markdown(f"**EB Grid Connection:** `{site_row.get('EB/Non EB', 'N/A')}`")
@@ -1387,7 +1404,7 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown(f"**Supervisor Name:** `{site_row.get('Supervisor Name', 'N/A')}`")
                         st.markdown(f"**TRT Personnel:** `{site_row.get('TRT Name', 'N/A')}`")
                         st.markdown(f"**Contact Number:** `{site_row.get('Contact No.', 'N/A')}`")
-                        st.markdown(f"**Dependent Sites:** `{site_row.get('Dependent Site', 'None')}`")
+                        st.markdown(f"**Dependent Sites:** `{site_pop if 'Dependent Site' in site_row else 'None'}`")
 
             with diag_t2:
                 with st.container(border=True):
@@ -1401,7 +1418,7 @@ elif page == "🔍 AI Site Diagnostics":
                         ],
                         "Master Tracker (Live)": [
                             str(site_row.get("Fuel Sensor Status", "")),
-                            str(site_row.get("Docket no.", "")),
+                            str(site_row.get("`, '')),
                             clean_date_str(site_row.get("Open Date", "")),
                             str(site_row.get("DG Automation Status", "")),
                             str(site_row.get("Present Remarks", "")),
@@ -1414,6 +1431,7 @@ elif page == "🔍 AI Site Diagnostics":
                     })
                     st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
 
+            with_diag_t3_flag = True
             with diag_t3:
                 with st.container(border=True):
                     h1, h2 = st.columns(2)
