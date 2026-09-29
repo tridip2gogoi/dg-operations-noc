@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
-import time
+from streamlit_autorefresh import st_autorefresh
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -16,21 +16,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- PURE PYTHON AUTO REFRESH LOGIC (Every 30 Seconds) ---
-if 'last_refresh' not in st.session_state:
-    st.session_state.last_refresh = time.time()
-
-refresh_interval = 30  # 30 Seconds
-current_time = time.time()
-
-if current_time - st.session_state.last_refresh > refresh_interval:
-    st.session_state.last_refresh = current_time
-    st.rerun()
-
-# --- ACCURATE IST TIME HELPER ---
-def get_ist_time_str():
-    ist_zone = timezone(timedelta(hours=5, minutes=30))
-    return datetime.now(ist_zone).strftime('%d %b %Y, %I:%M %p')
+# --- AUTO REFRESH CONFIGURATION (Every 30 Seconds) ---
+count = st_autorefresh(interval=30000, limit=None, key="datanocrefresh")
 
 # Custom Corporate Professional NOC Styling & Streamlit Branding Hiding
 st.markdown("""
@@ -279,40 +266,26 @@ def clean_date_str(val):
     except Exception:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
-# --- USER CREDENTIALS ---
 USER_CREDENTIALS = {
-    "tridip2.gogoi": {
-        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
+    "admin": {
+        "password_hash": hashlib.sha256("admin@123".encode()).hexdigest(),
         "role": "Super Admin / Operations Head",
-        "name": "Tridip Gogoi (Operations Head)",
+        "name": "Circle Operations Head",
         "access": ["all"]
     },
-    "all": {
-        "password_hash": hashlib.sha256("Viewer@2026".encode()).hexdigest(),
+    "viewer": {
+        "password_hash": hashlib.sha256("viewer@123".encode()).hexdigest(),
         "role": "NOC Viewer / Executive",
         "name": "Circle Audit Desk",
-        "access": ["read_only"]
+        "access": ["read_only"]  # ⚡ Viewer account set to Read-only (Editing Locked)
     }
 }
 
 def verify_login(username, password):
-    clean_user = username.strip()
-    clean_pass = password.strip()
-    
-    if clean_user.lower() == "tridip2.gogoi" and clean_pass == "Gogoi@6095":
-        return {
-            "role": "Super Admin / Operations Head",
-            "name": "Tridip Gogoi (Operations Head)",
-            "access": ["all"]
-        }
-    
-    if clean_user.lower() == "all" and clean_pass == "Viewer@2026":
-        return {
-            "role": "NOC Viewer / Executive",
-            "name": "Circle Audit Desk",
-            "access": ["read_only"]
-        }
-        
+    if username in USER_CREDENTIALS:
+        hashed_pwd = hashlib.sha256(password.encode()).hexdigest()
+        if hashed_pwd == USER_CREDENTIALS[username]["password_hash"]:
+            return USER_CREDENTIALS[username]
     return None
 
 def is_valid_source(src):
@@ -464,8 +437,7 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
         if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
         
-        ist_zone = timezone(timedelta(hours=5, minutes=30))
-        today_date_str = datetime.now(ist_zone).strftime('%Y-%m-%d')
+        today_date_str = datetime.now().strftime('%Y-%m-%d')
         target_closed_col = None
         for col in updated.columns:
             if 'last closed' in col.lower():
@@ -500,11 +472,11 @@ if not st.session_state.authenticated:
             login_btn = st.form_submit_button("Authenticate & Access Dashboard", use_container_width=True, type="primary")
 
             if login_btn:
-                user_record = verify_login(input_user, input_pass)
+                user_record = verify_login(input_user.strip().lower(), input_pass)
                 if user_record:
                     st.session_state.authenticated = True
                     st.session_state.user_info = user_record
-                    st.session_state.username = input_user.strip()
+                    st.session_state.username = input_user.strip().lower()
                     st.success("Access Granted! Loading Console...")
                     st.rerun()
                 else:
@@ -512,8 +484,8 @@ if not st.session_state.authenticated:
 
         st.markdown("""
         <div style="background: rgba(241, 245, 249, 0.95); border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 13px; color: #334155; text-align: center;">
-            👁️ <b>Viewer (Read-only) Access:</b><br>
-            Username: <code style="color: #0369a1; font-weight: 600;">all</code> | Password: <code style="color: #0369a1; font-weight: 600;">Viewer@2026</code>
+            👁️ <b>NOC Viewer (Read-only) Access:</b><br>
+            Username: <code style="color: #0369a1; font-weight: 600;">viewer</code> | Password: <code style="color: #0369a1; font-weight: 600;">viewer@123</code>
         </div>
         </div>
         """, unsafe_allow_html=True)
@@ -526,7 +498,7 @@ admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
 
-st.sidebar.markdown(f"### 🛡️ Enterprise NOC Hub")
+st.sidebar.markdown(f"### 🛡️️ Enterprise NOC Hub")
 st.sidebar.markdown(f"**Operator:** `{admin_name}`")
 st.sidebar.markdown(f"**Role:** `{admin_role}`")
 if st.sidebar.button("Log Out Session", use_container_width=True):
@@ -626,7 +598,7 @@ if not df_status.empty:
 # ---------------------------------------------------------
 if page == "📊 Executive Control Center":
     st.markdown("## ⚡ North East Circle - DG Operations Control Center")
-    st.caption(f"System State: Operational | Active Operator: **{admin_name} ({admin_role})** | Refreshed: {get_ist_time_str()}")
+    st.caption(f"System State: Operational | Active Operator: **{admin_name} ({admin_role})** | Refreshed: {datetime.now().strftime('%d %b %Y, %I:%M %p')}")
 
     if not df_status.empty:
         total_sites = len(df_status)
@@ -912,7 +884,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                     st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(df_ila):,} total records.")
 
                 if is_viewer:
-                    st.warning("🔒 Viewer Account: Read-only access. Editing is disabled.")
+                    st.info("🔒 Viewer Mode: Read-only grid view.")
                     st.dataframe(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450)
                 else:
                     edited_ila_data = st.data_editor(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450)
@@ -944,7 +916,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
                 
                 if is_viewer:
-                    st.warning("🔒 Viewer Account: Single site modification and fault clearance are disabled.")
+                    st.warning("🔒 Viewer Account: Single site modification and fault clearance are locked (Read-only).")
                 else:
                     target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
                     
@@ -1028,7 +1000,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
                 if is_viewer:
-                    st.warning("🔒 Viewer Account: Adding new cases is restricted to Admin.")
+                    st.warning("🔒 Viewer Account: Adding new cases is restricted (Read-only).")
                 else:
                     with st.form("new_ila_case_form"):
                         nc1, nc2 = st.columns(2)
@@ -1075,12 +1047,12 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                 st.rerun()
 
 # ---------------------------------------------------------
-# 6. IN-PORTAL MASTER TRACKER EDITOR (FULL MASTER EDITING & DUAL SEARCH LINES WITH SPECIFIC FILTERS)
+# 6. IN-PORTAL MASTER TRACKER EDITOR
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     if is_viewer:
-        st.warning("🔒 Viewer Account: Read-only access enabled. Editing and modifications are locked.")
+        st.warning("🔒 Viewer Account: Master Tracker editing is locked (Read-only mode).")
         with st.container(border=True):
             st.dataframe(df_status, use_container_width=True, height=500)
     else:
@@ -1182,8 +1154,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     if edit_faulty_date_str.strip():
                                         try:
                                             parsed_faulty_date = pd.to_datetime(edit_faulty_date_str.strip()).date()
-                                            ist_zone = timezone(timedelta(hours=5, minutes=30))
-                                            current_eval_date = datetime.now(ist_zone).date()
+                                            current_eval_date = date(2026, 9, 28)
                                             calc_aging = (current_eval_date - parsed_faulty_date).days
                                             if calc_aging < 0:
                                                 calc_aging = 0
@@ -1221,7 +1192,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
         with edit_tab2:
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing.")
+                st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing[cite: 10].")
                 
                 sc1, sc2 = st.columns(2)
                 with sc1:
@@ -1276,7 +1247,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     st.rerun()
 
 # ---------------------------------------------------------
-# 7. AI SITE DIAGNOSTICS (PROFESSIONAL ENTERPRISE EDITION)
+# 7. AI SITE DIAGNOSTICS
 # ---------------------------------------------------------
 elif page == "🔍 AI Site Diagnostics":
     st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
