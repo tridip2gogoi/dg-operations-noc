@@ -3,9 +3,14 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, date
+import pytz
 import os
 import hashlib
 from io import BytesIO
+
+# --- TIMEZONE CONFIGURATION FOR IST ---
+IST = pytz.timezone('Asia/Kolkata')
+current_ist_time = datetime.now(IST)
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -433,7 +438,7 @@ def clear_site_active_fault_data(site_id, df_target):
         if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
         if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
         
-        today_date_str = datetime.now().strftime('%Y-%m-%d')
+        today_date_str = datetime.now(IST).strftime('%Y-%m-%d')
         target_closed_col = None
         for col in updated.columns:
             if 'last closed' in col.lower():
@@ -504,13 +509,13 @@ if st.sidebar.button("Log Out Session", use_container_width=True):
 
 st.sidebar.markdown("---")
 
-# ⚡ ONE CLICK DATA REFRESH BUTTON ADDED IN SIDEBAR
+# ⚡ ONE CLICK DATA REFRESH BUTTON WITH IST TIME SYNC
 if st.sidebar.button("🔄 Refresh All Data", use_container_width=True, type="primary"):
     st.cache_data.clear()
     for key in list(st.session_state.keys()):
         if key != "authenticated" and key != "user_info" and key != "username":
             del st.session_state[key]
-    st.success("Cache cleared and data successfully refreshed!")
+    st.success("Cache cleared and data successfully refreshed (IST Time Synced)!")
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -591,7 +596,7 @@ if not df_status.empty:
     st.sidebar.download_button(
         label="📥 Download Complete Trackers (.xlsx)",
         data=full_output.getvalue(),
-        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True
     )
@@ -601,7 +606,7 @@ if not df_status.empty:
 # ---------------------------------------------------------
 if page == "📊 Executive Control Center":
     st.markdown("## ⚡ North East Circle - DG Operations Control Center")
-    st.caption(f"System State: Operational | Active Operator: **{admin_name} ({admin_role})** | Refreshed: {datetime.now().strftime('%d %b %Y, %I:%M %p')}")
+    st.caption(f"System State: Operational | Active Operator: **{admin_name} ({admin_role})** | Refreshed (IST): {datetime.now(IST).strftime('%d %b %Y, %I:%M:%S %p')}")
 
     if not df_status.empty:
         total_sites = len(df_status)
@@ -909,7 +914,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                 st.download_button(
                     label="📥 Download Processed ILA-AG1 Report (.xlsx)",
                     data=ila_output.getvalue(),
-                    file_name=f"ILA_AG1_Report_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                    file_name=f"ILA_AG1_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True
                 )
@@ -1157,7 +1162,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     if edit_faulty_date_str.strip():
                                         try:
                                             parsed_faulty_date = pd.to_datetime(edit_faulty_date_str.strip()).date()
-                                            current_eval_date = date(2026, 9, 28)
+                                            current_eval_date = datetime.now(IST).date()
                                             calc_aging = (current_eval_date - parsed_faulty_date).days
                                             if calc_aging < 0:
                                                 calc_aging = 0
@@ -1351,7 +1356,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
