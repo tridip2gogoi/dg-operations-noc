@@ -6,6 +6,7 @@ from datetime import datetime, date
 import os
 import hashlib
 from io import BytesIO
+import time
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -930,7 +931,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
