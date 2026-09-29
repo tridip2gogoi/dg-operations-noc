@@ -263,13 +263,13 @@ def clean_date_str(val):
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
 USER_CREDENTIALS = {
-    "admin": {
-        "password_hash": hashlib.sha256("admin@123".encode()).hexdigest(),
-        "role": "Super Admin / Operations Head",
-        "name": "Circle Operations Head",
+    "tridip2.gogoi": {
+        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
+        "role": "Super Admin",
+        "name": "Circle MIS",
         "access": ["all"]
     },
-    "viewer": {
+    "all": {
         "password_hash": hashlib.sha256("viewer@123".encode()).hexdigest(),
         "role": "NOC Viewer / Executive",
         "name": "Circle Audit Desk",
