@@ -32,21 +32,12 @@ st.markdown("""
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
 
-    /* MOBILE & DESKTOP SMOOTH SCROLLING FIX */
-    html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-        height: 100% !important;
+    /* MOBILE & APP FULL SCROLL FIX */
+    html, body, [data-testid="stAppViewContainer"], .main, .block-container {
+        height: auto !important;
+        min-height: 100vh !important;
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
-    }
-
-    .main .block-container {
-        overflow-y: visible !important;
-        height: auto !important;
-        padding-bottom: 5rem !important;
-    }
-
-    [data-testid="stDataFrame"], div[data-testid="stVerticalBlock"] {
-        overflow-visible !important;
     }
 
     .stApp {
@@ -55,6 +46,11 @@ st.markdown("""
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
+        overflow-y: auto !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        overflow-y: auto !important;
     }
 
     div[data-testid="stRadio"] label,
@@ -1372,7 +1368,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
