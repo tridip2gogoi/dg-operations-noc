@@ -463,7 +463,7 @@ if st.session_state.show_control_panel:
             with up_c1:
                 uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
             with up_c2:
-                uploaded_dg = st.file_uploader("2. DG Automation Master Tracker", type=["xlsx", "xls"], key="top_dg")
+                uploaded_dg = st.file_uploader("2. Fuel Sensor / DG Master Tracker (Col O, P, Q)", type=["xlsx", "xls"], key="top_dg")
             with up_c3:
                 uploaded_ila = st.file_uploader("3. ILA-AG1 Tracker", type=["xlsx", "xls"], key="top_ila")
 
