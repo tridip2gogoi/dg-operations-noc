@@ -742,12 +742,21 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m4:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
-            if 'DG Automation Status' in df_status.columns and 'Bucket' in df_status.columns:
+            
+            # State/JC filter addition specifically for tab4 breakdown view
+            if 'State' in df_status.columns:
+                b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
+                chosen_b_state = st.selectbox("🌐 Filter State for Breakdown Matrix:", b_states, key="breakdown_state_filter")
+                filtered_b_df = df_status if chosen_b_state == "All States" else df_status[df_status['State'].astype(str).str.strip() == chosen_b_state]
+            else:
+                filtered_b_df = df_status
+
+            if 'DG Automation Status' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
                 target_statuses = ['DG Breakdown', 'Manual Mode']
                 target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
-                df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
+                df_sub = filtered_b_df[filtered_b_df['DG Automation Status'].isin(target_statuses) & filtered_b_df['Bucket'].isin(target_bkts)].copy()
                 if not df_sub.empty:
-                    df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_status.columns else ''
+                    df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in filtered_b_df.columns else ''
                     df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
                     if 'JC' in df_sub.columns:
                         ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
@@ -755,7 +764,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     else:
                         st.warning("JC column missing.")
                 else:
-                    st.info("No records matching breakdown/manual criteria.")
+                    st.info("No records matching breakdown/manual criteria for this state selection.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
