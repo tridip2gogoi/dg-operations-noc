@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling (With yellow accent for tabs/labels)
+# Custom Corporate Professional NOC Styling (With yellow accent for header banner)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -71,7 +71,6 @@ st.markdown("""
         margin-right: 6px;
     }
 
-    /* Tabs styling: active/inactive headers in bright yellow */
     div[data-testid="stTabs"] button p, div[data-testid="stTabs"] button span {
         color: #fef08a !important;
         font-weight: 800 !important;
@@ -140,14 +139,15 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
+    /* Custom Header Banner with Yellow/Gold Accent */
     .custom-header-banner {
         background-color: #0f172a !important;
         border: 2px solid #facc15 !important;
         border-radius: 8px !important;
-        padding: 12px 18px !important;
+        padding: 14px 20px !important;
         margin-top: 6px !important;
         margin-bottom: 8px !important;
-        box-shadow: 0 6px 15px -5px rgba(0,0,0,0.6) !important;
+        box-shadow: 0 6px 15px -5px rgba(250, 204, 21, 0.3) !important;
     }
 
     .yellow-alert-box {
@@ -668,7 +668,7 @@ if page == "📊 Executive Control Center":
         
         with c1:
             with st.container(border=True):
-                st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>JC / State Wise Automation Health</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>JC / State Wise Automation Health</h4>", unsafe_allow_html=True)
                 target_df_for_chart = state_filtered_df if 'State' in df_status.columns else df_status
                 if "JC" in target_df_for_chart.columns and "DG Automation Status" in target_df_for_chart.columns:
                     fig_bar = px.histogram(
@@ -687,7 +687,7 @@ if page == "📊 Executive Control Center":
 
         with c2:
             with st.container(border=True):
-                st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>DG Make Fleet Allocation</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>DG Make Fleet Allocation</h4>", unsafe_allow_html=True)
                 target_df_for_chart = state_filtered_df if 'State' in df_status.columns else df_status
                 if "DG Make" in target_df_for_chart.columns:
                     valid_makes = target_df_for_chart[target_df_for_chart['DG Make'].notna() & (target_df_for_chart['DG Make'].astype(str).str.strip() != '')]
@@ -719,7 +719,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     
     with col1:
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>Status Summary ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Status Summary ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
             if 'DG Automation Status' in filtered_status.columns:
                 stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
                 stat_summary.columns = ['Status Category', 'Site Count']
@@ -729,7 +729,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with col2:
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>Bucket Distribution ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket Distribution ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
             if not valid_bucket.empty:
                 b_summary = valid_bucket['Bucket'].value_counts().reset_index()
                 b_summary.columns = ['Root-Cause Bucket', 'Incidents']
@@ -759,7 +759,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m1:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
             if 'JC' in df_status.columns and 'DG Automation Status' in df_status.columns:
                 status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
                 st.dataframe(status_matrix, use_container_width=True)
@@ -768,7 +768,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m2:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
             if 'JC' in df_status.columns and 'Bucket' in df_status.columns:
                 all_valid_bkt = df_status[df_status['Bucket'].notna() & (df_status['Bucket'].astype(str).str.strip() != '')]
                 if not all_valid_bkt.empty:
@@ -781,7 +781,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m3:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
             if 'State' in df_status.columns:
                 gcu_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
                 chosen_gcu_state = st.selectbox("🌐 Filter State for GCU Breakdown:", gcu_states, key="gcu_state_filter")
@@ -801,7 +801,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m4:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
             if 'State' in df_status.columns:
                 b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
                 chosen_b_state = st.selectbox("🌐 Filter State for Breakdown Matrix:", b_states, key="breakdown_state_filter")
@@ -851,19 +851,19 @@ elif page == "⛽ Fuel Sensor Telemetry":
 
         st.markdown("---")
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>📊 JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
             if 'JC' in auto_df_fuel.columns and 'DG Make' in auto_df_fuel.columns:
                 jc_fault_matrix = pd.crosstab(auto_df_fuel['JC'], auto_df_fuel['DG Make'], margins=True, margins_name="Total")
                 st.dataframe(jc_fault_matrix, use_container_width=True)
 
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>⚡ DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>⚡ DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
             if 'DG Make' in auto_df_fuel.columns and 'DG Rating' in auto_df_fuel.columns:
                 make_kva_matrix = pd.crosstab(auto_df_fuel['DG Make'], auto_df_fuel['DG Rating'], margins=True, margins_name="Total")
                 st.dataframe(make_kva_matrix, use_container_width=True)
 
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Active Fuel Sensor Fault Site Registry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>📋 Active Fuel Sensor Fault Site Registry</h4>", unsafe_allow_html=True)
             st.dataframe(auto_df_fuel, use_container_width=True)
     else:
         st.info("No active fuel sensor faults detected in Master Tracker.")
@@ -908,7 +908,7 @@ elif page == "⏳ Daily Fault Summary":
     if not filtered_date_df.empty:
         st.markdown("---")
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
             if 'JC' in filtered_date_df.columns and 'Bucket' in filtered_date_df.columns:
                 jc_bucket_matrix = pd.crosstab(filtered_date_df['JC'], filtered_date_df['Bucket'], margins=True, margins_name="Total")
                 st.dataframe(jc_bucket_matrix, use_container_width=True)
@@ -916,7 +916,7 @@ elif page == "⏳ Daily Fault Summary":
                 st.info("JC or Bucket columns not found for cross-tabulation.")
 
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #0f172a;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
             st.dataframe(filtered_date_df, use_container_width=True)
     else:
         st.info(f"No fault records found matching date filter (`{selected_date_filter}`).")
@@ -939,7 +939,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab1:
             with st.container(border=True):
-                st.markdown(f"<h3 style='margin:0 0 10px 0; color: #0f172a;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='margin:0 0 10px 0; color: #facc15;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
                 
                 ila_search_query = st.text_input("🔍 Search / Filter ILA Registry by Sap ID, JC, Facility etc.:", "").strip().upper()
                 filtered_ila_df = df_ila.copy()
@@ -975,7 +975,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab2:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
                 if is_viewer:
                     st.info("🔒 Viewer Mode: Quick editing, fault clearance, and site removal are restricted.")
                 target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
@@ -1059,7 +1059,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
         with ila_tab3:
             with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
                 if is_viewer:
                     st.info("🔒 Viewer Mode: Adding new cases is restricted.")
                 else:
@@ -1119,7 +1119,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
     with edit_tab1:
         with st.container(border=True):
-            st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, TT Closure & Removal</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>Single Site Quick Editor, TT Closure & Removal</h3>", unsafe_allow_html=True)
             if is_viewer:
                 st.info("🔒 Viewer Mode: Quick editing, TT closures, and site removals are locked (Read-only view).")
             
@@ -1235,7 +1235,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
                         if not is_viewer:
                             st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
-                            st.markdown("<h4 style='color: #0f172a; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
+                            st.markdown("<h4 style='color: #facc15; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
                             
                             col_bt1, col_bt2 = st.columns(2)
                             with col_bt1:
@@ -1251,7 +1251,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
 
     with edit_tab2:
         with st.container(border=True):
-            st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor / Filter View</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor / Filter View</h3>", unsafe_allow_html=True)
             st.caption("Use the primary and secondary search filters below to filter and view rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W).")
             
             sc1, sc2 = st.columns(2)
@@ -1316,7 +1316,7 @@ elif page == "🔍 AI Site Diagnostics":
     st.caption("Circle-wide deep diagnostics, equipment specs, telemetry mapping, and field intervention radar.")
 
     with st.container(border=True):
-        st.markdown("<h4 style='margin:0 0 10px 0; color: #0f172a;'>🎯 Targeted Site Telemetry Search</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>🎯 Targeted Site Telemetry Search</h4>", unsafe_allow_html=True)
         s_col1, s_col2 = st.columns([3.5, 1])
         with s_col1:
             sq = st.text_input(
@@ -1331,7 +1331,7 @@ elif page == "🔍 AI Site Diagnostics":
 
     if not sq:
         with st.container(border=True):
-            st.markdown("<h3 style='margin:0 0 12px 0; color: #0f172a;'>⚡ Circle Network Overview & Diagnostics Radar</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin:0 0 12px 0; color: #facc15;'>⚡ Circle Network Overview & Diagnostics Radar</h3>", unsafe_allow_html=True)
             tot_s = len(df_status) if not df_status.empty else 0
             auto_s = len(df_status[df_status['DG Automation Status'] == 'Automation Ok']) if not df_status.empty else 0
             manual_mode = len(df_status[df_status['DG Automation Status'] == 'Manual Mode']) if not df_status.empty else 0
@@ -1343,8 +1343,8 @@ elif page == "🔍 AI Site Diagnostics":
             c3.metric("Manual Mode Alerts", manual_mode, f"-{round((manual_mode/tot_s)*100, 1) if tot_s else 0}%", delta_color="inverse")
             c4.metric("Active Breakdowns", bd_s, f"-{round((bd_s/tot_s)*100, 1) if tot_s else 0}%", delta_color="inverse")
             
-            st.markdown("<hr style='margin: 14px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
-            st.markdown("<p style='font-size: 14px; font-weight: 600; color: #475569;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 14px 0; border-color: #facc15;'>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 14px; font-weight: 600; color: #fef08a;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
 
     else:
         matches = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)] if not df_status.empty else pd.DataFrame()
@@ -1354,7 +1354,7 @@ elif page == "🔍 AI Site Diagnostics":
         else:
             if len(matches) > 1:
                 with st.container(border=True):
-                    st.markdown("<p style='font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #0f172a;'>Multiple Sites Found:</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #facc15;'>Multiple Sites Found:</p>", unsafe_allow_html=True)
                     selected_site = st.selectbox("Select Target SAIP ID:", matches['SAIP ID'].tolist(), label_visibility="collapsed")
                     site_row = matches[matches['SAIP ID'] == selected_site].iloc[0]
             else:
@@ -1373,9 +1373,9 @@ elif page == "🔍 AI Site Diagnostics":
             <div class="custom-header-banner">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
-                        <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #ffffff !important;">{selected_site}</span></h2>
-                        <div style="margin-top: 8px !important; color: #ffffff !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
-                            Territory: <span style="color: #38bdf8 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
+                        <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #facc15 !important;">{selected_site}</span></h2>
+                        <div style="margin-top: 8px !important; color: #fef08a !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
+                            Territory: <span style="color: #ffffff !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 10px;">
@@ -1446,7 +1446,7 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown("<p style='color: #0f172a; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='color: #facc15; font-weight: 700; margin-bottom: 8px;'>Master Tracker Live Telemetry (Col O to AB)</p>", unsafe_allow_html=True)
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
@@ -1472,7 +1472,7 @@ elif page == "🔍 AI Site Diagnostics":
                     h1, h2 = st.columns(2)
                     h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
                     h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
-                    st.markdown("<hr style='margin: 10px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin: 10px 0; border-color: #facc15;'>", unsafe_allow_html=True)
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
                     prev_rem_text = str(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
                     st.markdown(f"""
