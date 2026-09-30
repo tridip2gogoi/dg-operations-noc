@@ -181,8 +181,8 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin / Operations Head",
-        "name": "Tridip Gogoi (Operations Head)",
+        "role": "Super Admin",
+        "name": "Tridip Gogoi (MIS)",
         "access": ["all"]
     },
     "viewer": {
