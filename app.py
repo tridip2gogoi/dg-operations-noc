@@ -379,7 +379,7 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
 
         with st.form("admin_login_form"):
-            input_user = st.text_input("Username", placeholder="Enter username (e.g. tridip2.gogoi)")
+            input_user = st.text_input("Username", placeholder="Enter username")
             input_pass = st.text_input("Password", type="password", placeholder="••••••••")
             login_btn = st.form_submit_button("Authenticate & Access Dashboard", use_container_width=True, type="primary")
 
@@ -394,13 +394,7 @@ if not st.session_state.authenticated:
                 else:
                     st.error("Authentication Failed: Invalid Credentials")
 
-        st.markdown("""
-        <div style="background: rgba(241, 245, 249, 0.95); border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 13px; color: #334155; text-align: center;">
-            👁️ <b>NOC Viewer Access:</b><br>
-            Username: <code style="color: #0369a1; font-weight: 600;">viewer</code> | Password: <code style="color: #0369a1; font-weight: 600;">viewer@2026</code>
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # --- AUTHENTICATED WORKSPACE ---
@@ -409,7 +403,6 @@ admin_name = user_data["name"]
 admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
-username = st.session_state.get("username", "")
 
 # --- SESSION STATE INITIALIZATION FOR TOGGLE ---
 if "show_control_panel" not in st.session_state:
