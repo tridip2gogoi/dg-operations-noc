@@ -348,12 +348,12 @@ def save_master_to_disk():
             if local_files:
                 target_file = local_files[0]
         
-        if not st.session_state.master_tracker_df.empty:
+        if "master_tracker_df" in st.session_state and not st.session_state.master_tracker_df.empty:
             with pd.ExcelWriter(target_file, engine='openpyxl') as writer:
                 st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
-                if not st.session_state.fuel_tracker_df.empty:
+                if "fuel_tracker_df" in st.session_state and not st.session_state.fuel_tracker_df.empty:
                     st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
-                if not st.session_state.ila_tracker_df.empty:
+                if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
                     st.session_state.ila_tracker_df.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
             st.cache_data.clear()
     except Exception as ex:
@@ -537,16 +537,12 @@ if st.session_state.show_control_panel:
         with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
             df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(perm_master_source, cm_source, ila_source)
 
-        if "master_tracker_df" not in st.session_state:
-            st.session_state.master_tracker_df = pd.DataFrame()
-        if "fuel_tracker_df" not in st.session_state:
-            st.session_state.fuel_tracker_df = pd.DataFrame()
-        if "ila_tracker_df" not in st.session_state:
-            st.session_state.ila_tracker_df = pd.DataFrame()
-
-        # PERMANENT MASTER PRESERVATION LOGIC
-        if st.session_state.master_tracker_df.empty or uploaded_perm_master is not None:
+        if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
             st.session_state.master_tracker_df = df_status_raw.copy()
+        if "fuel_tracker_df" not in st.session_state or st.session_state.fuel_tracker_df.empty:
+            st.session_state.fuel_tracker_df = df_fuel_raw.copy()
+        if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
+            st.session_state.ila_tracker_df = df_ila_raw.copy()
 
         if uploaded_dg is not None:
             try:
@@ -571,14 +567,6 @@ if st.session_state.show_control_panel:
                     st.success("✅ Permanent Master Base intact! Docket No. and status updated successfully.")
             except Exception as e:
                 st.warning(f"Could not merge incoming file: {e}")
-
-        if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
-            st.session_state.fuel_tracker_df = df_fuel_raw.copy()
-        if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
-            st.session_state.ila_tracker_df = df_ila_raw.copy()
-
-        if uploaded_ila is not None and not df_ila_raw.empty:
-            st.session_state.ila_tracker_df = df_ila_raw.copy()
 
         df_status = st.session_state.master_tracker_df
         df_fuel = st.session_state.fuel_tracker_df
@@ -1486,7 +1474,7 @@ elif page == "🔍 AI Site Diagnostics":
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U:Bucket",
+                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Bucket",
                             "Col V: Present Docket No.", "Col W: Present Docket raise Date",
                             "Col X: Aging (Day's)"
                         ],
