@@ -181,8 +181,8 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin",
-        "name": "Tridip Gogoi (MIS)",
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
         "access": ["all"]
     },
     "viewer": {
@@ -815,28 +815,25 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     if df_ila.empty:
         st.info("📂 Please open the top toggle panel and upload the **ILA-AG1 Tracker** file to initialize this module.")
     else:
-        if is_viewer:
-            st.info("🔒 Viewer Mode: Read-only grid view.")
-            st.dataframe(df_ila, use_container_width=True, height=500)
-        else:
-            ila_tab1, ila_tab2, ila_tab3 = st.tabs([
-                "📊 Registry & Spreadsheet Grid",
-                "📝 Single Site Quick Editor, Clear & Removal",
-                "➕ New Case / Site Entry"
-            ])
+        ila_tab1, ila_tab2, ila_tab3 = st.tabs([
+            "📊 Registry & Spreadsheet Grid",
+            "📝 Single Site Quick Editor, Clear & Removal",
+            "➕ New Case / Site Entry"
+        ])
 
-            with ila_tab1:
-                with st.container(border=True):
-                    st.markdown(f"<h3 style='margin:0 0 10px 0; color: #0f172a;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
-                    
-                    ila_search_query = st.text_input("🔍 Search / Filter ILA Registry by Sap ID, JC, Facility etc.:", "").strip().upper()
-                    filtered_ila_df = df_ila.copy()
-                    if ila_search_query:
-                        ila_mask = filtered_ila_df.astype(str).apply(lambda col: col.str.contains(ila_search_query, case=False, na=False)).any(axis=1)
-                        filtered_grid_df = filtered_ila_df[ila_mask]
-                        st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(df_ila):,} total records.")
+        with ila_tab1:
+            with st.container(border=True):
+                st.markdown(f"<h3 style='margin:0 0 10px 0; color: #0f172a;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
+                
+                ila_search_query = st.text_input("🔍 Search / Filter ILA Registry by Sap ID, JC, Facility etc.:", "").strip().upper()
+                filtered_ila_df = df_ila.copy()
+                if ila_search_query:
+                    ila_mask = filtered_ila_df.astype(str).apply(lambda col: col.str.contains(ila_search_query, case=False, na=False)).any(axis=1)
+                    filtered_grid_df = filtered_ila_df[ila_mask]
+                    st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(df_ila):,} total records.")
 
-                    edited_ila_data = st.data_editor(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450)
+                edited_ila_data = st.data_editor(filtered_grid_df if ila_search_query else df_ila, use_container_width=True, height=450, disabled=is_viewer)
+                if not is_viewer:
                     if st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
                         for col in st.session_state.ila_tracker_df.columns:
                             st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
@@ -849,38 +846,41 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                         st.success("ILA-AG1 grid updates saved successfully!")
                         st.rerun()
 
-                    ila_output = BytesIO()
-                    with pd.ExcelWriter(ila_output, engine='openpyxl') as writer:
-                        df_ila.to_excel(writer, sheet_name="ILA-AG1 Data", index=False)
-                    st.download_button(
-                        label="📥 Download Processed ILA-AG1 Report (.xlsx)",
-                        data=ila_output.getvalue(),
-                        file_name=f"ILA_AG1_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
-                    )
+                ila_output = BytesIO()
+                with pd.ExcelWriter(ila_output, engine='openpyxl') as writer:
+                    df_ila.to_excel(writer, sheet_name="ILA-AG1 Data", index=False)
+                st.download_button(
+                    label="📥 Download Processed ILA-AG1 Report (.xlsx)",
+                    data=ila_output.getvalue(),
+                    file_name=f"ILA_AG1_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
 
-            with ila_tab2:
-                with st.container(border=True):
-                    st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
-                    target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
-                    
-                    if target_sap_id and 'Sap ID' in df_ila.columns:
-                        matches_ila = df_ila[df_ila['Sap ID'].astype(str).str.contains(target_sap_id, case=False, na=False)]
-                        if matches_ila.empty:
-                            st.error(f"Sap ID matching `{target_sap_id}` not found in ILA-AG1 tracker.")
+        with ila_tab2:
+            with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
+                if is_viewer:
+                    st.info("🔒 Viewer Mode: Quick editing, fault clearance, and site removal are restricted to Admin.")
+                target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
+                
+                if target_sap_id and 'Sap ID' in df_ila.columns:
+                    matches_ila = df_ila[df_ila['Sap ID'].astype(str).str.contains(target_sap_id, case=False, na=False)]
+                    if matches_ila.empty:
+                        st.error(f"Sap ID matching `{target_sap_id}` not found in ILA-AG1 tracker.")
+                    else:
+                        if len(matches_ila) > 1:
+                            selected_ila_sap = st.selectbox("Multiple Sites Found:", matches_ila['Sap ID'].tolist())
                         else:
-                            if len(matches_ila) > 1:
-                                selected_ila_sap = st.selectbox("Multiple Sites Found:", matches_ila['Sap ID'].tolist())
-                            else:
-                                selected_ila_sap = matches_ila.iloc[0]['Sap ID']
+                            selected_ila_sap = matches_ila.iloc[0]['Sap ID']
 
-                            match_ila_idx = df_ila[df_ila['Sap ID'].astype(str).str.strip().str.upper() == str(selected_ila_sap).strip().upper()].index
-                            if not match_ila_idx.empty:
-                                i_idx = match_ila_idx[0]
-                                i_row = df_ila.loc[i_idx]
-                                st.info(f"Selected Record: **{selected_ila_sap}** | Facality: **{i_row.get('Facality', 'N/A')}** | JC: **{i_row.get('JC', 'N/A')}**")
+                        match_ila_idx = df_ila[df_ila['Sap ID'].astype(str).str.strip().str.upper() == str(selected_ila_sap).strip().upper()].index
+                        if not match_ila_idx.empty:
+                            i_idx = match_ila_idx[0]
+                            i_row = df_ila.loc[i_idx]
+                            st.info(f"Selected Record: **{selected_ila_sap}** | Facality: **{i_row.get('Facality', 'N/A')}** | JC: **{i_row.get('JC', 'N/A')}**")
 
+                            if not is_viewer:
                                 ila_action = st.radio(
                                     "Select Action:",
                                     ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
@@ -941,9 +941,12 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                         st.success(f"Record `{selected_ila_sap}` deleted successfully!")
                                         st.rerun()
 
-            with ila_tab3:
-                with st.container(border=True):
-                    st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
+        with ila_tab3:
+            with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
+                if is_viewer:
+                    st.info("🔒 Viewer Mode: Adding new cases is restricted to Admin.")
+                else:
                     with st.form("new_ila_case_form"):
                         nc1, nc2 = st.columns(2)
                         with nc1:
@@ -993,95 +996,94 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
-    if is_viewer:
-        st.warning("🔒 Viewer Account: Master Tracker editing and modifications are locked (Read-only mode).")
+    edit_tab1, edit_tab2 = st.tabs([
+        "📝 Single Site Quick Editor, TT Closure & Removal",
+        "📊 Full Master Tracker Spreadsheet Inline Grid Editor"
+    ])
+
+    with edit_tab1:
         with st.container(border=True):
-            st.dataframe(df_status, use_container_width=True, height=500)
-    else:
-        edit_tab1, edit_tab2 = st.tabs([
-            "📝 Single Site Quick Editor, TT Closure & Removal",
-            "📊 Full Master Tracker Spreadsheet Inline Grid Editor"
-        ])
-
-        with edit_tab1:
-            with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, TT Closure & Removal</h3>", unsafe_allow_html=True)
-                search_edit_site = st.text_input(
-                    "Enter SAIP ID to modify, close TT, or remove:",
-                    placeholder="Enter SAIP ID (e.g. 9011, BARA, DNGI, 9020)..."
-                ).strip().upper()
-                
-                if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
-                    matches_edit = df_status[df_status['SAIP ID'].astype(str).str.contains(search_edit_site, case=False, na=False)]
-                    if matches_edit.empty:
-                        st.error(f"Site matching `{search_edit_site}` not found in Master Tracker.")
+            st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, TT Closure & Removal</h3>", unsafe_allow_html=True)
+            if is_viewer:
+                st.info("🔒 Viewer Mode: Quick editing, TT closures, and site removals are locked (Read-only view).")
+            
+            search_edit_site = st.text_input(
+                "Enter SAIP ID to search / view / modify:",
+                placeholder="Enter SAIP ID (e.g. 9011, BARA, DNGI, 9020)..."
+            ).strip().upper()
+            
+            if search_edit_site and not df_status.empty and 'SAIP ID' in df_status.columns:
+                matches_edit = df_status[df_status['SAIP ID'].astype(str).str.contains(search_edit_site, case=False, na=False)]
+                if matches_edit.empty:
+                    st.error(f"Site matching `{search_edit_site}` not found in Master Tracker.")
+                else:
+                    if len(matches_edit) > 1:
+                        selected_edit_site = st.selectbox("Multiple Sites Found:", matches_edit['SAIP ID'].tolist())
                     else:
-                        if len(matches_edit) > 1:
-                            selected_edit_site = st.selectbox("Multiple Sites Found:", matches_edit['SAIP ID'].tolist())
-                        else:
-                            selected_edit_site = matches_edit.iloc[0]['SAIP ID']
+                        selected_edit_site = matches_edit.iloc[0]['SAIP ID']
 
-                        match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == str(selected_edit_site).strip().upper()].index
-                        if not match_idx.empty:
-                            row_idx = match_idx[0]
-                            s_row = df_status.loc[row_idx]
-                            
-                            auto_scanned_data = ai_capture_o_to_ab(selected_edit_site, df_open_cm, df_status, None)
-                            
-                            default_stat = s_row.get('DG Automation Status', 'Automation Ok')
-                            if auto_scanned_data["source"] != "None" and default_stat == "Automation Ok":
-                                default_stat = auto_scanned_data["Col_S_DG_Automation_Status"]
+                    match_idx = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == str(selected_edit_site).strip().upper()].index
+                    if not match_idx.empty:
+                        row_idx = match_idx[0]
+                        s_row = df_status.loc[row_idx]
+                        
+                        auto_scanned_data = ai_capture_o_to_ab(selected_edit_site, df_open_cm, df_status, None)
+                        
+                        default_stat = s_row.get('DG Automation Status', 'Automation Ok')
+                        if auto_scanned_data["source"] != "None" and default_stat == "Automation Ok":
+                            default_stat = auto_scanned_data["Col_S_DG_Automation_Status"]
 
-                            default_bkt = s_row.get('Bucket')
-                            if not default_bkt or pd.isna(default_bkt):
-                                default_bkt = auto_scanned_data["Col_U_Bucket"]
+                        default_bkt = s_row.get('Bucket')
+                        if not default_bkt or pd.isna(default_bkt):
+                            default_bkt = auto_scanned_data["Col_U_Bucket"]
 
-                            default_docket = str(s_row.get('Present Docket No.', ''))
-                            if (not default_docket or default_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_V_Present_Docket_No"]:
-                                default_docket = auto_scanned_data["Col_V_Present_Docket_No"]
+                        default_docket = str(s_row.get('Present Docket No.', ''))
+                        if (not default_docket or default_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_V_Present_Docket_No"]:
+                            default_docket = auto_scanned_data["Col_V_Present_Docket_No"]
 
-                            default_rem = str(s_row.get('Present Remarks', ''))
-                            if (not default_rem or default_rem.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_T_Present_Remarks"]:
-                                default_rem = auto_scanned_data["Col_T_Present_Remarks"]
+                        default_rem = str(s_row.get('Present Remarks', ''))
+                        if (not default_rem or default_rem.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_T_Present_Remarks"]:
+                            default_rem = auto_scanned_data["Col_T_Present_Remarks"]
 
-                            default_fuel_status = str(s_row.get('Fuel Sensor Status', 'Ok'))
-                            if auto_scanned_data["Col_O_Fuel_Sensor_Status"] and auto_scanned_data["Col_O_Fuel_Sensor_Status"] != "Ok":
-                                default_fuel_status = auto_scanned_data["Col_O_Fuel_Sensor_Status"]
+                        default_fuel_status = str(s_row.get('Fuel Sensor Status', 'Ok'))
+                        if auto_scanned_data["Col_O_Fuel_Sensor_Status"] and auto_scanned_data["Col_O_Fuel_Sensor_Status"] != "Ok":
+                            default_fuel_status = auto_scanned_data["Col_O_Fuel_Sensor_Status"]
 
-                            default_fuel_docket = str(s_row.get('Docket no.', ''))
-                            if (not default_fuel_docket or default_fuel_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_P_Docket_no"]:
-                                default_fuel_docket = auto_scanned_data["Col_P_Docket_no"]
+                        default_fuel_docket = str(s_row.get('Docket no.', ''))
+                        if (not default_fuel_docket or default_fuel_docket.lower() in ['', 'nan', 'none']) and auto_scanned_data["Col_P_Docket_no"]:
+                            default_fuel_docket = auto_scanned_data["Col_P_Docket_no"]
 
-                            st.success(f"Site Selected: **{selected_edit_site}** | Auto-Scanned Source: **{auto_scanned_data['source']}**")
+                        st.success(f"Site Selected: **{selected_edit_site}** | Auto-Scanned Source: **{auto_scanned_data['source']}**")
 
-                            with st.form("single_site_inline_edit_form"):
-                                se1, se2 = st.columns(2)
-                                with se1:
-                                    edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0)
-                                    edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0)
-                                    
-                                    edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0)
-                                    edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "")
-                                    
-                                    raw_open_date_val = s_row.get('Open Date')
-                                    if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
-                                        raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
-                                    
-                                    open_date_str_val = clean_date_str(raw_open_date_val)
-                                    edit_open_date_str = st.text_input("Open Date (Col Q) [Optional]:", value=open_date_str_val)
+                        with st.form("single_site_inline_edit_form"):
+                            se1, se2 = st.columns(2)
+                            with se1:
+                                edit_stat = st.selectbox("DG Automation Status:", STATUS_CHOICES, index=STATUS_CHOICES.index(default_stat) if default_stat in STATUS_CHOICES else 0, disabled=is_viewer)
+                                edit_bkt = st.selectbox("Problem Bucket:", ["None"] + BUCKET_LIST, index=BUCKET_LIST.index(default_bkt) + 1 if default_bkt in BUCKET_LIST else 0, disabled=is_viewer)
+                                
+                                edit_fuel_status = st.selectbox("Fuel Sensor Status (Col O):", FUEL_STATUS_CHOICES, index=FUEL_STATUS_CHOICES.index(default_fuel_status) if default_fuel_status in FUEL_STATUS_CHOICES else 0, disabled=is_viewer)
+                                edit_fuel_docket = st.text_input("Fuel Sensor Docket No (Col P):", value=default_fuel_docket if default_fuel_docket.lower() != 'nan' else "", disabled=is_viewer)
+                                
+                                raw_open_date_val = s_row.get('Open Date')
+                                if not raw_open_date_val or pd.isna(raw_open_date_val) or str(raw_open_date_val).lower() in ['nan', 'none', '']:
+                                    raw_open_date_val = auto_scanned_data["Col_Q_Open_Date"]
+                                
+                                open_date_str_val = clean_date_str(raw_open_date_val)
+                                edit_open_date_str = st.text_input("Open Date (Col Q) [Optional]:", value=open_date_str_val, disabled=is_viewer)
 
-                                with se2:
-                                    edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "")
-                                    
-                                    edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "")
+                            with se2:
+                                edit_rem = st.text_area("Present Remarks / Complaint:", value=default_rem if default_rem.lower() != 'nan' else "", disabled=is_viewer)
+                                
+                                edit_docket = st.text_input("Present Docket No (Col V):", value=default_docket if default_docket.lower() != 'nan' else "", disabled=is_viewer)
 
-                                    raw_date_val = s_row.get('Present Docket raise Date')
-                                    if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
-                                        raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
-                                    
-                                    faulty_date_str_val = clean_date_str(raw_date_val)
-                                    edit_faulty_date_str = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=faulty_date_str_val)
+                                raw_date_val = s_row.get('Present Docket raise Date')
+                                if not raw_date_val or pd.isna(raw_date_val) or str(raw_date_val).lower() in ['nan', 'none', '']:
+                                    raw_date_val = auto_scanned_data["Col_W_Present_Docket_raise_Date"]
+                                
+                                faulty_date_str_val = clean_date_str(raw_date_val)
+                                edit_faulty_date_str = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=faulty_date_str_val, disabled=is_viewer)
 
+                            if not is_viewer:
                                 submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
                                 if submit_single_edit:
                                     for col in st.session_state.master_tracker_df.columns:
@@ -1115,6 +1117,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.success(f"Site `{selected_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
                                     st.rerun()
 
+                        if not is_viewer:
                             st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                             st.markdown("<h4 style='color: #0f172a; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
                             
@@ -1130,46 +1133,48 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.success(f"Site `{selected_edit_site}` removed from Master Tracker successfully!")
                                     st.rerun()
 
-        with edit_tab2:
-            with st.container(border=True):
-                st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor</h3>", unsafe_allow_html=True)
-                st.caption("Use the primary/secondary search filters below to narrow down rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W) before editing.")
-                
-                sc1, sc2 = st.columns(2)
-                with sc1:
-                    search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State, JC etc.):", "").strip().upper()
-                with sc2:
-                    filter_col_choice = st.selectbox("🎯 Secondary Filter Field:", ["All Fields", "Bucket (Col U)", "Automation Status (Col S)", "Present Docket raise Date (Col W)"])
-                
-                search_grid_query_2 = st.text_input("🔍 Secondary Keyword / Value Search:", "").strip().upper()
-                
-                filtered_grid_df = st.session_state.master_tracker_df.copy()
-                
-                if search_grid_query_1:
-                    mask1 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_1, case=False, na=False)).any(axis=1)
-                    filtered_grid_df = filtered_grid_df[mask1]
-                
-                if search_grid_query_2:
-                    if filter_col_choice == "Bucket (Col U)" and 'Bucket' in filtered_grid_df.columns:
-                        filtered_grid_df = filtered_grid_df[filtered_grid_df['Bucket'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
-                    elif filter_col_choice == "Automation Status (Col S)" and 'DG Automation Status' in filtered_grid_df.columns:
-                        filtered_grid_df = filtered_grid_df[filtered_grid_df['DG Automation Status'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
-                    elif filter_col_choice == "Present Docket raise Date (Col W)" and 'Present Docket raise Date' in filtered_grid_df.columns:
-                        filtered_grid_df = filtered_grid_df[filtered_grid_df['Present Docket raise Date'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
-                    else:
-                        mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
-                        filtered_grid_df = filtered_grid_df[mask2]
+    with edit_tab2:
+        with st.container(border=True):
+            st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor / Filter View</h3>", unsafe_allow_html=True)
+            st.caption("Use the primary and secondary search filters below to filter and view rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W).")
+            
+            sc1, sc2 = st.columns(2)
+            with sc1:
+                search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State, JC etc.):", "").strip().upper()
+            with sc2:
+                filter_col_choice = st.selectbox("🎯 Secondary Filter Field:", ["All Fields", "Bucket (Col U)", "Automation Status (Col S)", "Present Docket raise Date (Col W)"])
+            
+            search_grid_query_2 = st.text_input("🔍 Secondary Keyword / Value Search:", "").strip().upper()
+            
+            filtered_grid_df = st.session_state.master_tracker_df.copy()
+            
+            if search_grid_query_1:
+                mask1 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_1, case=False, na=False)).any(axis=1)
+                filtered_grid_df = filtered_grid_df[mask1]
+            
+            if search_grid_query_2:
+                if filter_col_choice == "Bucket (Col U)" and 'Bucket' in filtered_grid_df.columns:
+                    filtered_grid_df = filtered_grid_df[filtered_grid_df['Bucket'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
+                elif filter_col_choice == "Automation Status (Col S)" and 'DG Automation Status' in filtered_grid_df.columns:
+                    filtered_grid_df = filtered_grid_df[filtered_grid_df['DG Automation Status'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
+                elif filter_col_choice == "Present Docket raise Date (Col W)" and 'Present Docket raise Date' in filtered_grid_df.columns:
+                    filtered_grid_df = filtered_grid_df[filtered_grid_df['Present Docket raise Date'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
+                else:
+                    mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
+                    filtered_grid_df = filtered_grid_df[mask2]
 
-                if search_grid_query_1 or search_grid_query_2:
-                    st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
+            if search_grid_query_1 or search_grid_query_2:
+                st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
 
-                edited_full_master = st.data_editor(
-                    filtered_grid_df, 
-                    use_container_width=True, 
-                    height=500, 
-                    num_rows="dynamic"
-                )
-                
+            edited_full_master = st.data_editor(
+                filtered_grid_df, 
+                use_container_width=True, 
+                height=500, 
+                num_rows="dynamic" if not is_viewer else "fixed",
+                disabled=is_viewer
+            )
+            
+            if not is_viewer:
                 if st.button("💾 Commit & Save Full Master Grid Changes", type="primary", use_container_width=True):
                     for col in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
