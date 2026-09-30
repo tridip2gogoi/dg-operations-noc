@@ -342,15 +342,22 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
 
 def save_master_to_disk():
     try:
-        if os.path.exists(DEFAULT_EXCEL) and not st.session_state.master_tracker_df.empty:
-            with pd.ExcelWriter(DEFAULT_EXCEL, engine='openpyxl') as writer:
+        target_file = DEFAULT_EXCEL
+        if not os.path.exists(target_file):
+            local_files = [f for f in os.listdir('.') if f.endswith(('.xlsx', '.xls')) and not f.startswith('~$')]
+            if local_files:
+                target_file = local_files[0]
+        
+        if not st.session_state.master_tracker_df.empty:
+            with pd.ExcelWriter(target_file, engine='openpyxl') as writer:
                 st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
                 if not st.session_state.fuel_tracker_df.empty:
                     st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
                 if not st.session_state.ila_tracker_df.empty:
                     st.session_state.ila_tracker_df.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
-    except Exception as e:
-        pass
+            st.cache_data.clear()
+    except Exception as ex:
+        st.error(f"Error saving to disk: {ex}")
 
 def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     clean_id = str(site_id).strip().upper() if site_id else ""
@@ -489,7 +496,7 @@ with c_btn2:
         st.session_state.show_control_panel = not st.session_state.show_control_panel
         st.rerun()
 
-# --- EXPANDED / COLLAPSED TOP CONTROL PANEL (REFRESH BUTTON REMOVED) ---
+# --- EXPANDED / COLLAPSED TOP CONTROL PANEL ---
 if st.session_state.show_control_panel:
     with st.container(border=True):
         top_c1, top_c2 = st.columns([2, 1.2])
@@ -541,7 +548,6 @@ if st.session_state.show_control_panel:
         if st.session_state.master_tracker_df.empty or uploaded_perm_master is not None:
             st.session_state.master_tracker_df = df_status_raw.copy()
 
-        # If user uploads a new file (like Fuel Sensor or Daily Update), intelligently merge ONLY dynamic columns (Col O to Last Closed date)
         if uploaded_dg is not None:
             try:
                 xls_up = pd.ExcelFile(uploaded_dg)
@@ -1254,7 +1260,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = int(calc_aging)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = int(calc_aging)
                                     
-                                    # Auto-save changes permanently to the Excel tracker file
+                                    # Save permanently to Excel file and session state
                                     save_master_to_disk()
                                     
                                     st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
