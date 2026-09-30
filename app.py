@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling (Fixed white labels for form inputs)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -69,6 +69,14 @@ st.markdown("""
         border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.25);
         margin-right: 6px;
+    }
+
+    /* Force all form labels, text inputs, selectbox labels to be pure white */
+    label, [data-testid="stWidgetLabel"] p, [data-testid="stForm"] label p {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
 
     h1, h2, h3, h4, h5, h6,
