@@ -362,16 +362,6 @@ def clear_site_active_fault_data(site_id, df_target):
 
     return updated
 
-# --- PERSISTENT GLOBAL APPROVAL QUEUE (SHARED ACROSS SESSIONS) ---
-if "pending_viewer_approvals" not in st.session_state:
-    st.session_state.pending_viewer_approvals = ["viewer"]
-if "viewer_approved_list" not in st.session_state:
-    st.session_state.viewer_approved_list = []
-if "pending_download_approvals" not in st.session_state:
-    st.session_state.pending_download_approvals = []
-if "download_approved_list" not in st.session_state:
-    st.session_state.download_approved_list = []
-
 # --- AUTHENTICATION GATEWAY ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -399,11 +389,6 @@ if not st.session_state.authenticated:
                     st.session_state.authenticated = True
                     st.session_state.user_info = user_record
                     st.session_state.username = input_user.strip().lower()
-                    
-                    if input_user.strip().lower() == "viewer":
-                        if "viewer" not in st.session_state.viewer_approved_list and "viewer" not in st.session_state.pending_viewer_approvals:
-                            st.session_state.pending_viewer_approvals.append("viewer")
-                    
                     st.success("Access Granted! Loading Console...")
                     st.rerun()
                 else:
@@ -411,7 +396,7 @@ if not st.session_state.authenticated:
 
         st.markdown("""
         <div style="background: rgba(241, 245, 249, 0.95); border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 13px; color: #334155; text-align: center;">
-            👁️️ <b>NOC Viewer Access:</b><br>
+            👁️ <b>NOC Viewer Access:</b><br>
             Username: <code style="color: #0369a1; font-weight: 600;">viewer</code> | Password: <code style="color: #0369a1; font-weight: 600;">viewer@2026</code>
         </div>
         </div>
@@ -425,78 +410,6 @@ admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
 username = st.session_state.get("username", "")
-
-# --- ADMIN APPROVAL CHECK FOR VIEWER ---
-if is_viewer and username not in st.session_state.viewer_approved_list:
-    _, center_col, _ = st.columns([1, 1.5, 1])
-    with center_col:
-        st.markdown("""
-        <div style="background: rgba(15, 23, 42, 0.95); padding: 2.5rem 2rem; border-radius: 16px; border: 2px solid #38bdf8; text-align: center; margin-top: 5rem;">
-            <h3 style="color: #ffffff !important; margin-bottom: 10px;">⏳ Approval Pending from Admin</h3>
-            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from Operations Head (Tridip Gogoi). Click below to check status after admin approval.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col_ref1, col_ref2 = st.columns(2)
-        with col_ref1:
-            if st.button("🔄 Check Approval Status", use_container_width=True, type="primary"):
-                st.rerun()
-        with col_ref2:
-            if st.button("🚪 Log Out", use_container_width=True):
-                st.session_state.authenticated = False
-                st.session_state.user_info = None
-                st.rerun()
-    st.stop()
-
-# --- ADMIN NOTIFICATION / APPROVAL QUEUE WIDGET ---
-if not is_viewer:
-    with st.container(border=True):
-        st.markdown(f"🔔 **Admin Alert Center (Operations Command):**")
-        col_st1, col_st2 = st.columns(2)
-        col_st1.metric("Pending Viewer Requests", len(st.session_state.pending_viewer_approvals))
-        col_st2.metric("Pending Download Requests", len(st.session_state.pending_download_approvals))
-        
-        if len(st.session_state.pending_viewer_approvals) > 0:
-            st.markdown(f"👤 **Viewer Login Requests:**")
-            for p_user in list(st.session_state.pending_viewer_approvals):
-                col_u1, col_u2, col_u3 = st.columns([2, 1, 1])
-                with col_u1:
-                    st.markdown(f"User: `{p_user}` (Circle Audit Desk)")
-                with col_u2:
-                    if st.button(f"✅ Approve Login", key=f"app_login_{p_user}", type="primary", use_container_width=True):
-                        if p_user not in st.session_state.viewer_approved_list:
-                            st.session_state.viewer_approved_list.append(p_user)
-                        if p_user in st.session_state.pending_viewer_approvals:
-                            st.session_state.pending_viewer_approvals.remove(p_user)
-                        st.success(f"Viewer `{p_user}` login approved!")
-                        st.rerun()
-                with col_u3:
-                    if st.button(f"❌ Reject Login", key=f"rej_login_{p_user}", use_container_width=True):
-                        if p_user in st.session_state.pending_viewer_approvals:
-                            st.session_state.pending_viewer_approvals.remove(p_user)
-                        st.warning(f"Viewer `{p_user}` request rejected.")
-                        st.rerun()
-
-        if len(st.session_state.pending_download_approvals) > 0:
-            st.markdown(f"📥 **Master Tracker Download Requests:**")
-            for d_user in list(st.session_state.pending_download_approvals):
-                col_d1, col_d2, col_d3 = st.columns([2, 1, 1])
-                with col_d1:
-                    st.markdown(f"User: `{d_user}` requesting Master Report Download")
-                with col_d2:
-                    if st.button(f"✅ Approve Download", key=f"app_dl_{d_user}", type="primary", use_container_width=True):
-                        if d_user not in st.session_state.download_approved_list:
-                            st.session_state.download_approved_list.append(d_user)
-                        if d_user in st.session_state.pending_download_approvals:
-                            st.session_state.pending_download_approvals.remove(d_user)
-                        st.success(f"Download approved for `{d_user}`!")
-                        st.rerun()
-                with col_d3:
-                    if st.button(f"❌ Reject Download", key=f"rej_dl_{d_user}", use_container_width=True):
-                        if d_user in st.session_state.pending_download_approvals:
-                            st.session_state.pending_download_approvals.remove(d_user)
-                        st.warning("Download request rejected.")
-                        st.rerun()
 
 # --- SESSION STATE INITIALIZATION FOR TOGGLE ---
 if "show_control_panel" not in st.session_state:
@@ -533,7 +446,7 @@ if st.session_state.show_control_panel:
         st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
 
         if is_viewer:
-            st.info("🔒 Viewer Mode: File uploading is locked. You can request report downloads below.")
+            st.info("🔒 Viewer Mode: File uploading is locked. You can download reports below.")
             uploaded_cm, uploaded_dg, uploaded_ila = None, None, None
         else:
             up_c1, up_c2, up_c3 = st.columns(3)
@@ -593,21 +506,13 @@ if st.session_state.show_control_panel:
             
             dc1, dc2, dc3 = st.columns([1, 2, 1])
             with dc2:
-                if not is_viewer or username in st.session_state.download_approved_list:
-                    st.download_button(
-                        label="📥 Download Complete Master & Operations Report (.xlsx)",
-                        data=full_output.getvalue(),
-                        file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
-                    )
-                else:
-                    st.warning("🔒 Master Report download requires Admin approval.")
-                    if st.button("Request Admin Approval for Download", key="req_dl_btn", use_container_width=True, type="primary"):
-                        if username not in st.session_state.pending_download_approvals:
-                            st.session_state.pending_download_approvals.append(username)
-                            st.success("Download request sent to Admin! Please wait for approval.")
-                            st.rerun()
+                st.download_button(
+                    label="📥 Download Complete Master & Operations Report (.xlsx)",
+                    data=full_output.getvalue(),
+                    file_name=f"NE_Circle_Complete_NOC_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
 
 # Fallback loaders if panel is closed
 detected_excel = DEFAULT_EXCEL
@@ -716,7 +621,7 @@ if page == "📊 Executive Control Center":
                     )
                     st.plotly_chart(fig_donut, use_container_width=True)
     else:
-        st.info("No data loaded. Please upload the Master Tracker from the top pipeline section.")
+        st.info("No data loaded. Please open the top toggle panel to upload the Master Tracker.")
 
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
@@ -915,7 +820,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     st.caption("Integrated tracking, editing, fault clearance, removal, and new case entries for ILA-AG1 operational logs.")
 
     if df_ila.empty:
-        st.info("📂 Please upload the **ILA-AG1 Tracker** file from the top expander section to initialize this module.")
+        st.info("📂 Please open the top toggle panel and upload the **ILA-AG1 Tracker** file to initialize this module.")
     else:
         if is_viewer:
             st.info("🔒 Viewer Mode: Read-only grid view.")
