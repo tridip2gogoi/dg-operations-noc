@@ -477,23 +477,15 @@ with c_btn2:
         st.session_state.show_control_panel = not st.session_state.show_control_panel
         st.rerun()
 
-# --- EXPANDED / COLLAPSED TOP CONTROL PANEL WITH LIVE TIME REFRESHER ---
+# --- EXPANDED / COLLAPSED TOP CONTROL PANEL (REFRESH BUTTON REMOVED) ---
 if st.session_state.show_control_panel:
     with st.container(border=True):
-        top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1])
+        top_c1, top_c2 = st.columns([2, 1.2])
         with top_c1:
-            st.markdown(f"🛡️️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
+            st.markdown(f"🛡 **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
         with top_c2:
             live_ist_str = datetime.now(IST).strftime('%d %b %Y, %I:%M:%S %p')
             st.markdown(f"🕒 **IST:** `{live_ist_str}`")
-        with top_c3:
-            if st.button("🔄 Refresh Data", use_container_width=True, type="secondary"):
-                st.cache_data.clear()
-                for key in list(st.session_state.keys()):
-                    if key != "authenticated" and key != "user_info" and key != "username":
-                        del st.session_state[key]
-                st.success("Cache cleared & Refreshed!")
-                st.rerun()
 
         st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
 
@@ -1423,7 +1415,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
