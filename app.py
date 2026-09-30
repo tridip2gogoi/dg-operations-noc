@@ -489,15 +489,31 @@ if st.session_state.show_control_panel:
         if "ila_tracker_df" not in st.session_state:
             st.session_state.ila_tracker_df = pd.DataFrame()
 
+        # PERMANENT MASTER PRESERVATION LOGIC (Col O to Last Closed date update only)
         if st.session_state.master_tracker_df.empty and not df_status_raw.empty:
             st.session_state.master_tracker_df = df_status_raw.copy()
+        elif not st.session_state.master_tracker_df.empty and not df_status_raw.empty and uploaded_dg is not None:
+            existing_df = st.session_state.master_tracker_df.set_index('SAIP ID') if 'SAIP ID' in st.session_state.master_tracker_df.columns else pd.DataFrame()
+            new_incoming_df = df_status_raw.set_index('SAIP ID') if 'SAIP ID' in df_status_raw.columns else pd.DataFrame()
+            
+            if not existing_df.empty and not new_incoming_df.empty:
+                cols_to_update = [
+                    'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status',
+                    'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date',
+                    "Aging (Day's)", 'Timeline', 'Previous Remarks', 'Previous Docket No.', 'Previous Docket raise Date', 'Last Closed date'
+                ]
+                for c_up in cols_to_update:
+                    if c_up in new_incoming_df.columns and c_up in existing_df.columns:
+                        existing_df[c_up] = new_incoming_df[c_up].combine_first(existing_df[c_up])
+                st.session_state.master_tracker_df = existing_df.reset_index()
+            else:
+                st.session_state.master_tracker_df = df_status_raw.copy()
+
         if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
             st.session_state.fuel_tracker_df = df_fuel_raw.copy()
         if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
             st.session_state.ila_tracker_df = df_ila_raw.copy()
 
-        if uploaded_dg is not None and not df_status_raw.empty:
-            st.session_state.master_tracker_df = df_status_raw.copy()
         if uploaded_ila is not None and not df_ila_raw.empty:
             st.session_state.ila_tracker_df = df_ila_raw.copy()
 
@@ -1327,7 +1343,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
@@ -1367,7 +1383,7 @@ elif page == "🔍 AI Site Diagnostics":
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "No active problem bucket recorded for this selection." if 'Bucket' not in df_status.columns else "Col U: Bucket",
+                            "Col S: DG Automation Status", "Col U: Bucket",
                             "Col V: Present Docket No.", "Col W: Present Docket raise Date",
                             "Col X: Aging (Day's)", "Col Y: Timeline"
                         ],
