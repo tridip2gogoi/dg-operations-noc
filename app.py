@@ -181,8 +181,8 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin / Operations Head",
-        "name": "Tridip Gogoi (Operations Head)",
+        "role": "Super Admin",
+        "name": "Tridip Gogoi",
         "access": ["all"]
     },
     "viewer": {
@@ -433,7 +433,7 @@ if is_viewer and username not in st.session_state.viewer_approved_list:
         st.markdown("""
         <div style="background: rgba(15, 23, 42, 0.95); padding: 2.5rem 2rem; border-radius: 16px; border: 2px solid #38bdf8; text-align: center; margin-top: 5rem;">
             <h3 style="color: #ffffff !important; margin-bottom: 10px;">⏳ Approval Pending from Admin</h3>
-            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from Operations Head (Tridip Gogoi). Please wait or notify admin.</p>
+            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from (Tridip Gogoi). Please wait or notify admin.</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("🔄 Check Approval Status", use_container_width=True, type="primary"):
