@@ -461,7 +461,7 @@ if st.session_state.show_control_panel:
         else:
             up_c1, up_c2, up_c3, up_c4 = st.columns(4)
             with up_c1:
-                uploaded_cm = st.file_uploader("1. CM Tracker", type=["xlsx", "xls"], key="top_cm")
+                uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
             with up_c2:
                 uploaded_perm_master = st.file_uploader("2. Permanent Master Base (.xlsx)", type=["xlsx", "xls"], key="top_perm_master")
             with up_c3:
@@ -495,7 +495,7 @@ if st.session_state.show_control_panel:
         if st.session_state.master_tracker_df.empty or uploaded_perm_master is not None:
             st.session_state.master_tracker_df = df_status_raw.copy()
 
-        # Merge daily updates or fuel sensor file updates into permanent master base safely
+        # If user uploads a new file (like Fuel Sensor or Daily Update), intelligently merge ONLY dynamic columns (Col O to Last Closed date)
         if uploaded_dg is not None:
             try:
                 xls_up = pd.ExcelFile(uploaded_dg)
@@ -1425,7 +1425,6 @@ elif page == "🔍 AI Site Diagnostics":
                             str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
-                            str(site_row.get("Aging (Day's)", "")),
                             str(site_row.get("Timeline", ""))
                         ]
                     })
