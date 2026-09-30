@@ -1003,7 +1003,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             if not is_viewer:
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
