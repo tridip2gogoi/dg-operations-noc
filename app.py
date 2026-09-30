@@ -489,7 +489,7 @@ if st.session_state.show_control_panel:
         if "ila_tracker_df" not in st.session_state:
             st.session_state.ila_tracker_df = pd.DataFrame()
 
-        # PERMANENT MASTER PRESERVATION LOGIC (Col O to Last Closed date update only)
+        # PERMANENT MASTER PRESERVATION LOGIC
         if st.session_state.master_tracker_df.empty and not df_status_raw.empty:
             st.session_state.master_tracker_df = df_status_raw.copy()
         elif not st.session_state.master_tracker_df.empty and not df_status_raw.empty and uploaded_dg is not None:
@@ -550,12 +550,18 @@ if not os.path.exists(DEFAULT_EXCEL):
             break
 
 if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
-    df_status_raw, _, _, df_ila_raw, _ = load_all_trackers(detected_excel, DEFAULT_CM_TRACKER, DEFAULT_ILA)
+    df_status_raw, _, df_open_cm_raw, df_ila_raw, _ = load_all_trackers(detected_excel, DEFAULT_CM_TRACKER, DEFAULT_ILA)
     st.session_state.master_tracker_df = df_status_raw
     st.session_state.ila_tracker_df = df_ila_raw
+    st.session_state.open_cm_df = df_open_cm_raw
+else:
+    if "open_cm_df" not in st.session_state:
+        _, _, df_open_cm_raw, _, _ = load_all_trackers(detected_excel, DEFAULT_CM_TRACKER, DEFAULT_ILA)
+        st.session_state.open_cm_df = df_open_cm_raw
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
+df_open_cm = st.session_state.get("open_cm_df", pd.DataFrame())
 
 # --- TOP HORIZONTAL NAVIGATION MENU ---
 page = st.radio(
@@ -729,8 +735,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m3:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
-            
-            # State/JC filter addition specifically for Tab 3 (GCU breakdown view)
             if 'State' in df_status.columns:
                 gcu_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
                 chosen_gcu_state = st.selectbox("🌐 Filter State for GCU Breakdown:", gcu_states, key="gcu_state_filter")
@@ -751,7 +755,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m4:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
-            
             if 'State' in df_status.columns:
                 b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
                 chosen_b_state = st.selectbox("🌐 Filter State for Breakdown Matrix:", b_states, key="breakdown_state_filter")
