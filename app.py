@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling (Added yellow alert box styling)
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -71,7 +71,6 @@ st.markdown("""
         margin-right: 6px;
     }
 
-    /* Force all form labels and text inputs to be pure white */
     label, [data-testid="stWidgetLabel"] p, [data-testid="stForm"] label p {
         color: #ffffff !important;
         font-weight: 700 !important;
@@ -136,7 +135,6 @@ st.markdown("""
         box-shadow: 0 6px 15px -5px rgba(0,0,0,0.6) !important;
     }
 
-    /* Custom Yellow Alert Banner Styling */
     .yellow-alert-box {
         background: linear-gradient(135deg, #f59e0b, #d97706) !important;
         color: #ffffff !important;
@@ -692,7 +690,7 @@ if page == "📊 Executive Control Center":
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
-elif page == "⚙️️ Fleet Analytics & Problem Buckets":
+elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
@@ -1439,7 +1437,7 @@ elif page == "🔍 AI Site Diagnostics":
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
                             "Col S: DG Automation Status", "Col U: Bucket",
                             "Col V: Present Docket No.", "Col W: Present Docket raise Date",
-                            "Col X: Aging (Day's)", "Col Y: Timeline"
+                            "Col X: Aging (Day's)"
                         ],
                         "Master Tracker (Live)": [
                             str(site_row.get("Fuel Sensor Status", "")),
@@ -1449,7 +1447,7 @@ elif page == "🔍 AI Site Diagnostics":
                             str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
-                            str(site_row.get("Timeline", ""))
+                            str(site_row.get("Aging (Day's)", ""))
                         ]
                     })
                     st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
