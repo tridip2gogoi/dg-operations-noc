@@ -1250,16 +1250,22 @@ elif page == "✏️ In-Portal Master Tracker Editor":
             st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor / Filter View</h3>", unsafe_allow_html=True)
             st.caption("Use the primary and secondary search filters below to filter and view rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W).")
             
-            sc1, sc2 = st.columns(2)
+            sc1, sc2, sc3 = st.columns(3)
             with sc1:
                 search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State, JC etc.):", "").strip().upper()
             with sc2:
                 filter_col_choice = st.selectbox("🎯 Secondary Filter Field:", ["All Fields", "Bucket (Col U)", "Automation Status (Col S)", "Present Docket raise Date (Col W)"])
+            with sc3:
+                available_jcs = ["All JCs"] + sorted([str(x) for x in st.session_state.master_tracker_df['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in st.session_state.master_tracker_df.columns else ["All JCs"]
+                tertiary_jc_filter = st.selectbox("🌐 Tertiary Filter (JC Circle):", available_jcs)
             
             search_grid_query_2 = st.text_input("🔍 Secondary Keyword / Value Search:", "").strip().upper()
             
             filtered_grid_df = st.session_state.master_tracker_df.copy()
             
+            if tertiary_jc_filter != "All JCs" and 'JC' in filtered_grid_df.columns:
+                filtered_grid_df = filtered_grid_df[filtered_grid_df['JC'].astype(str).str.strip() == tertiary_jc_filter]
+
             if search_grid_query_1:
                 mask1 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_1, case=False, na=False)).any(axis=1)
                 filtered_grid_df = filtered_grid_df[mask1]
@@ -1275,7 +1281,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
                     filtered_grid_df = filtered_grid_df[mask2]
 
-            if search_grid_query_1 or search_grid_query_2:
+            if search_grid_query_1 or search_grid_query_2 or tertiary_jc_filter != "All JCs":
                 st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
 
             edited_full_master = st.data_editor(
@@ -1291,7 +1297,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     for col in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
 
-                    if search_grid_query_1 or search_grid_query_2:
+                    if search_grid_query_1 or search_grid_query_2 or tertiary_jc_filter != "All JCs":
                         full_df = st.session_state.master_tracker_df.copy()
                         full_df.update(edited_full_master)
                         st.session_state.master_tracker_df = full_df
@@ -1406,7 +1412,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
