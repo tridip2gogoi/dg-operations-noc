@@ -702,7 +702,7 @@ if page == "📊 Executive Control Center":
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
-    st.markdown("## ⚙️️ Fleet Automation Classification & Root-Cause Analysis")
+    st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
     jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
@@ -1406,7 +1406,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
@@ -1446,7 +1446,7 @@ elif page == "🔍 AI Site Diagnostics":
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "Col U: Bucket",
+                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Bucket",
                             "Col V: Present Docket No.", "Col W: Present Docket raise Date",
                             "Col X: Aging (Day's)"
                         ],
@@ -1455,6 +1455,7 @@ elif page == "🔍 AI Site Diagnostics":
                             str(site_row.get("Docket no.", "")),
                             clean_date_str(site_row.get("Open Date", "")),
                             str(site_row.get("DG Automation Status", "")),
+                            str(site_row.get("Present Remarks", "")),
                             str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
@@ -1465,7 +1466,6 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t3:
                 with st.container(border=True):
-                    # Finding the correct column name for Last Closed date dynamically
                     target_closed_col_name = 'Last Closed date'
                     for col_c in site_row.index:
                         if 'last closed' in str(col_c).lower():
