@@ -362,12 +362,6 @@ def clear_site_active_fault_data(site_id, df_target):
 
     return updated
 
-# --- GLOBAL PENDING APPROVAL QUEUE STATE ---
-if "pending_viewer_approvals" not in st.session_state:
-    st.session_state.pending_viewer_approvals = []
-if "viewer_approved_list" not in st.session_state:
-    st.session_state.viewer_approved_list = []
-
 # --- AUTHENTICATION GATEWAY ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -395,11 +389,6 @@ if not st.session_state.authenticated:
                     st.session_state.authenticated = True
                     st.session_state.user_info = user_record
                     st.session_state.username = input_user.strip().lower()
-                    
-                    if input_user.strip().lower() == "viewer" and "viewer" not in st.session_state.viewer_approved_list:
-                        if "viewer" not in st.session_state.pending_viewer_approvals:
-                            st.session_state.pending_viewer_approvals.append("viewer")
-                    
                     st.success("Access Granted! Loading Console...")
                     st.rerun()
                 else:
@@ -420,46 +409,6 @@ admin_name = user_data["name"]
 admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
-username = st.session_state.get("username", "")
-
-# --- ADMIN APPROVAL CHECK FOR VIEWER ---
-if is_viewer and username not in st.session_state.viewer_approved_list:
-    _, center_col, _ = st.columns([1, 1.5, 1])
-    with center_col:
-        st.markdown("""
-        <div style="background: rgba(15, 23, 42, 0.95); padding: 2.5rem 2rem; border-radius: 16px; border: 2px solid #38bdf8; text-align: center; margin-top: 5rem;">
-            <h3 style="color: #ffffff !important; margin-bottom: 10px;">⏳ Approval Pending from Admin</h3>
-            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from Operations Head (Tridip Gogoi). Please wait or notify admin.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🔄 Check Approval Status", use_container_width=True, type="primary"):
-            st.rerun()
-        if st.button("🚪 Log Out", use_container_width=True):
-            st.session_state.authenticated = False
-            st.session_state.user_info = None
-            st.rerun()
-    st.stop()
-
-# --- ADMIN NOTIFICATION / APPROVAL QUEUE WIDGET ---
-if not is_viewer and len(st.session_state.pending_viewer_approvals) > 0:
-    with st.container(border=True):
-        st.markdown(f"🔔 **Admin Alert:** You have `{len(st.session_state.pending_viewer_approvals)}` pending Viewer login request(s) awaiting approval.")
-        for p_user in list(st.session_state.pending_viewer_approvals):
-            col_u1, col_u2, col_u3 = st.columns([2, 1, 1])
-            with col_u1:
-                st.markdown(f"👤 **User:** `{p_user}` (Circle Audit Desk)")
-            with col_u2:
-                if st.button(f"✅ Approve Viewer", key=f"app_{p_user}", type="primary", use_container_width=True):
-                    if p_user not in st.session_state.viewer_approved_list:
-                        st.session_state.viewer_approved_list.append(p_user)
-                    st.session_state.pending_viewer_approvals.remove(p_user)
-                    st.success(f"Viewer `{p_user}` approved successfully!")
-                    st.rerun()
-            with col_u3:
-                if st.button(f"❌ Reject", key=f"rej_{p_user}", use_container_width=True):
-                    st.session_state.pending_viewer_approvals.remove(p_user)
-                    st.warning(f"Viewer `{p_user}` request rejected.")
-                    st.rerun()
 
 # --- SESSION STATE INITIALIZATION FOR TOGGLE ---
 if "show_control_panel" not in st.session_state:
@@ -671,13 +620,13 @@ if page == "📊 Executive Control Center":
                     )
                     st.plotly_chart(fig_donut, use_container_width=True)
     else:
-        st.info("No data loaded. Please upload the Master Tracker from the top pipeline section.")
+        st.info("No data loaded. Please open the top toggle panel to upload the Master Tracker.")
 
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
-    st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
+    st.markdown("## ⚙️️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
     jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()]) if 'JC' in df_status.columns else ["All JCs"]
@@ -870,7 +819,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     st.caption("Integrated tracking, editing, fault clearance, removal, and new case entries for ILA-AG1 operational logs.")
 
     if df_ila.empty:
-        st.info("📂 Please upload the **ILA-AG1 Tracker** file from the top expander section to initialize this module.")
+        st.info("📂 Please open the top toggle panel and upload the **ILA-AG1 Tracker** file to initialize this module.")
     else:
         if is_viewer:
             st.info("🔒 Viewer Mode: Read-only grid view.")
