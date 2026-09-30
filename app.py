@@ -185,10 +185,16 @@ USER_CREDENTIALS = {
         "name": "Tridip Gogoi (Operations Head)",
         "access": ["all"]
     },
-    "viewer": {
-        "password_hash": hashlib.sha256("viewer@2026".encode()).hexdigest(),
+    "ptpl": {
+        "password_hash": hashlib.sha256("Rintu@2026".encode()).hexdigest(),
         "role": "NOC Viewer / Executive",
-        "name": "Circle Audit Desk",
+        "name": "PTPL Operations Desk",
+        "access": ["read_only"]
+    },
+    "sukanta.biswas": {
+        "password_hash": hashlib.sha256("Biswas@2027".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "Sukanta Biswas",
         "access": ["read_only"]
     }
 }
@@ -851,7 +857,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                     df_ila.to_excel(writer, sheet_name="ILA-AG1 Data", index=False)
                 st.download_button(
                     label="📥 Download Processed ILA-AG1 Report (.xlsx)",
-                    data=ila_output.getvalue(),
+                    data=full_output.getvalue(),
                     file_name=f"ILA_AG1_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True
@@ -861,7 +867,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
                 if is_viewer:
-                    st.info("🔒 Viewer Mode: Quick editing, fault clearance, and site removal are restricted to Admin.")
+                    st.info("🔒 Viewer Mode: Quick editing, fault clearance, and site removal are restricted.")
                 target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
                 
                 if target_sap_id and 'Sap ID' in df_ila.columns:
@@ -945,7 +951,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
             with st.container(border=True):
                 st.markdown("<h3 style='margin:0 0 10px 0; color: #0f172a;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
                 if is_viewer:
-                    st.info("🔒 Viewer Mode: Adding new cases is restricted to Admin.")
+                    st.info("🔒 Viewer Mode: Adding new cases is restricted.")
                 else:
                     with st.form("new_ila_case_form"):
                         nc1, nc2 = st.columns(2)
