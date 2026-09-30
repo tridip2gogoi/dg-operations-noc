@@ -164,7 +164,6 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* Custom style for yellow collar successful submission message */
     .yellow-success-msg {
         background-color: #1e293b;
         color: #facc15 !important;
@@ -478,24 +477,22 @@ with c_btn2:
         st.session_state.show_control_panel = not st.session_state.show_control_panel
         st.rerun()
 
-# --- EXPANDED / COLLAPSED TOP CONTROL PANEL ---
+# --- EXPANDED / COLLAPSED TOP CONTROL PANEL WITH LIVE TIME REFRESHER ---
 if st.session_state.show_control_panel:
     with st.container(border=True):
-        top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
+        top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1])
         with top_c1:
-            st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
+            st.markdown(f"🛡️️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
         with top_c2:
+            live_ist_str = datetime.now(IST).strftime('%d %b %Y, %I:%M:%S %p')
+            st.markdown(f"🕒 **IST:** `{live_ist_str}`")
+        with top_c3:
             if st.button("🔄 Refresh Data", use_container_width=True, type="secondary"):
                 st.cache_data.clear()
                 for key in list(st.session_state.keys()):
                     if key != "authenticated" and key != "user_info" and key != "username":
                         del st.session_state[key]
-                st.success("Cache cleared!")
-                st.rerun()
-        with top_c3:
-            if st.button("🚪 Log Out", use_container_width=True, type="primary"):
-                st.session_state.authenticated = False
-                st.session_state.user_info = None
+                st.success("Cache cleared & Refreshed!")
                 st.rerun()
 
         st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
@@ -1246,8 +1243,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = str(edit_rem)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = int(calc_aging)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = int(calc_aging)
-                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully!</div>', unsafe_allow_html=True)
-                                    st.success(f"Site `{selected_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
+                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
 
                         if not is_viewer:
@@ -1258,14 +1254,12 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                             with col_bt1:
                                 if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
                                     st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df)
-                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully!</div>', unsafe_allow_html=True)
-                                    st.success(f"TT closed and site `{selected_edit_site}` reset to Automation Ok successfully! Previous fault archived and Last Closed Date updated.")
+                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
                             with col_bt2:
                                 if st.button(f"🚨 Permanently Remove Site `{selected_edit_site}`", type="secondary", use_container_width=True):
                                     st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
-                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully!</div>', unsafe_allow_html=True)
-                                    st.success(f"Site `{selected_edit_site}` removed from Master Tracker successfully!")
+                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
 
     with edit_tab2:
@@ -1324,8 +1318,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     if "Aging (Day's)" in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df['Aging_Num'] = pd.to_numeric(st.session_state.master_tracker_df["Aging (Day's)"], errors='coerce').fillna(0)
 
-                    st.markdown('<div class="yellow-success-msg">Submitted Successfully!</div>', unsafe_allow_html=True)
-                    st.success("Full Master Tracker dataset updated successfully across all modules.")
+                    st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                     st.rerun()
 
 # ---------------------------------------------------------
