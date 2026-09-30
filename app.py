@@ -476,7 +476,7 @@ if st.session_state.show_control_panel:
                     break
 
         cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
-        dg_source = uploaded_dg if uploaded_dg is not None else detected_excel
+        dg_source = detected_excel  # ALWAYS PERMANENT MASTER BASE FOR BASE DATA LOADING
         ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
         with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
@@ -489,25 +489,33 @@ if st.session_state.show_control_panel:
         if "ila_tracker_df" not in st.session_state:
             st.session_state.ila_tracker_df = pd.DataFrame()
 
-        # PERMANENT MASTER PRESERVATION LOGIC
-        if st.session_state.master_tracker_df.empty and not df_status_raw.empty:
+        # PERMANENT MASTER PRESERVATION LOGIC: Base is always loaded from permanent default file
+        if st.session_state.master_tracker_df.empty:
             st.session_state.master_tracker_df = df_status_raw.copy()
-        elif not st.session_state.master_tracker_df.empty and not df_status_raw.empty and uploaded_dg is not None:
-            existing_df = st.session_state.master_tracker_df.set_index('SAIP ID') if 'SAIP ID' in st.session_state.master_tracker_df.columns else pd.DataFrame()
-            new_incoming_df = df_status_raw.set_index('SAIP ID') if 'SAIP ID' in df_status_raw.columns else pd.DataFrame()
-            
-            if not existing_df.empty and not new_incoming_df.empty:
-                cols_to_update = [
-                    'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status',
-                    'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date',
-                    "Aging (Day's)", 'Timeline', 'Previous Remarks', 'Previous Docket No.', 'Previous Docket raise Date', 'Last Closed date'
-                ]
-                for c_up in cols_to_update:
-                    if c_up in new_incoming_df.columns and c_up in existing_df.columns:
-                        existing_df[c_up] = new_incoming_df[c_up].combine_first(existing_df[c_up])
-                st.session_state.master_tracker_df = existing_df.reset_index()
-            else:
-                st.session_state.master_tracker_df = df_status_raw.copy()
+
+        # If user uploads a new file (like Fuel Sensor or Daily Update), intelligently merge ONLY dynamic columns (Col O to Last Closed date)
+        if uploaded_dg is not None:
+            try:
+                xls_up = pd.ExcelFile(uploaded_dg)
+                sheet_up = "Automation Status" if "Automation Status" in xls_up.sheet_names else xls_up.sheet_names[0]
+                df_incoming = pd.read_excel(xls_up, sheet_name=sheet_up)
+                
+                if 'SAIP ID' in df_incoming.columns and 'SAIP ID' in st.session_state.master_tracker_df.columns:
+                    existing_df = st.session_state.master_tracker_df.set_index('SAIP ID')
+                    incoming_df = df_incoming.set_index('SAIP ID')
+                    
+                    cols_to_update = [
+                        'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status',
+                        'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date',
+                        "Aging (Day's)", 'Timeline', 'Previous Remarks', 'Previous Docket No.', 'Previous Docket raise Date', 'Last Closed date'
+                    ]
+                    for c_up in cols_to_update:
+                        if c_up in incoming_df.columns and c_up in existing_df.columns:
+                            existing_df[c_up] = incoming_df[c_up].combine_first(existing_df[c_up])
+                    st.session_state.master_tracker_df = existing_df.reset_index()
+                    st.success("✅ Permanent Master Base intact! Dynamic columns (Docket No., Status, Dates) auto-updated successfully.")
+            except Exception as e:
+                st.warning(f"Could not merge uploaded file directly: {e}")
 
         if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
             st.session_state.fuel_tracker_df = df_fuel_raw.copy()
