@@ -181,19 +181,19 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin",
-        "name": "Tridip Gogoi (MIS)",
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
         "access": ["all"]
     },
     "ptpl": {
         "password_hash": hashlib.sha256("Rintu@2026".encode()).hexdigest(),
-        "role": "OEM",
+        "role": "NOC Viewer / Executive",
         "name": "PTPL Operations Desk",
         "access": ["read_only"]
     },
     "sukanta.biswas": {
         "password_hash": hashlib.sha256("Biswas@2027".encode()).hexdigest(),
-        "role": "SME",
+        "role": "NOC Viewer / Executive",
         "name": "Sukanta Biswas",
         "access": ["read_only"]
     },
@@ -391,7 +391,7 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
 
         with st.form("admin_login_form"):
-            input_user = st.text_input("Username", placeholder="Enter username (e.g. State)")
+            input_user = st.text_input("Username", placeholder="Enter username")
             input_pass = st.text_input("Password", type="password", placeholder="••••••••")
             login_btn = st.form_submit_button("Authenticate & Access Dashboard", use_container_width=True, type="primary")
 
@@ -709,16 +709,19 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m4:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
-            target_statuses = ['DG Breakdown', 'Manual Mode']
-            target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
-            df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
-            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_status.columns else ''
-            df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
-            if 'JC' in df_sub.columns:
-                ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
-                st.dataframe(ct_sub_bkt, use_container_width=True)
+            if 'DG Automation Status' in df_status.columns and 'Bucket' in df_status.columns:
+                target_statuses = ['DG Breakdown', 'Manual Mode']
+                target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
+                df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
+                df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_status.columns else ''
+                df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
+                if 'JC' in df_sub.columns:
+                    ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
+                    st.dataframe(ct_sub_bkt, use_container_width=True)
+                else:
+                    st.warning("JC column not found in dataset.")
             else:
-                st.warning("JC column not found in dataset.")
+                st.info("Required columns ('DG Automation Status' or 'Bucket') are missing in the dataset.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
