@@ -396,7 +396,6 @@ if not st.session_state.authenticated:
                     st.session_state.user_info = user_record
                     st.session_state.username = input_user.strip().lower()
                     
-                    # If Viewer logs in, add to pending approvals if not already approved
                     if input_user.strip().lower() == "viewer" and "viewer" not in st.session_state.viewer_approved_list:
                         if "viewer" not in st.session_state.pending_viewer_approvals:
                             st.session_state.pending_viewer_approvals.append("viewer")
@@ -941,7 +940,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
