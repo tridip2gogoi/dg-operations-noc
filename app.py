@@ -71,8 +71,9 @@ st.markdown("""
         margin-right: 6px;
     }
 
+    /* Sub-tabs & Main tabs styling in bright yellow */
     div[data-testid="stTabs"] button p, div[data-testid="stTabs"] button span {
-        color: #ffffff !important;
+        color: #facc15 !important;
         font-weight: 800 !important;
         font-size: 14px !important;
     }
@@ -871,7 +872,6 @@ elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
     st.caption("Filter faults by specific date (scanned from Col W: Present Docket raise Date) and analyze State, JC, and Problem Buckets.")
 
-    # --- ADDING JC FILTER ALONG WITH DATE & STATE ---
     dc_f1, dc_f2, dc_f3 = st.columns(3)
     with dc_f1:
         selected_date_filter = "All Dates"
@@ -1116,7 +1116,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 # 6. IN-PORTAL MASTER TRACKER EDITOR
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
-    st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
+    st.markdown("## ✏️️ In-Portal Master Tracker Live Editor")
     edit_tab1, edit_tab2 = st.tabs([
         "📝 Single Site Quick Editor, TT Closure & Removal",
         "📊 Full Master Tracker Spreadsheet Inline Grid Editor"
