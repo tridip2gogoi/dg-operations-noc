@@ -340,6 +340,18 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
 
+def save_master_to_disk():
+    try:
+        if os.path.exists(DEFAULT_EXCEL) and not st.session_state.master_tracker_df.empty:
+            with pd.ExcelWriter(DEFAULT_EXCEL, engine='openpyxl') as writer:
+                st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
+                if not st.session_state.fuel_tracker_df.empty:
+                    st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
+                if not st.session_state.ila_tracker_df.empty:
+                    st.session_state.ila_tracker_df.to_excel(writer, sheet_name="ILA-AG1 Tracker", index=False)
+    except Exception as e:
+        pass
+
 def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     clean_id = str(site_id).strip().upper() if site_id else ""
     res = {
@@ -482,7 +494,7 @@ if st.session_state.show_control_panel:
     with st.container(border=True):
         top_c1, top_c2 = st.columns([2, 1.2])
         with top_c1:
-            st.markdown(f"🛡 **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
+            st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
         with top_c2:
             live_ist_str = datetime.now(IST).strftime('%d %b %Y, %I:%M:%S %p')
             st.markdown(f"🕒 **IST:** `{live_ist_str}`")
@@ -549,6 +561,7 @@ if st.session_state.show_control_panel:
                         if c_up in incoming_df.columns and c_up in existing_df.columns:
                             existing_df[c_up] = incoming_df[c_up].combine_first(existing_df[c_up])
                     st.session_state.master_tracker_df = existing_df.reset_index()
+                    save_master_to_disk()
                     st.success("✅ Permanent Master Base intact! Docket No. and status updated successfully.")
             except Exception as e:
                 st.warning(f"Could not merge incoming file: {e}")
@@ -964,6 +977,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             st.session_state.ila_tracker_df = full_ila
                         else:
                             st.session_state.ila_tracker_df = edited_ila_data.copy()
+                        save_master_to_disk()
                         st.success("ILA-AG1 grid updates saved successfully!")
                         st.rerun()
 
@@ -1042,7 +1056,8 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                             elif 'Fault Date' in st.session_state.ila_tracker_df.columns:
                                                 st.session_state.ila_tracker_df.at[i_idx, 'Fault Date'] = str(new_fault_date)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = str(new_docket)
-                                            st.success(f"Record `{selected_ila_sap}` updated successfully!")
+                                            save_master_to_disk()
+                                            st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                             st.rerun()
 
                                 elif ila_action == "🧹 Clear Fault Status & Reset":
@@ -1053,13 +1068,15 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                         st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = "OK"
                                         st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = None
                                         st.session_state.ila_tracker_df.at[i_idx, 'Docket No.'] = None
-                                        st.success(f"Fault cleared for `{selected_ila_sap}`!")
+                                        save_master_to_disk()
+                                        st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                         st.rerun()
 
                                 else:
                                     if st.button(f"🚨 Confirm Delete Record `{selected_ila_sap}`", type="primary", use_container_width=True):
                                         st.session_state.ila_tracker_df = st.session_state.ila_tracker_df.drop(index=i_idx).reset_index(drop=True)
-                                        st.success(f"Record `{selected_ila_sap}` deleted successfully!")
+                                        save_master_to_disk()
+                                        st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                         st.rerun()
 
         with ila_tab3:
@@ -1109,7 +1126,8 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                     st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
 
                                 st.session_state.ila_tracker_df = pd.concat([st.session_state.ila_tracker_df, new_df_row], ignore_index=True)
-                                st.success(f"New case `{new_sap}` added successfully!")
+                                save_master_to_disk()
+                                st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                 st.rerun()
 
 # ---------------------------------------------------------
@@ -1235,6 +1253,10 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = str(edit_rem)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = int(calc_aging)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = int(calc_aging)
+                                    
+                                    # Auto-save changes permanently to the Excel tracker file
+                                    save_master_to_disk()
+                                    
                                     st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
 
@@ -1246,11 +1268,13 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                             with col_bt1:
                                 if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
                                     st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df)
+                                    save_master_to_disk()
                                     st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
                             with col_bt2:
                                 if st.button(f"🚨 Permanently Remove Site `{selected_edit_site}`", type="secondary", use_container_width=True):
                                     st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
+                                    save_master_to_disk()
                                     st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
 
@@ -1310,6 +1334,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     if "Aging (Day's)" in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df['Aging_Num'] = pd.to_numeric(st.session_state.master_tracker_df["Aging (Day's)"], errors='coerce').fillna(0)
 
+                    save_master_to_disk()
                     st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
                     st.rerun()
 
@@ -1415,7 +1440,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
