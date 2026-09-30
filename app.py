@@ -275,7 +275,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
     if is_valid_source(dg_file):
         try:
             xls_dg = pd.ExcelFile(dg_file)
-            sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
+            sheet_target = "IPMS Site Automation Status" if "IPMS Site Automation Status" in xls_dg.sheet_names else ("Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0])
             df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
             
             for col in df_status.columns:
@@ -350,7 +350,7 @@ def save_master_to_disk():
         
         if "master_tracker_df" in st.session_state and not st.session_state.master_tracker_df.empty:
             with pd.ExcelWriter(target_file, engine='openpyxl') as writer:
-                st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
+                st.session_state.master_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
                 if "fuel_tracker_df" in st.session_state and not st.session_state.fuel_tracker_df.empty:
                     st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
                 if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
@@ -547,7 +547,14 @@ if st.session_state.show_control_panel:
         if uploaded_dg is not None:
             try:
                 xls_up = pd.ExcelFile(uploaded_dg)
-                sheet_up = "Automation Status" if "Automation Status" in xls_up.sheet_names else xls_up.sheet_names[0]
+                sheet_up = None
+                for sh in xls_up.sheet_names:
+                    if "ipms" in sh.lower() or "automation status" in sh.lower():
+                        sheet_up = sh
+                        break
+                if not sheet_up:
+                    sheet_up = xls_up.sheet_names[0]
+                    
                 df_incoming = pd.read_excel(xls_up, sheet_name=sheet_up)
                 
                 if 'SAIP ID' in df_incoming.columns and 'SAIP ID' in st.session_state.master_tracker_df.columns:
@@ -564,9 +571,17 @@ if st.session_state.show_control_panel:
                             existing_df[c_up] = incoming_df[c_up].combine_first(existing_df[c_up])
                     st.session_state.master_tracker_df = existing_df.reset_index()
                     save_master_to_disk()
-                    st.success("✅ Permanent Master Base intact! Docket No. and status updated successfully.")
+                    st.success("✅ Permanent Master Base intact! IPMS Site Automation Status updated successfully.")
             except Exception as e:
                 st.warning(f"Could not merge incoming file: {e}")
+
+        if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
+            st.session_state.fuel_tracker_df = df_fuel_raw.copy()
+        if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
+            st.session_state.ila_tracker_df = df_ila_raw.copy()
+
+        if uploaded_ila is not None and not df_ila_raw.empty:
+            st.session_state.ila_tracker_df = df_ila_raw.copy()
 
         df_status = st.session_state.master_tracker_df
         df_fuel = st.session_state.fuel_tracker_df
@@ -575,7 +590,7 @@ if st.session_state.show_control_panel:
         if not df_status.empty:
             full_output = BytesIO()
             with pd.ExcelWriter(full_output, engine='openpyxl') as writer:
-                df_status.to_excel(writer, sheet_name="Automation Status", index=False)
+                df_status.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
                 if not df_fuel.empty:
                     df_fuel.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
                 if not df_ila.empty:
@@ -623,7 +638,7 @@ page = st.radio(
         "⛽ Fuel Sensor Telemetry",
         "⏳ Daily Fault Summary",
         "📈 ILA-AG1 Operations Tracker",
-        "✏️ In-Portal Master Tracker Editor",
+        "✏️️ In-Portal Master Tracker Editor",
         "🔍 AI Site Diagnostics"
     ],
     horizontal=True,
@@ -709,7 +724,7 @@ if page == "📊 Executive Control Center":
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
-elif page == "⚙️️ Fleet Analytics & Problem Buckets":
+elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
