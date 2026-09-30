@@ -871,22 +871,31 @@ elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
     st.caption("Filter faults by specific date (scanned from Col W: Present Docket raise Date) and analyze State, JC, and Problem Buckets.")
 
-    selected_date_filter = "All Dates"
-    if not df_status.empty and 'Present Docket raise Date' in df_status.columns:
-        valid_dates = sorted([str(x) for x in df_status['Present Docket raise Date'].dropna().unique() if str(x).strip().lower() not in ['', 'nat', 'nan', 'none', '0']])
-        date_options = ["All Dates"] + valid_dates
-        selected_date_filter = st.selectbox("📅 Select Date (Col W: Present Docket raise Date):", date_options)
+    # --- ADDING JC FILTER ALONG WITH DATE & STATE ---
+    dc_f1, dc_f2, dc_f3 = st.columns(3)
+    with dc_f1:
+        selected_date_filter = "All Dates"
+        if not df_status.empty and 'Present Docket raise Date' in df_status.columns:
+            valid_dates = sorted([str(x) for x in df_status['Present Docket raise Date'].dropna().unique() if str(x).strip().lower() not in ['', 'nat', 'nan', 'none', '0']])
+            date_options = ["All Dates"] + valid_dates
+            selected_date_filter = st.selectbox("📅 Select Date (Col W):", date_options)
+
+    with dc_f2:
+        summary_state_opts = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if not df_status.empty and 'State' in df_status.columns else ["All States"]
+        chosen_summary_state = st.selectbox("🌐 Filter by State:", summary_state_opts, key="summary_state_filter")
+
+    with dc_f3:
+        summary_jc_opts = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if not df_status.empty and 'JC' in df_status.columns else ["All JCs"]
+        chosen_summary_jc = st.selectbox("🌐 Filter by JC Circle:", summary_jc_opts, key="summary_jc_filter")
 
     filtered_date_df = df_status.copy()
-    if not filtered_date_df.empty and 'Present Docket raise Date' in filtered_date_df.columns:
-        if selected_date_filter != "All Dates":
+    if not filtered_date_df.empty:
+        if selected_date_filter != "All Dates" and 'Present Docket raise Date' in filtered_date_df.columns:
             filtered_date_df = filtered_date_df[filtered_date_df['Present Docket raise Date'].astype(str).str.startswith(selected_date_filter)]
-
-    if not filtered_date_df.empty and 'State' in filtered_date_df.columns:
-        summary_state_opts = ["All States"] + sorted([str(x) for x in filtered_date_df['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
-        chosen_summary_state = st.selectbox("🌐 Filter by State:", summary_state_opts, key="summary_state_filter")
-        if chosen_summary_state != "All States":
+        if chosen_summary_state != "All States" and 'State' in filtered_date_df.columns:
             filtered_date_df = filtered_date_df[filtered_date_df['State'].astype(str).str.strip() == chosen_summary_state]
+        if chosen_summary_jc != "All JCs" and 'JC' in filtered_date_df.columns:
+            filtered_date_df = filtered_date_df[filtered_date_df['JC'].astype(str).str.strip() == chosen_summary_jc]
 
     p_fuel_sensor = len(filtered_date_df[(filtered_date_df['Bucket'].astype(str).str.strip().str.upper() == 'FUEL SENSOR') | (filtered_date_df['Fuel Sensor Status'].astype(str).str.strip().str.upper() == 'FUEL SENSOR FAULTY')]) if not filtered_date_df.empty else 0
     p_dg_battery = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
@@ -915,7 +924,7 @@ elif page == "⏳ Daily Fault Summary":
             st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
             st.dataframe(filtered_date_df, use_container_width=True)
     else:
-        st.info(f"No fault records found matching date filter (`{selected_date_filter}`).")
+        st.info(f"No fault records found matching current date/state/JC filters.")
 
 # ---------------------------------------------------------
 # 5. ILA-AG1 OPERATIONS TRACKER
@@ -1406,7 +1415,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
