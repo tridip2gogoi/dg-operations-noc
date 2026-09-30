@@ -1260,7 +1260,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = int(calc_aging)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = int(calc_aging)
                                     
-                                    # Save permanently to Excel file and session state
+                                    # Force save and clear cache so UI reflects update instantly
                                     save_master_to_disk()
                                     
                                     st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
@@ -1486,7 +1486,7 @@ elif page == "🔍 AI Site Diagnostics":
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U: Bucket",
+                            "Col S: DG Automation Status", "Col T: Present Remarks", "Col U:Bucket",
                             "Col V: Present Docket No.", "Col W: Present Docket raise Date",
                             "Col X: Aging (Day's)"
                         ],
