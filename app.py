@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling (Fixed header banner text visibility)
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -391,9 +391,7 @@ def clear_site_active_fault_data(site_id, df_target):
     if not match_idx.empty:
         i = match_idx[0]
         updated = archive_current_fault_to_previous(i, updated)
-        if "Fuel Sensor Status" in updated.columns: updated.at[i, "Fuel Sensor Status"] = "Ok"
-        if "Docket no." in updated.columns: updated.at[i, "Docket no."] = ""
-        if "Open Date" in updated.columns: updated.at[i, "Open Date"] = ""
+        # Note: Col O, P, Q (Fuel Sensor Status, Docket no., Open Date) are intentionally NOT cleared or modified here as requested!
         if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
         if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
         if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
@@ -1409,7 +1407,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
