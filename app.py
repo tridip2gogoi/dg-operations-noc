@@ -196,6 +196,12 @@ USER_CREDENTIALS = {
         "role": "NOC Viewer / Executive",
         "name": "Sukanta Biswas",
         "access": ["read_only"]
+    },
+    "state": {
+        "password_hash": hashlib.sha256("NIPL@2026".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "State Operations Desk",
+        "access": ["read_only"]
     }
 }
 
@@ -385,7 +391,7 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
 
         with st.form("admin_login_form"):
-            input_user = st.text_input("Username", placeholder="Enter username")
+            input_user = st.text_input("Username", placeholder="Enter username (e.g. State)")
             input_pass = st.text_input("Password", type="password", placeholder="••••••••")
             login_btn = st.form_submit_button("Authenticate & Access Dashboard", use_container_width=True, type="primary")
 
@@ -857,7 +863,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                     df_ila.to_excel(writer, sheet_name="ILA-AG1 Data", index=False)
                 st.download_button(
                     label="📥 Download Processed ILA-AG1 Report (.xlsx)",
-                    data=full_output.getvalue(),
+                    data=ila_output.getvalue(),
                     file_name=f"ILA_AG1_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True
