@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling (Fixed banner subtext color to bright yellow)
+# Custom Corporate Professional NOC Styling
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -391,7 +391,6 @@ def clear_site_active_fault_data(site_id, df_target):
     if not match_idx.empty:
         i = match_idx[0]
         updated = archive_current_fault_to_previous(i, updated)
-        # Note: Col O, P, Q (Fuel Sensor Status, Docket no., Open Date) are intentionally NOT cleared or modified here as requested!
         if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
         if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
         if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
@@ -1372,7 +1371,7 @@ elif page == "🔍 AI Site Diagnostics":
                     <div>
                         <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #facc15 !important;">{selected_site}</span></h2>
                         <div style="margin-top: 8px !important; color: #facc15 !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
-                            Territory: <span style="color: #facc15 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #facc15 !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #facc15 !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #facc15 !important; font-weight: 800 !important;">{fac_5g}</span>
+                            Territory: <span style="color: #ffffff !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 10px;">
@@ -1466,9 +1465,20 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t3:
                 with st.container(border=True):
-                    h1, h2 = st.columns(2)
+                    # Finding the correct column name for Last Closed date dynamically
+                    target_closed_col_name = 'Last Closed date'
+                    for col_c in site_row.index:
+                        if 'last closed' in str(col_c).lower():
+                            target_closed_col_name = col_c
+                            break
+                    
+                    last_closed_val = clean_date_str(site_row.get(target_closed_col_name, 'None'))
+
+                    h1, h2, h3 = st.columns(3)
                     h1.metric("Previous Docket No (Col AA)", str(site_row.get('Previous Docket No.', 'None')))
                     h2.metric("Previous Raise Date (Col AB)", clean_date_str(site_row.get('Previous Docket raise Date', 'None')))
+                    h3.metric("Last Closed Date", last_closed_val if last_closed_val else 'None')
+
                     st.markdown("<hr style='margin: 10px 0; border-color: #facc15;'>", unsafe_allow_html=True)
                     st.markdown(f"**Previous Resolution Remarks (Col Z):**")
                     prev_rem_text = str(site_row.get('Previous Remarks', 'No previous historical remarks recorded.'))
