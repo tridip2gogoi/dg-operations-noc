@@ -181,19 +181,19 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin / Operations Head",
-        "name": "Tridip Gogoi (Operations Head)",
+        "role": "Super Admin",
+        "name": "Tridip Gogoi (MIS)",
         "access": ["all"]
     },
     "ptpl": {
         "password_hash": hashlib.sha256("Rintu@2026".encode()).hexdigest(),
-        "role": "NOC Viewer / Executive",
+        "role": "OEM",
         "name": "PTPL Operations Desk",
         "access": ["read_only"]
     },
     "sukanta.biswas": {
         "password_hash": hashlib.sha256("Biswas@2027".encode()).hexdigest(),
-        "role": "NOC Viewer / Executive",
+        "role": "SME",
         "name": "Sukanta Biswas",
         "access": ["read_only"]
     },
