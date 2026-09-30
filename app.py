@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling (With yellow accent for header banner)
+# Custom Corporate Professional NOC Styling (With bright yellow accents for headers & subtext)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -139,7 +139,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* Custom Header Banner with Yellow/Gold Accent */
+    /* Custom Header Banner with Yellow Accent */
     .custom-header-banner {
         background-color: #0f172a !important;
         border: 2px solid #facc15 !important;
@@ -475,7 +475,7 @@ if st.session_state.show_control_panel:
     with st.container(border=True):
         top_c1, top_c2, top_c3 = st.columns([2, 1, 1])
         with top_c1:
-            st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
+            st.markdown(f"🛡️️ **Operator:** `{admin_name}` | **Role:** `{admin_role}`")
         with top_c2:
             if st.button("🔄 Refresh Data", use_container_width=True, type="secondary"):
                 st.cache_data.clear()
@@ -1374,8 +1374,8 @@ elif page == "🔍 AI Site Diagnostics":
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div>
                         <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #facc15 !important;">{selected_site}</span></h2>
-                        <div style="margin-top: 8px !important; color: #fef08a !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
-                            Territory: <span style="color: #ffffff !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
+                        <div style="margin-top: 8px !important; color: #facc15 !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
+                            Territory: <span style="color: #facc15 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #facc15 !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #facc15 !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #facc15 !important; font-weight: 800 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 10px;">
