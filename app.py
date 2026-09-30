@@ -181,8 +181,8 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {
         "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
-        "role": "Super Admin",
-        "name": "Tridip Gogoi",
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
         "access": ["all"]
     },
     "viewer": {
@@ -362,9 +362,9 @@ def clear_site_active_fault_data(site_id, df_target):
 
     return updated
 
-# --- GLOBAL PENDING APPROVAL QUEUE STATE ---
+# --- PERSISTENT GLOBAL SESSION STATE FOR APPROVALS ---
 if "pending_viewer_approvals" not in st.session_state:
-    st.session_state.pending_viewer_approvals = []
+    st.session_state.pending_viewer_approvals = ["viewer"]  # Default ready request for test
 if "viewer_approved_list" not in st.session_state:
     st.session_state.viewer_approved_list = []
 if "pending_download_approvals" not in st.session_state:
@@ -400,8 +400,8 @@ if not st.session_state.authenticated:
                     st.session_state.user_info = user_record
                     st.session_state.username = input_user.strip().lower()
                     
-                    if input_user.strip().lower() == "viewer" and "viewer" not in st.session_state.viewer_approved_list:
-                        if "viewer" not in st.session_state.pending_viewer_approvals:
+                    if input_user.strip().lower() == "viewer":
+                        if "viewer" not in st.session_state.viewer_approved_list and "viewer" not in st.session_state.pending_viewer_approvals:
                             st.session_state.pending_viewer_approvals.append("viewer")
                     
                     st.success("Access Granted! Loading Console...")
@@ -433,7 +433,7 @@ if is_viewer and username not in st.session_state.viewer_approved_list:
         st.markdown("""
         <div style="background: rgba(15, 23, 42, 0.95); padding: 2.5rem 2rem; border-radius: 16px; border: 2px solid #38bdf8; text-align: center; margin-top: 5rem;">
             <h3 style="color: #ffffff !important; margin-bottom: 10px;">⏳ Approval Pending from Admin</h3>
-            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from (Tridip Gogoi). Please wait or notify admin.</p>
+            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from Operations Head (Tridip Gogoi). Please wait or notify admin.</p>
         </div>
         """, unsafe_allow_html=True)
         if st.button("🔄 Check Approval Status", use_container_width=True, type="primary"):
@@ -445,12 +445,15 @@ if is_viewer and username not in st.session_state.viewer_approved_list:
     st.stop()
 
 # --- ADMIN NOTIFICATION / APPROVAL QUEUE WIDGET ---
-if not is_viewer and (len(st.session_state.pending_viewer_approvals) > 0 or len(st.session_state.pending_download_approvals) > 0):
+if not is_viewer:
     with st.container(border=True):
-        st.markdown(f"🔔 **Admin Alert Center:**")
+        st.markdown(f"🔔 **Admin Alert Center (Operations Command):**")
+        col_st1, col_st2 = st.columns(2)
+        col_st1.metric("Pending Viewer Requests", len(st.session_state.pending_viewer_approvals))
+        col_st2.metric("Pending Download Requests", len(st.session_state.pending_download_approvals))
         
         if len(st.session_state.pending_viewer_approvals) > 0:
-            st.markdown(f"👤 **Viewer Login Requests ({len(st.session_state.pending_viewer_approvals)}):**")
+            st.markdown(f"👤 **Viewer Login Requests:**")
             for p_user in list(st.session_state.pending_viewer_approvals):
                 col_u1, col_u2, col_u3 = st.columns([2, 1, 1])
                 with col_u1:
@@ -469,7 +472,7 @@ if not is_viewer and (len(st.session_state.pending_viewer_approvals) > 0 or len(
                         st.rerun()
 
         if len(st.session_state.pending_download_approvals) > 0:
-            st.markdown(f"📥 **Master Tracker Download Requests ({len(st.session_state.pending_download_approvals)}):**")
+            st.markdown(f"📥 **Master Tracker Download Requests:**")
             for d_user in list(st.session_state.pending_download_approvals):
                 col_d1, col_d2, col_d3 = st.columns([2, 1, 1])
                 with col_d1:
@@ -592,7 +595,7 @@ if st.session_state.show_control_panel:
                     )
                 else:
                     st.warning("🔒 Master Report download requires Admin approval.")
-                    if st.button("request Admin Approval for Download", key="req_dl_btn", use_container_width=True, type="primary"):
+                    if st.button("Request Admin Approval for Download", key="req_dl_btn", use_container_width=True, type="primary"):
                         if username not in st.session_state.pending_download_approvals:
                             st.session_state.pending_download_approvals.append(username)
                             st.success("Download request sent to Admin! Please wait for approval.")
