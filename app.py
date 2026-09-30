@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Corporate Professional NOC Styling
+# Custom Corporate Professional NOC Styling (With bright yellow accents for headers & subtext)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -1340,7 +1340,7 @@ elif page == "🔍 AI Site Diagnostics":
             c4.metric("Active Breakdowns", bd_s, f"-{round((bd_s/tot_s)*100, 1) if tot_s else 0}%", delta_color="inverse")
             
             st.markdown("<hr style='margin: 14px 0; border-color: #facc15;'>", unsafe_allow_html=True)
-            st.markdown("<p style='font-size: 14px; font-weight: 600; color: #fef08a;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 14px; font-weight: 600; color: #facc15;'>💡 Type an SAIP ID in the search box above to access full hardware parameters, fuel probe telemetry, and automatic AI root-cause analysis.</p>", unsafe_allow_html=True)
 
     else:
         matches = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)] if not df_status.empty else pd.DataFrame()
@@ -1371,7 +1371,7 @@ elif page == "🔍 AI Site Diagnostics":
                     <div>
                         <h2 style="margin: 0 !important; color: #ffffff !important; font-weight: 900 !important; font-size: 26px !important; text-shadow: none !important;">⚡ <span style="color: #facc15 !important;">{selected_site}</span></h2>
                         <div style="margin-top: 8px !important; color: #facc15 !important; font-size: 15px !important; font-weight: 700 !important; letter-spacing: 0.02em;">
-                            Territory: <span style="color: #ffffff !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #ffffff !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #ffffff !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #ffffff !important; font-weight: 800 !important;">{fac_5g}</span>
+                            Territory: <span style="color: #facc15 !important; font-weight: 800 !important;">{jc_str}</span> | State: <span style="color: #facc15 !important; font-weight: 800 !important;">{state_str}</span> | Site Type: <span style="color: #facc15 !important; font-weight: 800 !important;">{st_type}</span> | 5G Facility: <span style="color: #facc15 !important; font-weight: 800 !important;">{fac_5g}</span>
                         </div>
                     </div>
                     <div style="margin-top: 10px;">
