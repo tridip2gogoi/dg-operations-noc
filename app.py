@@ -709,7 +709,7 @@ if page == "📊 Executive Control Center":
 # ---------------------------------------------------------
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
-elif page == "⚙️ Fleet Analytics & Problem Buckets":
+elif page == "⚙️️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
@@ -806,27 +806,43 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m4:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
-            if 'State' in df_status.columns:
-                b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
-                chosen_b_state = st.selectbox("🌐 Filter State for Breakdown Matrix:", b_states, key="breakdown_state_filter")
-                filtered_b_df = df_status if chosen_b_state == "All States" else df_status[df_status['State'].astype(str).str.strip() == chosen_b_state]
-            else:
-                filtered_b_df = df_status
+            
+            # --- ADDED MULTI-FILTERS FOR BREAKDOWN & MANUAL MATRIX (JC, Automation Status, Bucket) ---
+            bm_f1, bm_f2, bm_f3, bm_f4 = st.columns(4)
+            with bm_f1:
+                b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+                chosen_b_state = st.selectbox("🌐 Filter State:", b_states, key="breakdown_state_filter")
+            with bm_f2:
+                b_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+                chosen_b_jc = st.selectbox("🌐 Filter JC:", b_jcs, key="breakdown_jc_filter")
+            with bm_f3:
+                b_statuses = ["All Statuses"] + sorted([str(x) for x in df_status['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'DG Automation Status' in df_status.columns else ["All Statuses"]
+                chosen_b_status = st.selectbox("⚡ Filter Status:", b_statuses, key="breakdown_status_filter")
+            with bm_f4:
+                b_buckets = ["All Buckets"] + sorted([str(x) for x in df_status['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'Bucket' in df_status.columns else ["All Buckets"]
+                chosen_b_bucket = st.selectbox("🗂️ Filter Bucket:", b_buckets, key="breakdown_bucket_filter")
 
-            if 'DG Automation Status' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
-                target_statuses = ['DG Breakdown', 'Manual Mode']
-                target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
-                df_sub = filtered_b_df[filtered_b_df['DG Automation Status'].isin(target_statuses) & filtered_b_df['Bucket'].isin(target_bkts)].copy()
-                if not df_sub.empty:
-                    df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in filtered_b_df.columns else ''
-                    df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
-                    if 'JC' in df_sub.columns:
-                        ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
-                        st.dataframe(ct_sub_bkt, use_container_width=True)
-                    else:
-                        st.warning("JC column missing.")
+            filtered_b_df = df_status.copy()
+            if not filtered_b_df.empty:
+                if chosen_b_state != "All States" and 'State' in filtered_b_df.columns:
+                    filtered_b_df = filtered_b_df[filtered_b_df['State'].astype(str).str.strip() == chosen_b_state]
+                if chosen_b_jc != "All JCs" and 'JC' in filtered_b_df.columns:
+                    filtered_b_df = filtered_b_df[filtered_b_df['JC'].astype(str).str.strip() == chosen_b_jc]
+                if chosen_b_status != "All Statuses" and 'DG Automation Status' in filtered_b_df.columns:
+                    filtered_b_df = filtered_b_df[filtered_b_df['DG Automation Status'].astype(str).str.strip() == chosen_b_status]
+                if chosen_b_bucket != "All Buckets" and 'Bucket' in filtered_b_df.columns:
+                    filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
+
+            if not filtered_b_df.empty:
+                filtered_b_df['Clean_Docket'] = filtered_b_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in filtered_b_df.columns else ''
+                filtered_b_df['Docket_Status'] = filtered_b_df['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
+                if 'JC' in filtered_b_df.columns and 'DG Automation Status' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
+                    ct_sub_bkt = pd.crosstab([filtered_b_df['JC'], filtered_b_df['DG Automation Status'], filtered_b_df['Bucket']], filtered_b_df['Docket_Status'], margins=True, margins_name="Total")
+                    st.dataframe(ct_sub_bkt, use_container_width=True)
                 else:
-                    st.info("No records matching breakdown/manual criteria for this state selection.")
+                    st.warning("Required matrix columns missing.")
+            else:
+                st.info("No records matching the selected filters.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
