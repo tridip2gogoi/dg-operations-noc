@@ -457,15 +457,17 @@ if st.session_state.show_control_panel:
 
         if is_viewer:
             st.info("🔒 Viewer Mode: File uploading is locked. You can download reports below.")
-            uploaded_cm, uploaded_dg, uploaded_ila = None, None, None
+            uploaded_cm, uploaded_perm_master, uploaded_dg, uploaded_ila = None, None, None, None
         else:
-            up_c1, up_c2, up_c3 = st.columns(3)
+            up_c1, up_c2, up_c3, up_c4 = st.columns(4)
             with up_c1:
-                uploaded_cm = st.file_uploader("1. CM Tracker (Open Site)", type=["xlsx", "xls"], key="top_cm")
+                uploaded_cm = st.file_uploader("1. CM Tracker", type=["xlsx", "xls"], key="top_cm")
             with up_c2:
-                uploaded_dg = st.file_uploader("2. Fuel Sensor / DG Master Tracker (Col O, P, Q)", type=["xlsx", "xls"], key="top_dg")
+                uploaded_perm_master = st.file_uploader("2. Permanent Master Base (.xlsx)", type=["xlsx", "xls"], key="top_perm_master")
             with up_c3:
-                uploaded_ila = st.file_uploader("3. ILA-AG1 Tracker", type=["xlsx", "xls"], key="top_ila")
+                uploaded_dg = st.file_uploader("3. Daily Update / Fuel Sensor File", type=["xlsx", "xls"], key="top_dg")
+            with up_c4:
+                uploaded_ila = st.file_uploader("4. ILA-AG1 Tracker", type=["xlsx", "xls"], key="top_ila")
 
         detected_excel = DEFAULT_EXCEL
         if not os.path.exists(DEFAULT_EXCEL):
@@ -475,12 +477,12 @@ if st.session_state.show_control_panel:
                     detected_excel = lf
                     break
 
+        perm_master_source = uploaded_perm_master if uploaded_perm_master is not None else detected_excel
         cm_source = uploaded_cm if uploaded_cm is not None else DEFAULT_CM_TRACKER
-        dg_source = detected_excel  # ALWAYS PERMANENT MASTER BASE FOR BASE DATA LOADING
         ila_source = uploaded_ila if uploaded_ila is not None else DEFAULT_ILA
 
         with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
-            df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(dg_source, cm_source, ila_source)
+            df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(perm_master_source, cm_source, ila_source)
 
         if "master_tracker_df" not in st.session_state:
             st.session_state.master_tracker_df = pd.DataFrame()
@@ -489,11 +491,11 @@ if st.session_state.show_control_panel:
         if "ila_tracker_df" not in st.session_state:
             st.session_state.ila_tracker_df = pd.DataFrame()
 
-        # PERMANENT MASTER PRESERVATION LOGIC: Base is always loaded from permanent default file
-        if st.session_state.master_tracker_df.empty:
+        # PERMANENT MASTER PRESERVATION LOGIC
+        if st.session_state.master_tracker_df.empty or uploaded_perm_master is not None:
             st.session_state.master_tracker_df = df_status_raw.copy()
 
-        # If user uploads a new file (like Fuel Sensor or Daily Update), intelligently merge ONLY dynamic columns (Col O to Last Closed date)
+        # Merge daily updates or fuel sensor file updates into permanent master base safely
         if uploaded_dg is not None:
             try:
                 xls_up = pd.ExcelFile(uploaded_dg)
@@ -513,9 +515,9 @@ if st.session_state.show_control_panel:
                         if c_up in incoming_df.columns and c_up in existing_df.columns:
                             existing_df[c_up] = incoming_df[c_up].combine_first(existing_df[c_up])
                     st.session_state.master_tracker_df = existing_df.reset_index()
-                    st.success("✅ Permanent Master Base intact! Dynamic columns (Docket No., Status, Dates) auto-updated successfully.")
+                    st.success("✅ Permanent Master Base intact! Docket No. and status updated successfully.")
             except Exception as e:
-                st.warning(f"Could not merge uploaded file directly: {e}")
+                st.warning(f"Could not merge incoming file: {e}")
 
         if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
             st.session_state.fuel_tracker_df = df_fuel_raw.copy()
