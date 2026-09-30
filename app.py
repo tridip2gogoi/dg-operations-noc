@@ -729,21 +729,29 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with tab_m3:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
-            if 'Bucket' in df_status.columns:
-                df_gcu = df_status[df_status['Bucket'].astype(str).str.strip().str.upper() == 'GCU'].copy()
+            
+            # State/JC filter addition specifically for Tab 3 (GCU breakdown view)
+            if 'State' in df_status.columns:
+                gcu_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
+                chosen_gcu_state = st.selectbox("🌐 Filter State for GCU Breakdown:", gcu_states, key="gcu_state_filter")
+                filtered_gcu_base = df_status if chosen_gcu_state == "All States" else df_status[df_status['State'].astype(str).str.strip() == chosen_gcu_state]
+            else:
+                filtered_gcu_base = df_status
+
+            if 'Bucket' in filtered_gcu_base.columns:
+                df_gcu = filtered_gcu_base[filtered_gcu_base['Bucket'].astype(str).str.strip().str.upper() == 'GCU'].copy()
                 if not df_gcu.empty:
                     df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified') if 'DG Make' in df_gcu.columns else 'Unspecified'
                     df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
                     ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
                     st.dataframe(ct_gcu_detailed, use_container_width=True)
                 else:
-                    st.info("No GCU sites found in Master Tracker.")
+                    st.info("No GCU sites found for this state selection.")
 
     with tab_m4:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
             
-            # State/JC filter addition specifically for tab4 breakdown view
             if 'State' in df_status.columns:
                 b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
                 chosen_b_state = st.selectbox("🌐 Filter State for Breakdown Matrix:", b_states, key="breakdown_state_filter")
