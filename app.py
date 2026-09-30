@@ -362,9 +362,9 @@ def clear_site_active_fault_data(site_id, df_target):
 
     return updated
 
-# --- PERSISTENT GLOBAL SESSION STATE FOR APPROVALS ---
+# --- PERSISTENT GLOBAL APPROVAL QUEUE (SHARED ACROSS SESSIONS) ---
 if "pending_viewer_approvals" not in st.session_state:
-    st.session_state.pending_viewer_approvals = ["viewer"]  # Default ready request for test
+    st.session_state.pending_viewer_approvals = ["viewer"]
 if "viewer_approved_list" not in st.session_state:
     st.session_state.viewer_approved_list = []
 if "pending_download_approvals" not in st.session_state:
@@ -411,7 +411,7 @@ if not st.session_state.authenticated:
 
         st.markdown("""
         <div style="background: rgba(241, 245, 249, 0.95); border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 13px; color: #334155; text-align: center;">
-            👁️ <b>NOC Viewer Access:</b><br>
+            👁️️ <b>NOC Viewer Access:</b><br>
             Username: <code style="color: #0369a1; font-weight: 600;">viewer</code> | Password: <code style="color: #0369a1; font-weight: 600;">viewer@2026</code>
         </div>
         </div>
@@ -433,15 +433,19 @@ if is_viewer and username not in st.session_state.viewer_approved_list:
         st.markdown("""
         <div style="background: rgba(15, 23, 42, 0.95); padding: 2.5rem 2rem; border-radius: 16px; border: 2px solid #38bdf8; text-align: center; margin-top: 5rem;">
             <h3 style="color: #ffffff !important; margin-bottom: 10px;">⏳ Approval Pending from Admin</h3>
-            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from Operations Head (Tridip Gogoi). Please wait or notify admin.</p>
+            <p style="color: #cbd5e1 !important; font-size: 15px;">Your viewer session is waiting for approval from Operations Head (Tridip Gogoi). Click below to check status after admin approval.</p>
         </div>
         """, unsafe_allow_html=True)
-        if st.button("🔄 Check Approval Status", use_container_width=True, type="primary"):
-            st.rerun()
-        if st.button("🚪 Log Out", use_container_width=True):
-            st.session_state.authenticated = False
-            st.session_state.user_info = None
-            st.rerun()
+        
+        col_ref1, col_ref2 = st.columns(2)
+        with col_ref1:
+            if st.button("🔄 Check Approval Status", use_container_width=True, type="primary"):
+                st.rerun()
+        with col_ref2:
+            if st.button("🚪 Log Out", use_container_width=True):
+                st.session_state.authenticated = False
+                st.session_state.user_info = None
+                st.rerun()
     st.stop()
 
 # --- ADMIN NOTIFICATION / APPROVAL QUEUE WIDGET ---
@@ -462,12 +466,14 @@ if not is_viewer:
                     if st.button(f"✅ Approve Login", key=f"app_login_{p_user}", type="primary", use_container_width=True):
                         if p_user not in st.session_state.viewer_approved_list:
                             st.session_state.viewer_approved_list.append(p_user)
-                        st.session_state.pending_viewer_approvals.remove(p_user)
+                        if p_user in st.session_state.pending_viewer_approvals:
+                            st.session_state.pending_viewer_approvals.remove(p_user)
                         st.success(f"Viewer `{p_user}` login approved!")
                         st.rerun()
                 with col_u3:
                     if st.button(f"❌ Reject Login", key=f"rej_login_{p_user}", use_container_width=True):
-                        st.session_state.pending_viewer_approvals.remove(p_user)
+                        if p_user in st.session_state.pending_viewer_approvals:
+                            st.session_state.pending_viewer_approvals.remove(p_user)
                         st.warning(f"Viewer `{p_user}` request rejected.")
                         st.rerun()
 
@@ -481,12 +487,14 @@ if not is_viewer:
                     if st.button(f"✅ Approve Download", key=f"app_dl_{d_user}", type="primary", use_container_width=True):
                         if d_user not in st.session_state.download_approved_list:
                             st.session_state.download_approved_list.append(d_user)
-                        st.session_state.pending_download_approvals.remove(d_user)
+                        if d_user in st.session_state.pending_download_approvals:
+                            st.session_state.pending_download_approvals.remove(d_user)
                         st.success(f"Download approved for `{d_user}`!")
                         st.rerun()
                 with col_d3:
                     if st.button(f"❌ Reject Download", key=f"rej_dl_{d_user}", use_container_width=True):
-                        st.session_state.pending_download_approvals.remove(d_user)
+                        if d_user in st.session_state.pending_download_approvals:
+                            st.session_state.pending_download_approvals.remove(d_user)
                         st.warning("Download request rejected.")
                         st.rerun()
 
