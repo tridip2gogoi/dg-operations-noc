@@ -248,6 +248,11 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
                 df_status['JC'] = df_status['JC'].astype(str).str.strip()
             if 'State' in df_status.columns:
                 df_status['State'] = df_status['State'].astype(str).str.strip()
+            if 'Bucket' in df_status.columns:
+                df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
+                df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
+            if 'DG Automation Status' in df_status.columns:
+                df_status['DG Automation Status'] = df_status['DG Automation Status'].astype(str).str.strip()
             
             for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date', 'Last Closed date.1']:
                 if d_col in df_status.columns:
@@ -391,7 +396,7 @@ if not st.session_state.authenticated:
         """, unsafe_allow_html=True)
 
         with st.form("admin_login_form"):
-            input_user = st.text_input("Username", placeholder="Enter username (e.g. State)")
+            input_user = st.text_input("Username", placeholder="Enter username")
             input_pass = st.text_input("Password", type="password", placeholder="••••••••")
             login_btn = st.form_submit_button("Authenticate & Access Dashboard", use_container_width=True, type="primary")
 
@@ -635,11 +640,11 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
-    jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique()]) if 'JC' in df_status.columns else ["All JCs"]
+    jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
     selected_fleet_jc = st.selectbox("Select JC Circle:", jc_options)
 
-    filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'] == selected_fleet_jc]
-    valid_bucket = filtered_status[filtered_status['Bucket'].notna()] if 'Bucket' in filtered_status.columns else pd.DataFrame()
+    filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'].astype(str).str.strip() == selected_fleet_jc]
+    valid_bucket = filtered_status[filtered_status['Bucket'].notna() & (filtered_status['Bucket'].astype(str).str.strip() != '')] if 'Bucket' in filtered_status.columns else pd.DataFrame()
 
     col1, col2 = st.columns([1, 2])
     
@@ -650,6 +655,8 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
                 stat_summary.columns = ['Status Category', 'Site Count']
                 st.dataframe(stat_summary, use_container_width=True, hide_index=True)
+            else:
+                st.info("DG Automation Status column not found.")
 
     with col2:
         with st.container(border=True):
@@ -687,38 +694,52 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
             if 'JC' in df_status.columns and 'DG Automation Status' in df_status.columns:
                 status_matrix = pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total")
                 st.dataframe(status_matrix, use_container_width=True)
+            else:
+                st.warning("Required columns for cross-tabulation are missing.")
 
     with tab_m2:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
             if 'JC' in df_status.columns and 'Bucket' in df_status.columns:
-                all_valid_bkt = df_status[df_status['Bucket'].notna()]
-                bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
-                st.dataframe(bucket_matrix, use_container_width=True)
+                all_valid_bkt = df_status[df_status['Bucket'].notna() & (df_status['Bucket'].astype(str).str.strip() != '')]
+                if not all_valid_bkt.empty:
+                    bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
+                    st.dataframe(bucket_matrix, use_container_width=True)
+                else:
+                    st.info("No valid bucket records available for matrix.")
+            else:
+                st.warning("JC or Bucket column missing.")
 
     with tab_m3:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
             if 'Bucket' in df_status.columns:
-                df_gcu = df_status[df_status['Bucket'] == 'GCU'].copy()
-                df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified') if 'DG Make' in df_gcu.columns else 'Unspecified'
-                df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
-                ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
-                st.dataframe(ct_gcu_detailed, use_container_width=True)
+                df_gcu = df_status[df_status['Bucket'].astype(str).str.strip().str.upper() == 'GCU'].copy()
+                if not df_gcu.empty:
+                    df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified') if 'DG Make' in df_gcu.columns else 'Unspecified'
+                    df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
+                    ct_gcu_detailed = pd.crosstab([df_gcu['JC'], df_gcu['DG Make Clean']], df_gcu['DG Rating Clean'], margins=True, margins_name="Total")
+                    st.dataframe(ct_gcu_detailed, use_container_width=True)
+                else:
+                    st.info("No GCU sites found in Master Tracker.")
 
     with tab_m4:
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #0f172a;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
-            target_statuses = ['DG Breakdown', 'Manual Mode']
-            target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
-            df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
-            df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_status.columns else ''
-            df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
-            if 'JC' in df_sub.columns:
-                ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
-                st.dataframe(ct_sub_bkt, use_container_width=True)
-            else:
-                st.warning("JC column not found in dataset.")
+            if 'DG Automation Status' in df_status.columns and 'Bucket' in df_status.columns:
+                target_statuses = ['DG Breakdown', 'Manual Mode']
+                target_bkts = ['GCU', 'OEM Spare parts', 'DG Breakdown']
+                df_sub = df_status[df_status['DG Automation Status'].isin(target_statuses) & df_status['Bucket'].isin(target_bkts)].copy()
+                if not df_sub.empty:
+                    df_sub['Clean_Docket'] = df_sub['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in df_status.columns else ''
+                    df_sub['Docket_Status'] = df_sub['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
+                    if 'JC' in df_sub.columns:
+                        ct_sub_bkt = pd.crosstab([df_sub['JC'], df_sub['DG Automation Status'], df_sub['Bucket']], df_sub['Docket_Status'], margins=True, margins_name="Total")
+                        st.dataframe(ct_sub_bkt, use_container_width=True)
+                    else:
+                        st.warning("JC column missing.")
+                else:
+                    st.info("No records matching breakdown/manual criteria.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
@@ -1306,7 +1327,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
@@ -1346,8 +1367,8 @@ elif page == "🔍 AI Site Diagnostics":
                     master_telemetry_df = pd.DataFrame({
                         "Field": [
                             "Col O: Fuel Sensor Status", "Col P: Docket no.", "Col Q: Open Date",
-                            "Col S: DG Automation Status", "Col T: Present Remarks",
-                            "Col U: Bucket", "Col V: Present Docket No.", "Col W: Present Docket raise Date",
+                            "Col S: DG Automation Status", "No active problem bucket recorded for this selection." if 'Bucket' not in df_status.columns else "Col U: Bucket",
+                            "Col V: Present Docket No.", "Col W: Present Docket raise Date",
                             "Col X: Aging (Day's)", "Col Y: Timeline"
                         ],
                         "Master Tracker (Live)": [
@@ -1355,7 +1376,6 @@ elif page == "🔍 AI Site Diagnostics":
                             str(site_row.get("Docket no.", "")),
                             clean_date_str(site_row.get("Open Date", "")),
                             str(site_row.get("DG Automation Status", "")),
-                            str(site_row.get("Present Remarks", "")),
                             str(site_row.get("Bucket", "")),
                             str(site_row.get("Present Docket No.", "")),
                             clean_date_str(site_row.get("Present Docket raise Date", "")),
