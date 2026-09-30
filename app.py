@@ -71,9 +71,8 @@ st.markdown("""
         margin-right: 6px;
     }
 
-    /* Sub-tabs & Main tabs styling in bright yellow */
     div[data-testid="stTabs"] button p, div[data-testid="stTabs"] button span {
-        color: #facc15 !important;
+        color: #ffffff !important;
         font-weight: 800 !important;
         font-size: 14px !important;
     }
@@ -1004,7 +1003,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             if not is_viewer:
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
@@ -1116,7 +1115,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 # 6. IN-PORTAL MASTER TRACKER EDITOR
 # ---------------------------------------------------------
 elif page == "✏️ In-Portal Master Tracker Editor":
-    st.markdown("## ✏️️ In-Portal Master Tracker Live Editor")
+    st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     edit_tab1, edit_tab2 = st.tabs([
         "📝 Single Site Quick Editor, TT Closure & Removal",
         "📊 Full Master Tracker Spreadsheet Inline Grid Editor"
@@ -1205,7 +1204,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                 edit_faulty_date_str = st.text_input("Present Docket raise Date (Faulty Date - Col W) [Optional]:", value=faulty_date_str_val, disabled=is_viewer)
 
                             if not is_viewer:
-                                submit_single_edit = st.form_submit_button("💾 Save Site Updates & Auto-Calculate Aging", type="primary", use_container_width=True)
+                                submit_single_edit = st.form_submit_button("📥 Submit", type="primary", use_container_width=True)
                                 if submit_single_edit:
                                     for col in st.session_state.master_tracker_df.columns:
                                         st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
@@ -1235,7 +1234,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     st.session_state.master_tracker_df.at[row_idx, 'Present Remarks'] = str(edit_rem)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging (Day's)"] = int(calc_aging)
                                     st.session_state.master_tracker_df.at[row_idx, "Aging_Num"] = int(calc_aging)
-                                    st.success(f"Site `{selected_edit_site}` updated successfully! Auto-Calculated Aging: **{calc_aging} Days**")
+                                    st.success(f"Submitted Successfully! Site `{selected_edit_site}` updated. Auto-Calculated Aging: **{calc_aging} Days**")
                                     st.rerun()
 
                         if not is_viewer:
@@ -1310,7 +1309,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     if "Aging (Day's)" in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df['Aging_Num'] = pd.to_numeric(st.session_state.master_tracker_df["Aging (Day's)"], errors='coerce').fillna(0)
 
-                    st.success("Full Master Tracker dataset updated and saved successfully across all modules!")
+                    st.success("Submitted Successfully! Full Master Tracker dataset updated across all modules.")
                     st.rerun()
 
 # ---------------------------------------------------------
