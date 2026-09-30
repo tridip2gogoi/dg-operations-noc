@@ -1248,41 +1248,38 @@ elif page == "✏️ In-Portal Master Tracker Editor":
     with edit_tab2:
         with st.container(border=True):
             st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>📊 Full Master Tracker Spreadsheet Inline Grid Editor / Filter View</h3>", unsafe_allow_html=True)
-            st.caption("Use the primary and secondary search filters below to filter and view rows by SAIP ID, Bucket (Col U), Automation Status (Col S), or Present Docket raise Date (Col W).")
+            st.caption("Use the filters below to filter by Primary Search, JC Circle, Automation Status, and Problem Bucket.")
             
-            sc1, sc2, sc3 = st.columns(3)
-            with sc1:
-                search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State, JC etc.):", "").strip().upper()
-            with sc2:
-                filter_col_choice = st.selectbox("🎯 Secondary Filter Field:", ["All Fields", "Bucket (Col U)", "Automation Status (Col S)", "Present Docket raise Date (Col W)"])
-            with sc3:
+            # --- ADVANCED MULTI-CRITERIA FILTERS ---
+            fc1, fc2, fc3, fc4 = st.columns(4)
+            with fc1:
+                search_grid_query_1 = st.text_input("🔍 Primary Search (SAIP ID, State etc.):", "").strip().upper()
+            with fc2:
                 available_jcs = ["All JCs"] + sorted([str(x) for x in st.session_state.master_tracker_df['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in st.session_state.master_tracker_df.columns else ["All JCs"]
-                tertiary_jc_filter = st.selectbox("🌐 Tertiary Filter (JC Circle):", available_jcs)
-            
-            search_grid_query_2 = st.text_input("🔍 Secondary Keyword / Value Search:", "").strip().upper()
+                filter_jc = st.selectbox("🌐 Filter by JC Circle:", available_jcs)
+            with fc3:
+                available_statuses = ["All Statuses"] + sorted([str(x) for x in st.session_state.master_tracker_df['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'DG Automation Status' in st.session_state.master_tracker_df.columns else ["All Statuses"]
+                filter_status = st.selectbox("⚡ Filter by Automation Status:", available_statuses)
+            with fc4:
+                available_buckets = ["All Buckets"] + sorted([str(x) for x in st.session_state.master_tracker_df['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'Bucket' in st.session_state.master_tracker_df.columns else ["All Buckets"]
+                filter_bucket = st.selectbox("🗂️ Filter by Problem Bucket:", available_buckets)
             
             filtered_grid_df = st.session_state.master_tracker_df.copy()
             
-            if tertiary_jc_filter != "All JCs" and 'JC' in filtered_grid_df.columns:
-                filtered_grid_df = filtered_grid_df[filtered_grid_df['JC'].astype(str).str.strip() == tertiary_jc_filter]
+            if filter_jc != "All JCs" and 'JC' in filtered_grid_df.columns:
+                filtered_grid_df = filtered_grid_df[filtered_grid_df['JC'].astype(str).str.strip() == filter_jc]
+
+            if filter_status != "All Statuses" and 'DG Automation Status' in filtered_grid_df.columns:
+                filtered_grid_df = filtered_grid_df[filtered_grid_df['DG Automation Status'].astype(str).str.strip() == filter_status]
+
+            if filter_bucket != "All Buckets" and 'Bucket' in filtered_grid_df.columns:
+                filtered_grid_df = filtered_grid_df[filtered_grid_df['Bucket'].astype(str).str.strip() == filter_bucket]
 
             if search_grid_query_1:
                 mask1 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_1, case=False, na=False)).any(axis=1)
                 filtered_grid_df = filtered_grid_df[mask1]
-            
-            if search_grid_query_2:
-                if filter_col_choice == "Bucket (Col U)" and 'Bucket' in filtered_grid_df.columns:
-                    filtered_grid_df = filtered_grid_df[filtered_grid_df['Bucket'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
-                elif filter_col_choice == "Automation Status (Col S)" and 'DG Automation Status' in filtered_grid_df.columns:
-                    filtered_grid_df = filtered_grid_df[filtered_grid_df['DG Automation Status'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
-                elif filter_col_choice == "Present Docket raise Date (Col W)" and 'Present Docket raise Date' in filtered_grid_df.columns:
-                    filtered_grid_df = filtered_grid_df[filtered_grid_df['Present Docket raise Date'].astype(str).str.upper().str.contains(search_grid_query_2, na=False)]
-                else:
-                    mask2 = filtered_grid_df.astype(str).apply(lambda col: col.str.contains(search_grid_query_2, case=False, na=False)).any(axis=1)
-                    filtered_grid_df = filtered_grid_df[mask2]
 
-            if search_grid_query_1 or search_grid_query_2 or tertiary_jc_filter != "All JCs":
-                st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
+            st.info(f"Showing {len(filtered_grid_df):,} matching rows out of {len(st.session_state.master_tracker_df):,} total sites.")
 
             edited_full_master = st.data_editor(
                 filtered_grid_df, 
@@ -1297,12 +1294,9 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                     for col in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df[col] = st.session_state.master_tracker_df[col].astype(object)
 
-                    if search_grid_query_1 or search_grid_query_2 or tertiary_jc_filter != "All JCs":
-                        full_df = st.session_state.master_tracker_df.copy()
-                        full_df.update(edited_full_master)
-                        st.session_state.master_tracker_df = full_df
-                    else:
-                        st.session_state.master_tracker_df = edited_full_master.copy()
+                    full_df = st.session_state.master_tracker_df.copy()
+                    full_df.update(edited_full_master)
+                    st.session_state.master_tracker_df = full_df
                     
                     if "Aging (Day's)" in st.session_state.master_tracker_df.columns:
                         st.session_state.master_tracker_df['Aging_Num'] = pd.to_numeric(st.session_state.master_tracker_df["Aging (Day's)"], errors='coerce').fillna(0)
@@ -1412,7 +1406,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
