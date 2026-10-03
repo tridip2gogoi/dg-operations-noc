@@ -742,26 +742,25 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with col2:
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket-Wise Docket Pending / Received Matrix ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
-            
-            # --- BUCKET-WISE DOCKET PENDING / RECEIVED MATRIX (Col T: DG Breakdown, GCU, OEM Spare parts) ---
-            b_matrix_df = filtered_status.copy()
-            if not b_matrix_df.empty:
-                if 'Bucket' in b_matrix_df.columns:
-                    b_matrix_df['Bucket_Clean'] = b_matrix_df['Bucket'].astype(str).str.strip().str.title()
-                    target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
-                    b_matrix_df = b_matrix_df[b_matrix_df['Bucket_Clean'].isin(target_bkts)]
-
-                b_matrix_df['Clean_Docket'] = b_matrix_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in b_matrix_df.columns else ''
-                b_matrix_df['Docket_Status'] = b_matrix_df['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
-
-                if 'Bucket' in b_matrix_df.columns and 'Docket_Status' in b_matrix_df.columns:
-                    bucket_docket_crosstab = pd.crosstab(b_matrix_df['Bucket'], b_matrix_df['Docket_Status'], margins=True, margins_name="Total")
-                    st.dataframe(bucket_docket_crosstab, use_container_width=True)
-                else:
-                    st.info("Required columns missing for bucket matrix.")
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket Distribution ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
+            if not valid_bucket.empty:
+                b_summary = valid_bucket['Bucket'].value_counts().reset_index()
+                b_summary.columns = ['Root-Cause Bucket', 'Incidents']
+                fig_b = px.bar(
+                    b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents",
+                    color="Incidents", color_continuous_scale="Blues"
+                )
+                fig_b.update_layout(
+                    height=340, margin=dict(l=10, r=10, t=10, b=10),
+                    plot_bgcolor="#ffffff", paper_bgcolor="#ffffff",
+                    font=dict(color="#0f172a", family="Inter, sans-serif"),
+                    xaxis=dict(showgrid=True, gridcolor="#f1f5f9", tickfont=dict(color="#0f172a", size=11)),
+                    yaxis=dict(showgrid=True, gridcolor="#f1f5f9", tickfont=dict(color="#0f172a"))
+                )
+                fig_b.update_traces(textposition='outside', textfont=dict(color="#0f172a", weight="bold"))
+                st.plotly_chart(fig_b, use_container_width=True)
             else:
-                st.info("No data available.")
+                st.info("No active problem bucket recorded for this selection.")
 
     st.markdown("---")
     tab_m1, tab_m2, tab_m3, tab_m4, tab_m5 = st.tabs([
@@ -769,7 +768,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 Bucket-Wise Docket Pending Details (DG Breakdown, GCU, OEM)"
+        "📋 JC-Wise Bucket Docket Pending Matrix (DG Breakdown, GCU, OEM)"
     ])
 
     with tab_m1:
@@ -856,7 +855,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 Bucket-Wise Docket Pending Matrix & Details (DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Bucket Docket Pending / Received Matrix (DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
             
             p_f1, p_f2 = st.columns(2)
             with p_f1:
@@ -868,6 +867,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
             pending_df = df_status.copy()
             if not pending_df.empty:
+                # Filter specifically for DG Breakdown, GCU, OEM Spare parts buckets
                 if 'Bucket' in pending_df.columns:
                     pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
                     target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
@@ -881,15 +881,16 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 if chosen_p_jc != "All JCs" and 'JC' in pending_df.columns:
                     pending_df = pending_df[pending_df['JC'].astype(str).str.strip() == chosen_p_jc]
 
-                if 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
-                    bucket_pending_matrix = pd.crosstab(pending_df['Bucket'], pending_df['Docket_Status'], margins=True, margins_name="Total")
-                    st.markdown("##### Bucket-Wise Summary: Docket Pending vs Received")
-                    st.dataframe(bucket_pending_matrix, use_container_width=True)
+                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
+                    # JC-wise bucket cross-tabulation for docket pending vs received
+                    jc_bucket_docket_matrix = pd.crosstab([pending_df['JC'], pending_df['Bucket']], pending_df['Docket_Status'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket Pending vs Received")
+                    st.dataframe(jc_bucket_docket_matrix, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
                     st.dataframe(pending_df, use_container_width=True)
                 else:
-                    st.info("Required Bucket or Docket columns missing.")
+                    st.info("Required JC, Bucket or Docket columns missing.")
             else:
                 st.info("No data available.")
 
