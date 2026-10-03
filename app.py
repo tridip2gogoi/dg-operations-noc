@@ -775,7 +775,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)"
+        "📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)"
     ])
 
     with tab_m1:
@@ -857,9 +857,11 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
 
             if not filtered_b_df.empty:
+                filtered_b_df['Clean_Docket'] = filtered_b_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in filtered_b_df.columns else ''
+                filtered_b_df['Docket_Status'] = filtered_b_df['Clean_Docket'].apply(lambda x: 'Docket received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket pending')
                 if 'JC' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
-                    ct_sub_bkt = pd.crosstab(filtered_b_df['JC'], filtered_b_df['Bucket'], margins=True, margins_name="Total")
-                    st.markdown("##### JC-Wise Summary: Bucket Distribution")
+                    ct_sub_bkt = pd.crosstab([filtered_b_df['JC'], filtered_b_df['Bucket']], filtered_b_df['Docket_Status'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket received vs Docket pending")
                     st.dataframe(ct_sub_bkt, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
@@ -871,7 +873,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
             
             p_f1, p_f2, p_f3, p_f4 = st.columns(4)
             with p_f1:
@@ -899,6 +901,9 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
                     target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
                     pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
+
+                pending_df['Clean_Docket'] = pending_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in pending_df.columns else ''
+                pending_df['Docket_Status'] = pending_df['Clean_Docket'].apply(lambda x: 'Docket received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket pending')
                 
                 if chosen_p_state != "All States" and 'State' in pending_df.columns:
                     pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
@@ -909,15 +914,15 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 if chosen_p_bucket != "All Buckets" and 'Bucket' in pending_df.columns:
                     pending_df = pending_df[pending_df['Bucket'].astype(str).str.strip() == chosen_p_bucket]
 
-                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns:
-                    jc_bucket_matrix = pd.crosstab(pending_df['JC'], pending_df['Bucket'], margins=True, margins_name="Total")
-                    st.markdown("##### JC-Wise & Bucket-Wise Summary")
-                    st.dataframe(jc_bucket_matrix, use_container_width=True)
+                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
+                    jc_bucket_docket_matrix = pd.crosstab([pending_df['JC'], pending_df['Bucket']], pending_df['Docket_Status'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket received vs Docket pending")
+                    st.dataframe(jc_bucket_docket_matrix, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
                     st.dataframe(pending_df, use_container_width=True)
                 else:
-                    st.info("Required JC or Bucket columns missing.")
+                    st.info("Required JC, Bucket or Docket columns missing.")
             else:
                 st.info("No data available.")
 
@@ -1105,7 +1110,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             if not is_viewer:
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
