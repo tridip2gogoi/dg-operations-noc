@@ -727,7 +727,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'].astype(str).str.strip() == selected_fleet_jc]
     
-    # Strictly exclude Automation Ok sites from bucket counts
+    # Strictly exclude Automation Ok sites from problem buckets
     if 'DG Automation Status' in filtered_status.columns:
         valid_bucket_base = filtered_status[filtered_status['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok'].copy()
     else:
@@ -775,7 +775,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)"
+        "📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)"
     ])
 
     with tab_m1:
@@ -857,10 +857,10 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
 
             if not filtered_b_df.empty:
-                filtered_b_df['Clean_Docket'] = filtered_b_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in filtered_b_df.columns else ''
-                filtered_b_df['Docket_Status'] = filtered_b_df['Clean_Docket'].apply(lambda x: 'Docket received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket pending')
+                # Replaced Docket Pending/Received with Bucket breakdown summary
                 if 'JC' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
-                    ct_sub_bkt = pd.crosstab([filtered_b_df['JC'], filtered_b_df['Bucket']], filtered_b_df['Docket_Status'], margins=True, margins_name="Total")
+                    all_buckets_list = sorted([str(x) for x in filtered_b_df['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
+                    ct_sub_bkt = pd.crosstab(filtered_b_df['JC'], filtered_b_df['Bucket'], margins=True, margins_name="Total")
                     st.dataframe(ct_sub_bkt, use_container_width=True)
                 else:
                     st.warning("Required matrix columns missing.")
@@ -869,9 +869,8 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
             
-            # --- ADDED FILTER STATUS AND FILTER BUCKET HERE AS REQUESTED ---
             p_f1, p_f2, p_f3, p_f4 = st.columns(4)
             with p_f1:
                 p_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
