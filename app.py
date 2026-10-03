@@ -726,7 +726,14 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     selected_fleet_jc = st.selectbox("Select JC Circle:", jc_options)
 
     filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'].astype(str).str.strip() == selected_fleet_jc]
-    valid_bucket = filtered_status[filtered_status['Bucket'].notna() & (filtered_status['Bucket'].astype(str).str.strip() != '')] if 'Bucket' in filtered_status.columns else pd.DataFrame()
+    
+    # Strictly filter out 'Automation Ok' sites from having problem buckets
+    if 'DG Automation Status' in filtered_status.columns:
+        valid_bucket_base = filtered_status[filtered_status['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok'].copy()
+    else:
+        valid_bucket_base = filtered_status.copy()
+
+    valid_bucket = valid_bucket_base[valid_bucket_base['Bucket'].notna() & (valid_bucket_base['Bucket'].astype(str).str.strip() != '')] if 'Bucket' in valid_bucket_base.columns else pd.DataFrame()
 
     col1, col2 = st.columns([1, 2])
     
@@ -784,7 +791,9 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
             if 'JC' in df_status.columns and 'Bucket' in df_status.columns:
-                all_valid_bkt = df_status[df_status['Bucket'].notna() & (df_status['Bucket'].astype(str).str.strip() != '')]
+                # Exclude Automation Ok sites from bucket matrix
+                clean_bkt_df = df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok'].copy()
+                all_valid_bkt = clean_bkt_df[clean_bkt_df['Bucket'].notna() & (clean_bkt_df['Bucket'].astype(str).str.strip() != '')]
                 if not all_valid_bkt.empty:
                     bucket_matrix = pd.crosstab(all_valid_bkt['JC'], all_valid_bkt['Bucket'], margins=True, margins_name="Total")
                     st.dataframe(bucket_matrix, use_container_width=True)
@@ -804,7 +813,9 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 filtered_gcu_base = df_status
 
             if 'Bucket' in filtered_gcu_base.columns:
-                df_gcu = filtered_gcu_base[filtered_gcu_base['Bucket'].astype(str).str.strip().str.upper() == 'GCU'].copy()
+                # Exclude Automation Ok for GCU sites
+                clean_gcu_base = filtered_gcu_base[filtered_gcu_base['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+                df_gcu = clean_gcu_base[clean_gcu_base['Bucket'].astype(str).str.strip().str.upper() == 'GCU'].copy()
                 if not df_gcu.empty:
                     df_gcu['DG Make Clean'] = df_gcu['DG Make'].fillna('Unspecified') if 'DG Make' in df_gcu.columns else 'Unspecified'
                     df_gcu['DG Rating Clean'] = df_gcu['DG Rating'].fillna('Unspecified') if 'DG Rating' in df_gcu.columns else 'Unspecified'
@@ -833,6 +844,10 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
             filtered_b_df = df_status.copy()
             if not filtered_b_df.empty:
+                # Strictly exclude Automation Ok sites
+                if 'DG Automation Status' in filtered_b_df.columns:
+                    filtered_b_df = filtered_b_df[filtered_b_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+
                 if chosen_b_state != "All States" and 'State' in filtered_b_df.columns:
                     filtered_b_df = filtered_b_df[filtered_b_df['State'].astype(str).str.strip() == chosen_b_state]
                 if chosen_b_jc != "All JCs" and 'JC' in filtered_b_df.columns:
@@ -855,7 +870,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending / Received Matrix (DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
             
             p_f1, p_f2 = st.columns(2)
             with p_f1:
@@ -867,6 +882,10 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
             pending_df = df_status.copy()
             if not pending_df.empty:
+                # Strictly exclude Automation Ok sites
+                if 'DG Automation Status' in pending_df.columns:
+                    pending_df = pending_df[pending_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+
                 if 'Bucket' in pending_df.columns:
                     pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
                     target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
@@ -882,7 +901,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
                 if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
                     jc_bucket_docket_matrix = pd.crosstab([pending_df['JC'], pending_df['Bucket']], pending_df['Docket_Status'], margins=True, margins_name="Total")
-                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket Received vs Docket Pending")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket received vs Docket pending")
                     st.dataframe(jc_bucket_docket_matrix, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
@@ -1557,7 +1576,7 @@ elif page == "🔍 AI Site Diagnostics":
                     st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
 
             with diag_t3:
-                with st.container(border=Thread if 'Thread' in globals() else object):
+                with st.container(border=True):
                     target_closed_col_name = 'Last Closed date'
                     for col_c in site_row.index:
                         if 'last closed' in str(col_c).lower():
