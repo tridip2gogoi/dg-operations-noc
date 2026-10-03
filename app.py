@@ -857,9 +857,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
 
             if not filtered_b_df.empty:
-                # Replaced Docket Pending/Received with Bucket breakdown summary
                 if 'JC' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
-                    all_buckets_list = sorted([str(x) for x in filtered_b_df['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
                     ct_sub_bkt = pd.crosstab(filtered_b_df['JC'], filtered_b_df['Bucket'], margins=True, margins_name="Total")
                     st.dataframe(ct_sub_bkt, use_container_width=True)
                 else:
@@ -897,9 +895,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
                     target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
                     pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
-
-                pending_df['Clean_Docket'] = pending_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in pending_df.columns else ''
-                pending_df['Docket_Status'] = pending_df['Clean_Docket'].apply(lambda x: 'Docket received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket pending')
                 
                 if chosen_p_state != "All States" and 'State' in pending_df.columns:
                     pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
@@ -910,15 +905,15 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 if chosen_p_bucket != "All Buckets" and 'Bucket' in pending_df.columns:
                     pending_df = pending_df[pending_df['Bucket'].astype(str).str.strip() == chosen_p_bucket]
 
-                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
-                    jc_bucket_docket_matrix = pd.crosstab([pending_df['JC'], pending_df['Bucket']], pending_df['Docket_Status'], margins=True, margins_name="Total")
-                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket received vs Docket pending")
-                    st.dataframe(jc_bucket_docket_matrix, use_container_width=True)
+                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns:
+                    jc_bucket_matrix = pd.crosstab(pending_df['JC'], pending_df['Bucket'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary")
+                    st.dataframe(jc_bucket_matrix, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
                     st.dataframe(pending_df, use_container_width=True)
                 else:
-                    st.info("Required JC, Bucket or Docket columns missing.")
+                    st.info("Required JC or Bucket columns missing.")
             else:
                 st.info("No data available.")
 
