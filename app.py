@@ -768,7 +768,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 Docket Available (DG Breakdown, Manual)"
+        "📋 JC-Wise Docket Pending / Received Matrix"
     ])
 
     with tab_m1:
@@ -855,39 +855,36 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 Docket Available Sites (Status: DG Breakdown, DG Manual / Manual Mode)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending Matrix & Details</h4>", unsafe_allow_html=True)
             
-            d_f1, d_f2 = st.columns(2)
-            with d_f1:
-                d_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
-                chosen_d_state = st.selectbox("🌐 Filter State:", d_states, key="docket_state_filter")
-            with d_f2:
-                d_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
-                chosen_d_jc = st.selectbox("🌐 Filter JC:", d_jcs, key="docket_jc_filter")
+            p_f1, p_f2 = st.columns(2)
+            with p_f1:
+                p_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+                chosen_p_state = st.selectbox("🌐 Filter State:", p_states, key="pending_state_filter")
+            with p_f2:
+                p_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+                chosen_p_jc = st.selectbox("🌐 Filter JC:", p_jcs, key="pending_jc_filter")
 
-            docket_df = df_status.copy()
-            
-            if not docket_df.empty:
-                # Filter by status: DG Breakdown or Manual Mode / DG Manual
-                if 'DG Automation Status' in docket_df.columns:
-                    docket_df['Status_Clean'] = docket_df['DG Automation Status'].astype(str).str.strip().str.lower()
-                    docket_df = docket_df[docket_df['Status_Clean'].isin(['dg breakdown', 'manual mode', 'dg manual'])]
+            pending_df = df_status.copy()
+            if not pending_df.empty:
+                pending_df['Clean_Docket'] = pending_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in pending_df.columns else ''
+                pending_df['Docket_Status'] = pending_df['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
                 
-                # Filter by Docket Available (Present Docket No. is present and valid)
-                if 'Present Docket No.' in docket_df.columns:
-                    docket_df['Clean_Docket'] = docket_df['Present Docket No.'].fillna('').astype(str).str.strip()
-                    docket_df = docket_df[docket_df['Clean_Docket'].str.lower().notna() & ~docket_df['Clean_Docket'].str.lower().isin(['', 'nan', 'none', 'n/a', '0'])]
-                
-                if chosen_d_state != "All States" and 'State' in docket_df.columns:
-                    docket_df = docket_df[docket_df['State'].astype(str).str.strip() == chosen_d_state]
-                if chosen_d_jc != "All JCs" and 'JC' in docket_df.columns:
-                    docket_df = docket_df[docket_df['JC'].astype(str).str.strip() == chosen_d_jc]
+                if chosen_p_state != "All States" and 'State' in pending_df.columns:
+                    pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
+                if chosen_p_jc != "All JCs" and 'JC' in pending_df.columns:
+                    pending_df = pending_df[pending_df['JC'].astype(str).str.strip() == chosen_p_jc]
 
-                if not docket_df.empty:
-                    st.info(f"Showing {len(docket_df):,} sites with active dockets for DG Breakdown & Manual mode.")
-                    st.dataframe(docket_df, use_container_width=True)
+                if 'JC' in pending_df.columns and 'Docket_Status' in pending_df.columns:
+                    jc_pending_matrix = pd.crosstab(pending_df['JC'], pending_df['Docket_Status'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise Summary: Docket Pending vs Received")
+                    st.dataframe(jc_pending_matrix, use_container_width=True)
+                    
+                    st.markdown("##### Detailed Site Records (Docket Pending)")
+                    only_pending_df = pending_df[pending_df['Docket_Status'] == 'Docket Pending']
+                    st.dataframe(only_pending_df, use_container_width=True)
                 else:
-                    st.info("No sites found with active dockets for DG Breakdown or Manual mode matching the filters.")
+                    st.info("Required JC or Docket columns missing.")
             else:
                 st.info("No data available.")
 
