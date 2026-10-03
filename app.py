@@ -768,7 +768,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 JC-Wise Docket Pending / Received Matrix"
+        "📋 JC-Wise Docket Pending / Received Matrix (DG Breakdown, GCU, OEM Spare parts)"
     ])
 
     with tab_m1:
@@ -855,7 +855,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending Matrix & Details</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending Matrix & Details (Buckets: DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
             
             p_f1, p_f2 = st.columns(2)
             with p_f1:
@@ -867,6 +867,12 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
             pending_df = df_status.copy()
             if not pending_df.empty:
+                # Filter specifically for DG Breakdown, GCU, OEM Spare parts buckets
+                if 'Bucket' in pending_df.columns:
+                    pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
+                    target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
+                    pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
+
                 pending_df['Clean_Docket'] = pending_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in pending_df.columns else ''
                 pending_df['Docket_Status'] = pending_df['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
                 
@@ -880,9 +886,8 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     st.markdown("##### JC-Wise Summary: Docket Pending vs Received")
                     st.dataframe(jc_pending_matrix, use_container_width=True)
                     
-                    st.markdown("##### Detailed Site Records (Docket Pending)")
-                    only_pending_df = pending_df[pending_df['Docket_Status'] == 'Docket Pending']
-                    st.dataframe(only_pending_df, use_container_width=True)
+                    st.markdown("##### Detailed Site Records")
+                    st.dataframe(pending_df, use_container_width=True)
                 else:
                     st.info("Required JC or Docket columns missing.")
             else:
