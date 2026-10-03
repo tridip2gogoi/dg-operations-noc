@@ -768,7 +768,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 JC-Wise Problem Bucket Breakdown Matrix"
+        "📋 JC-Wise Bucket Docket Pending Matrix (DG Breakdown, GCU, OEM)"
     ])
 
     with tab_m1:
@@ -855,18 +855,44 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Problem Bucket Breakdown Matrix</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Bucket Docket Pending / Received Matrix (DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
             
-            matrix_df = df_status.copy()
-            if not matrix_df.empty and 'JC' in matrix_df.columns and 'Bucket' in matrix_df.columns:
-                valid_matrix_df = matrix_df[matrix_df['Bucket'].notna() & (matrix_df['Bucket'].astype(str).str.strip() != '')]
-                if not valid_matrix_df.empty:
-                    jc_bucket_crosstab = pd.crosstab(valid_matrix_df['JC'], valid_matrix_df['Bucket'], margins=True, margins_name="Total")
-                    st.dataframe(jc_bucket_crosstab, use_container_width=True)
+            p_f1, p_f2 = st.columns(2)
+            with p_f1:
+                p_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+                chosen_p_state = st.selectbox("🌐 Filter State:", p_states, key="pending_state_filter")
+            with p_f2:
+                p_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+                chosen_p_jc = st.selectbox("🌐 Filter JC:", p_jcs, key="pending_jc_filter")
+
+            pending_df = df_status.copy()
+            if not pending_df.empty:
+                # Filter specifically for DG Breakdown, GCU, OEM Spare parts buckets
+                if 'Bucket' in pending_df.columns:
+                    pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
+                    target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
+                    pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
+
+                pending_df['Clean_Docket'] = pending_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in pending_df.columns else ''
+                pending_df['Docket_Status'] = pending_df['Clean_Docket'].apply(lambda x: 'Docket Received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket Pending')
+                
+                if chosen_p_state != "All States" and 'State' in pending_df.columns:
+                    pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
+                if chosen_p_jc != "All JCs" and 'JC' in pending_df.columns:
+                    pending_df = pending_df[pending_df['JC'].astype(str).str.strip() == chosen_p_jc]
+
+                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
+                    # JC-wise bucket cross-tabulation for docket pending vs received
+                    jc_bucket_docket_matrix = pd.crosstab([pending_df['JC'], pending_df['Bucket']], pending_df['Docket_Status'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket Pending vs Received")
+                    st.dataframe(jc_bucket_docket_matrix, use_container_width=True)
+                    
+                    st.markdown("##### Detailed Site Records")
+                    st.dataframe(pending_df, use_container_width=True)
                 else:
-                    st.info("No valid bucket entries available.")
+                    st.info("Required JC, Bucket or Docket columns missing.")
             else:
-                st.info("Required JC or Bucket columns missing.")
+                st.info("No data available.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
