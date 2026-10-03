@@ -768,7 +768,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 Docket Available (Breakdown, GCU, OEM)"
+        "📋 Docket Available (DG Breakdown, Manual)"
     ])
 
     with tab_m1:
@@ -855,9 +855,8 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 Docket Available Sites (Buckets: DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 Docket Available Sites (Status: DG Breakdown, DG Manual / Manual Mode)</h4>", unsafe_allow_html=True)
             
-            # Filters for the new tab
             d_f1, d_f2 = st.columns(2)
             with d_f1:
                 d_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
@@ -866,15 +865,13 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 d_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
                 chosen_d_jc = st.selectbox("🌐 Filter JC:", d_jcs, key="docket_jc_filter")
 
-            target_buckets = ["DG Breakdown", "GCU", "OEM Spare parts"]
             docket_df = df_status.copy()
             
             if not docket_df.empty:
-                # Filter by target buckets (case-insensitive check)
-                if 'Bucket' in docket_df.columns:
-                    docket_df['Bucket_Clean'] = docket_df['Bucket'].astype(str).str.strip().str.title()
-                    target_buckets_clean = [b.title() for b in target_buckets]
-                    docket_df = docket_df[docket_df['Bucket_Clean'].isin(target_buckets_clean)]
+                # Filter by status: DG Breakdown or Manual Mode / DG Manual
+                if 'DG Automation Status' in docket_df.columns:
+                    docket_df['Status_Clean'] = docket_df['DG Automation Status'].astype(str).str.strip().str.lower()
+                    docket_df = docket_df[docket_df['Status_Clean'].isin(['dg breakdown', 'manual mode', 'dg manual'])]
                 
                 # Filter by Docket Available (Present Docket No. is present and valid)
                 if 'Present Docket No.' in docket_df.columns:
@@ -887,10 +884,10 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     docket_df = docket_df[docket_df['JC'].astype(str).str.strip() == chosen_d_jc]
 
                 if not docket_df.empty:
-                    st.info(f"Showing {len(docket_df):,} sites with active dockets for DG Breakdown, GCU, and OEM Spare parts.")
+                    st.info(f"Showing {len(docket_df):,} sites with active dockets for DG Breakdown & Manual mode.")
                     st.dataframe(docket_df, use_container_width=True)
                 else:
-                    st.info("No sites found with active dockets for DG Breakdown, GCU, or OEM Spare parts matching the filters.")
+                    st.info("No sites found with active dockets for DG Breakdown or Manual mode matching the filters.")
             else:
                 st.info("No data available.")
 
@@ -1523,7 +1520,7 @@ elif page == "🔍 AI Site Diagnostics":
                 with st.container(border=True):
                     c_s1, c_s2 = st.columns(2)
                     with c_s1:
-                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/Y')}`")
+                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/A')}`")
                         st.markdown(f"**DG Rating:** `{site_row.get('DG Rating', 'N/A')}`")
                         st.markdown(f"**OEM Vendor:** `{site_row.get('OEM Vendor', 'N/A')}`")
                         st.markdown(f"**EB Grid Connection:** `{site_row.get('EB/Non EB', 'N/A')}`")
