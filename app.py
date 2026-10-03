@@ -329,7 +329,6 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
     if ila_file and is_valid_source(ila_file):
         try:
             xls_ila = pd.ExcelFile(ila_file)
-            # Automatically scan for "IPMS Site Automation Status" sheet specifically for ILA-AG1 if present
             ila_sheet_target = "IPMS Site Automation Status" if "IPMS Site Automation Status" in xls_ila.sheet_names else xls_ila.sheet_names[0]
             df_ila = pd.read_excel(xls_ila, sheet_name=ila_sheet_target)
             for col in df_ila.columns:
@@ -764,11 +763,12 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 st.info("No active problem bucket recorded for this selection.")
 
     st.markdown("---")
-    tab_m1, tab_m2, tab_m3, tab_m4 = st.tabs([
+    tab_m1, tab_m2, tab_m3, tab_m4, tab_m5 = st.tabs([
         "📊 JC-Wise Automation Status Matrix",
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
-        "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)"
+        "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
+        "📋 Docket Available (Breakdown, GCU, OEM)"
     ])
 
     with tab_m1:
@@ -817,7 +817,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         with st.container(border=True):
             st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
             
-            # --- ADDED MULTI-FILTERS FOR BREAKDOWN & MANUAL MATRIX (JC, Automation Status, Bucket) ---
             bm_f1, bm_f2, bm_f3, bm_f4 = st.columns(4)
             with bm_f1:
                 b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
@@ -853,6 +852,47 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     st.warning("Required matrix columns missing.")
             else:
                 st.info("No records matching the selected filters.")
+
+    with tab_m5:
+        with st.container(border=True):
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 Docket Available Sites (Buckets: DG Breakdown, GCU, OEM Spare parts)</h4>", unsafe_allow_html=True)
+            
+            # Filters for the new tab
+            d_f1, d_f2 = st.columns(2)
+            with d_f1:
+                d_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+                chosen_d_state = st.selectbox("🌐 Filter State:", d_states, key="docket_state_filter")
+            with d_f2:
+                d_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+                chosen_d_jc = st.selectbox("🌐 Filter JC:", d_jcs, key="docket_jc_filter")
+
+            target_buckets = ["DG Breakdown", "GCU", "OEM Spare parts"]
+            docket_df = df_status.copy()
+            
+            if not docket_df.empty:
+                # Filter by target buckets (case-insensitive check)
+                if 'Bucket' in docket_df.columns:
+                    docket_df['Bucket_Clean'] = docket_df['Bucket'].astype(str).str.strip().str.title()
+                    target_buckets_clean = [b.title() for b in target_buckets]
+                    docket_df = docket_df[docket_df['Bucket_Clean'].isin(target_buckets_clean)]
+                
+                # Filter by Docket Available (Present Docket No. is present and valid)
+                if 'Present Docket No.' in docket_df.columns:
+                    docket_df['Clean_Docket'] = docket_df['Present Docket No.'].fillna('').astype(str).str.strip()
+                    docket_df = docket_df[docket_df['Clean_Docket'].str.lower().notna() & ~docket_df['Clean_Docket'].str.lower().isin(['', 'nan', 'none', 'n/a', '0'])]
+                
+                if chosen_d_state != "All States" and 'State' in docket_df.columns:
+                    docket_df = docket_df[docket_df['State'].astype(str).str.strip() == chosen_d_state]
+                if chosen_d_jc != "All JCs" and 'JC' in docket_df.columns:
+                    docket_df = docket_df[docket_df['JC'].astype(str).str.strip() == chosen_d_jc]
+
+                if not docket_df.empty:
+                    st.info(f"Showing {len(docket_df):,} sites with active dockets for DG Breakdown, GCU, and OEM Spare parts.")
+                    st.dataframe(docket_df, use_container_width=True)
+                else:
+                    st.info("No sites found with active dockets for DG Breakdown, GCU, or OEM Spare parts matching the filters.")
+            else:
+                st.info("No data available.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
@@ -1483,7 +1523,7 @@ elif page == "🔍 AI Site Diagnostics":
                 with st.container(border=True):
                     c_s1, c_s2 = st.columns(2)
                     with c_s1:
-                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/A')}`")
+                        st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/Y')}`")
                         st.markdown(f"**DG Rating:** `{site_row.get('DG Rating', 'N/A')}`")
                         st.markdown(f"**OEM Vendor:** `{site_row.get('OEM Vendor', 'N/A')}`")
                         st.markdown(f"**EB Grid Connection:** `{site_row.get('EB/Non EB', 'N/A')}`")
