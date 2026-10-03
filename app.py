@@ -767,7 +767,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "📊 JC-Wise Automation Status Matrix",
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
-        "🛠️️ JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)"
+        "🛠️ JC-Wise: DG Breakdown & Manual (Excluding Automation Ok)"
     ])
 
     with tab_m1:
@@ -814,7 +814,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m4:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>JC-Wise: DG Breakdown & Manual (Excluding Automation Ok)</h4>", unsafe_allow_html=True)
             
             bm_f1, bm_f2, bm_f3, bm_f4 = st.columns(4)
             with bm_f1:
@@ -824,7 +824,10 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 b_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
                 chosen_b_jc = st.selectbox("🌐 Filter JC:", b_jcs, key="breakdown_jc_filter")
             with bm_f3:
-                b_statuses = ["All Statuses"] + sorted([str(x) for x in df_status['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'DG Automation Status' in df_status.columns else ["All Statuses"]
+                # Exclude 'Automation Ok' from status choices
+                raw_statuses = [str(x) for x in df_status['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]
+                filtered_statuses_list = [s for s in raw_statuses if s.lower() != 'automation ok']
+                b_statuses = ["All Fault Statuses"] + sorted(filtered_statuses_list)
                 chosen_b_status = st.selectbox("⚡ Filter Status:", b_statuses, key="breakdown_status_filter")
             with bm_f4:
                 b_buckets = ["All Buckets"] + sorted([str(x) for x in df_status['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'Bucket' in df_status.columns else ["All Buckets"]
@@ -832,11 +835,15 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
             filtered_b_df = df_status.copy()
             if not filtered_b_df.empty:
+                # Strictly filter out 'Automation Ok' from this matrix
+                if 'DG Automation Status' in filtered_b_df.columns:
+                    filtered_b_df = filtered_b_df[filtered_b_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+
                 if chosen_b_state != "All States" and 'State' in filtered_b_df.columns:
                     filtered_b_df = filtered_b_df[filtered_b_df['State'].astype(str).str.strip() == chosen_b_state]
                 if chosen_b_jc != "All JCs" and 'JC' in filtered_b_df.columns:
                     filtered_b_df = filtered_b_df[filtered_b_df['JC'].astype(str).str.strip() == chosen_b_jc]
-                if chosen_b_status != "All Statuses" and 'DG Automation Status' in filtered_b_df.columns:
+                if chosen_b_status != "All Fault Statuses" and 'DG Automation Status' in filtered_b_df.columns:
                     filtered_b_df = filtered_b_df[filtered_b_df['DG Automation Status'].astype(str).str.strip() == chosen_b_status]
                 if chosen_b_bucket != "All Buckets" and 'Bucket' in filtered_b_df.columns:
                     filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
@@ -848,7 +855,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 else:
                     st.warning("Required matrix columns missing.")
             else:
-                st.info("No records matching the selected filters.")
+                st.info("No fault records matching the selected filters.")
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
@@ -1034,7 +1041,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             if not is_viewer:
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️️ Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
