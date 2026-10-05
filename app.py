@@ -396,15 +396,15 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res[k] = ""
     return res
 
-def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="", fsr_file_name=""):
+def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
     r = df_target.loc[row_idx]
     pres_doc = str(r.get('Present Docket No.', '')).strip()
     pres_date = str(r.get('Present Docket raise Date', '')).strip()
     pres_rem = str(r.get('Present Remarks', '')).strip()
     
     final_remarks = custom_fsr_remarks.strip() if custom_fsr_remarks.strip() else pres_rem
-    if fsr_file_name:
-        final_remarks += f" [FSR PDF Proof: {fsr_file_name}]"
+    if fsr_pdf_name:
+        final_remarks += f" [FSR PDF Proof: {fsr_pdf_name}]"
 
     if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
         df_target.at[row_idx, 'Previous Docket No.'] = str(pres_doc)
@@ -414,7 +414,7 @@ def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="",
         df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
     return df_target
 
-def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_file_name=""):
+def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
     if df_target.empty or not site_id:
         return df_target
     updated = df_target.copy()
@@ -425,7 +425,7 @@ def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_
     match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
     if not match_idx.empty:
         i = match_idx[0]
-        updated = archive_current_fault_to_previous(i, updated, custom_fsr_remarks, fsr_file_name)
+        updated = archive_current_fault_to_previous(i, updated, custom_fsr_remarks, fsr_pdf_name)
         if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
         if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
         if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
