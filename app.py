@@ -398,19 +398,25 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res[k] = ""
     return res
 
-def archive_current_fault_to_previous(row_idx, df_target):
+def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="", fsr_img_name=""):
     r = df_target.loc[row_idx]
     pres_doc = str(r.get('Present Docket No.', '')).strip()
     pres_date = str(r.get('Present Docket raise Date', '')).strip()
     pres_rem = str(r.get('Present Remarks', '')).strip()
     
+    final_remarks = custom_fsr_remarks.strip() if custom_fsr_remarks.strip() else pres_rem
+    if fsr_img_name:
+        final_remarks += f" [FSR Proof: {fsr_img_name}]"
+
     if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
         df_target.at[row_idx, 'Previous Docket No.'] = str(pres_doc)
         df_target.at[row_idx, 'Previous Docket raise Date'] = str(pres_date)
-        df_target.at[row_idx, 'Previous Remarks'] = str(pres_rem)
+        df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
+    elif final_remarks and final_remarks.lower() not in ['', 'nan', 'none']:
+        df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
     return df_target
 
-def clear_site_active_fault_data(site_id, df_target):
+def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_img_name=""):
     if df_target.empty or not site_id:
         return df_target
     updated = df_target.copy()
@@ -421,7 +427,7 @@ def clear_site_active_fault_data(site_id, df_target):
     match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
     if not match_idx.empty:
         i = match_idx[0]
-        updated = archive_current_fault_to_previous(i, updated)
+        updated = archive_current_fault_to_previous(i, updated, custom_fsr_remarks, fsr_img_name)
         if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
         if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
         if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
@@ -433,7 +439,7 @@ def clear_site_active_fault_data(site_id, df_target):
         today_date_str = datetime.now(IST).strftime('%Y-%m-%d')
         target_closed_col = None
         for col in updated.columns:
-            if 'last closed' in col.lower():
+            if 'last closed' in str(col).lower():
                 target_closed_col = col
                 break
         if target_closed_col:
@@ -565,7 +571,7 @@ if st.session_state.show_control_panel:
                             existing_df[c_up] = incoming_df[c_up].combine_first(existing_df[c_up])
                     st.session_state.master_tracker_df = existing_df.reset_index()
                     save_master_to_disk()
-                    st.success("✅ Permanent Master Base intact! Docket No. and status updated successfully.")
+                    st.success("✅ Permanent Master Base updated successfully!")
             except Exception as e:
                 st.warning(f"Could not merge incoming file: {e}")
 
@@ -628,7 +634,7 @@ page = st.radio(
     "Select Operation View:", 
     [
         "📊 Executive Control Center",
-        "⚙️ Fleet Analytics & Problem Buckets",
+        "⚙️️ Fleet Analytics & Problem Buckets",
         "⛽ Fuel Sensor Telemetry",
         "⏳ Daily Fault Summary",
         "📈 ILA-AG1 Operations Tracker",
@@ -719,7 +725,7 @@ if page == "📊 Executive Control Center":
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
-    st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
+    st.markdown("## ⚙️️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
     jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
@@ -775,7 +781,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         "🗂️ JC-Wise Problem Bucket Matrix",
         "⚡ GCU Sites: JC vs DG Make & KVA",
         "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-        "📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)"
+        "📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)"
     ])
 
     with tab_m1:
@@ -857,11 +863,9 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
 
             if not filtered_b_df.empty:
-                filtered_b_df['Clean_Docket'] = filtered_b_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in filtered_b_df.columns else ''
-                filtered_b_df['Docket_Status'] = filtered_b_df['Clean_Docket'].apply(lambda x: 'Docket received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket pending')
                 if 'JC' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns:
-                    ct_sub_bkt = pd.crosstab([filtered_b_df['JC'], filtered_b_df['Bucket']], filtered_b_df['Docket_Status'], margins=True, margins_name="Total")
-                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket received vs Docket pending")
+                    ct_sub_bkt = pd.crosstab(filtered_b_df['JC'], filtered_b_df['Bucket'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise Summary: Bucket Distribution")
                     st.dataframe(ct_sub_bkt, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
@@ -873,7 +877,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
     with tab_m5:
         with st.container(border=True):
-            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Docket Pending / Received (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-bottom:10px; color: #facc15;'>📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
             
             p_f1, p_f2, p_f3, p_f4 = st.columns(4)
             with p_f1:
@@ -901,9 +905,6 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                     pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
                     target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
                     pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
-
-                pending_df['Clean_Docket'] = pending_df['Present Docket No.'].fillna('').astype(str).str.strip() if 'Present Docket No.' in pending_df.columns else ''
-                pending_df['Docket_Status'] = pending_df['Clean_Docket'].apply(lambda x: 'Docket received' if x.lower() not in ['', 'nan', 'none', 'n/a', '0'] else 'Docket pending')
                 
                 if chosen_p_state != "All States" and 'State' in pending_df.columns:
                     pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
@@ -914,15 +915,15 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                 if chosen_p_bucket != "All Buckets" and 'Bucket' in pending_df.columns:
                     pending_df = pending_df[pending_df['Bucket'].astype(str).str.strip() == chosen_p_bucket]
 
-                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and 'Docket_Status' in pending_df.columns:
-                    jc_bucket_docket_matrix = pd.crosstab([pending_df['JC'], pending_df['Bucket']], pending_df['Docket_Status'], margins=True, margins_name="Total")
-                    st.markdown("##### JC-Wise & Bucket-Wise Summary: Docket received vs Docket pending")
-                    st.dataframe(jc_bucket_docket_matrix, use_container_width=True)
+                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns:
+                    jc_bucket_matrix = pd.crosstab(pending_df['JC'], pending_df['Bucket'], margins=True, margins_name="Total")
+                    st.markdown("##### JC-Wise & Bucket-Wise Summary")
+                    st.dataframe(jc_bucket_matrix, use_container_width=True)
                     
                     st.markdown("##### Detailed Site Records")
                     st.dataframe(pending_df, use_container_width=True)
                 else:
-                    st.info("Required JC, Bucket or Docket columns missing.")
+                    st.info("Required JC or Bucket columns missing.")
             else:
                 st.info("No data available.")
 
@@ -1356,18 +1357,24 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                             st.markdown("<hr style='margin: 15px 0; border-color: #cbd5e1;'>", unsafe_allow_html=True)
                             st.markdown("<h4 style='color: #facc15; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
                             
+                            close_fsr_remarks = st.text_input("📝 Enter FSR / Resolution Remarks (for Col Z archive):", placeholder="e.g. Self starter replaced & tested OK...", key=f"fsr_{selected_edit_site}")
+                            uploaded_fsr_image = st.file_uploader("📷 Upload FSR Image / Proof (Optional):", type=["png", "jpg", "jpeg"], key=f"img_{selected_edit_site}")
+
                             col_bt1, col_bt2 = st.columns(2)
                             with col_bt1:
                                 if st.button("✅ Close TT & Reset to Automation Ok", type="primary", use_container_width=True):
-                                    st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df)
+                                    final_close_remark = close_fsr_remarks
+                                    img_name = uploaded_fsr_image.name if uploaded_fsr_image is not None else ""
+                                    
+                                    st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df, final_close_remark, img_name)
                                     save_master_to_disk()
-                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
+                                    st.markdown('<div class="yellow-success-msg">TT Closed & FSR Remarks/Image Archived Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
                             with col_bt2:
                                 if st.button(f"🚨 Permanently Remove Site `{selected_edit_site}`", type="secondary", use_container_width=True):
                                     st.session_state.master_tracker_df = st.session_state.master_tracker_df.drop(index=row_idx).reset_index(drop=True)
                                     save_master_to_disk()
-                                    st.markdown('<div class="yellow-success-msg">Submitted Successfully</div>', unsafe_allow_html=True)
+                                    st.markdown('<div class="yellow-success-msg">Site Removed Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
 
     with edit_tab2:
