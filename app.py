@@ -264,7 +264,12 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
+# Dynamic caching with file modification time check for desktop live sync
+@st.cache_data
 def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
+    mtime_dg = os.path.getmtime(dg_file) if isinstance(dg_file, str) and os.path.exists(dg_file) else 0
+    mtime_cm = os.path.getmtime(cm_file) if isinstance(cm_file, str) and os.path.exists(cm_file) else 0
+    
     df_status = pd.DataFrame()
     df_fuel = pd.DataFrame()
     df_open_cm = pd.DataFrame()
@@ -355,6 +360,7 @@ def save_master_to_disk():
                     st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
                 if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
                     st.session_state.ila_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
+            st.cache_data.clear()
     except Exception as ex:
         pass
 
