@@ -264,7 +264,6 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
-@st.cache_data
 def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
     df_status = pd.DataFrame()
     df_fuel = pd.DataFrame()
@@ -316,7 +315,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             else:
                 df_status['Aging_Num'] = 0
         except Exception as e:
-            st.error(f"Error loading DG tracker: {e}")
+            pass
 
     if is_valid_source(cm_file):
         try:
@@ -324,7 +323,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             target_cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
             df_open_cm = pd.read_excel(xls_cm, sheet_name=target_cm_sheet)
         except Exception as e:
-            st.warning(f"Note on CM tracker: {e}")
+            pass
 
     if ila_file and is_valid_source(ila_file):
         try:
@@ -337,7 +336,7 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
                 df_ila = df_ila[df_ila['Sap ID'].notna()]
                 df_ila['Sap ID'] = df_ila['Sap ID'].astype(str).str.strip()
         except Exception as e:
-            st.warning(f"Note on ILA-AG1 tracker: {e}")
+            pass
 
     return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
 
@@ -356,9 +355,8 @@ def save_master_to_disk():
                     st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
                 if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
                     st.session_state.ila_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
-            st.cache_data.clear()
     except Exception as ex:
-        st.error(f"Error saving to disk: {ex}")
+        pass
 
 def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
     clean_id = str(site_id).strip().upper() if site_id else ""
@@ -573,7 +571,7 @@ if st.session_state.show_control_panel:
                     save_master_to_disk()
                     st.success("✅ Permanent Master Base updated successfully!")
             except Exception as e:
-                st.warning(f"Could not merge incoming file: {e}")
+                pass
 
         if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
             st.session_state.fuel_tracker_df = df_fuel_raw.copy()
@@ -1111,7 +1109,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                             if not is_viewer:
                                 ila_action = st.radio(
                                     "Select Action:",
-                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑 Remove / Delete Record"],
+                                    ["📝 Edit Record Fields", "🧹 Clear Fault Status & Reset", "🗑️ Remove / Delete Record"],
                                     horizontal=True
                                 )
 
@@ -1539,7 +1537,7 @@ elif page == "🔍 AI Site Diagnostics":
                 ai_inference = f"⛽ **Fuel Telemetry Signal Loss:** Fuel probe data corrupted or missing. Reported: `{rem_val}`."
                 sop_action = "Dispatch fuel sensor combo calibration kit; inspect sensor wiring harness."
             elif bucket_val == "OEM Spare parts":
-                ai_inference = f"🛠️️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
+                ai_inference = f"🛠️ **Component Replacement Required:** Waiting on OEM hardware parts. Defect: `{rem_val}`."
                 sop_action = "Track supply chain docket with OEM vendor. Expedite parts dispatch to Circle TRT."
             else:
                 ai_inference = f"⚠️ **Attention Required:** Manual mode active. Problem classified under `{bucket_val}`."
