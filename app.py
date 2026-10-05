@@ -634,7 +634,7 @@ page = st.radio(
     "Select Operation View:", 
     [
         "📊 Executive Control Center",
-        "⚙️️ Fleet Analytics & Problem Buckets",
+        "⚙️ Fleet Analytics & Problem Buckets",
         "⛽ Fuel Sensor Telemetry",
         "⏳ Daily Fault Summary",
         "📈 ILA-AG1 Operations Tracker",
@@ -725,7 +725,7 @@ if page == "📊 Executive Control Center":
 # 2. FLEET ANALYTICS & ROOT-CAUSE
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
-    st.markdown("## ⚙️️ Fleet Automation Classification & Root-Cause Analysis")
+    st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
 
     jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
