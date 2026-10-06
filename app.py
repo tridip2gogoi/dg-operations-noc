@@ -452,28 +452,28 @@ elif page == "⛽ Fuel Sensor Telemetry":
         with c1:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Active Faulty Sensors (Master)</span><br>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Active Faulty Sensors (Master)</h4>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_faults}</span>
             </div>
             """, unsafe_allow_html=True)
         with c2:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Most Affected JC</span><br>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Most Affected JC</h4>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aff_jc}</span>
             </div>
             """, unsafe_allow_html=True)
         with c3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Primary Fault Make</h4>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
             </div>
             """, unsafe_allow_html=True)
         with c4:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Rating</span><br>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Primary Fault Rating</h4>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_rat}</span>
             </div>
             """, unsafe_allow_html=True)
@@ -565,7 +565,7 @@ elif page == "⏳ Daily Fault Summary":
         with m5:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">OEM Spare Parts</h4>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">OEM Spare Parts</h4>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span><br>
                 <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Spares Required</span>
             </div>
