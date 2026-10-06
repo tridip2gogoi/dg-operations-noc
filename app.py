@@ -431,3 +431,46 @@ def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="",
 
 def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
     if df_target.empty or not site_id:
+        return df_target
+    updated = df_target.copy()
+    for col in updated.columns:
+        updated[col] = updated[col].astype(object)
+    
+    clean_id = str(site_id).strip().upper()
+    match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
+    if not match_idx.empty:
+        i = match_idx[0]
+        updated = archive_current_fault_to_previous(i, updated, custom_fsr_remarks, fsr_pdf_name)
+        if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
+        if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
+        if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
+        if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
+        if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
+        if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
+        if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
+        
+        today_date_str = datetime.now(IST).strftime('%Y-%m-%d')
+        target_closed_col = None
+        for col in updated.columns:
+            if 'last closed' in str(col).lower():
+                target_closed_col = col
+                break
+        if target_closed_col:
+            updated.at[i, target_closed_col] = str(today_date_str)
+        else:
+            updated.at[i, 'Last Closed date'] = str(today_date_str)
+
+    return updated
+
+# --- AUTHENTICATION GATEWAY ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+    st.session_state.user_info = None
+
+if not st.session_state.authenticated:
+    _, col1, _ = st.columns([1, 1.2, 1])
+    with col1:
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h2 style="color: #0f172a; font-weight:
