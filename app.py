@@ -1158,7 +1158,6 @@ elif page == "📈 ILA-AG1 Operations Tracker":
                                             st.session_state.ila_tracker_df.at[i_idx, 'State'] = str(new_state)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Supervisors'] = str(new_sup)
                                             st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = str(new_status)
-                                            st.session_state.ila_tracker_df.at[i_idx, 'presentableId'] = str(new_rem)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = str(new_rem)
                                             st.session_state.ila_tracker_df.at[i_idx, 'Bucket'] = str(new_bkt)
                                             if 'Present Docket raise Date' in st.session_state.ila_tracker_df.columns:
@@ -1638,7 +1637,7 @@ elif page == "🔍 AI Site Diagnostics":
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # --- CLEAN COL AC (FSR PDF LINK) INTEGRATION WITHOUT EXTRA TEXT OR MISTAKES ---
+                    # --- COL AC (FSR PDF LINK) FULL INTEGRATION WITH CLICKABLE LINK OR BUTTON ---
                     pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', site_row.get('FSR PDF Link', 'None'))).strip()
                     if pdf_link_val and pdf_link_val.lower() not in ['', 'nan', 'none', '0', '0.0']:
                         st.markdown(f"""
@@ -1648,18 +1647,14 @@ elif page == "🔍 AI Site Diagnostics":
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # If Col AC is a valid Google Drive or web link, render a proper button
+                        # Check if it's a URL (Google Drive or http/https)
                         if pdf_link_val.startswith(('http://', 'https://', 'www.')):
                             target_url = pdf_link_val if pdf_link_val.startswith('http') else f"https://{pdf_link_val}"
-                            st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
+                            st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_control_width=True if hasattr(st, "link_button") else False)
                         else:
-                            # If it's a file name or record identifier, provide a clean download button
-                            txt_data_bytes = f"Site ID: {selected_site}\nJC: {jc_str}\nState: {state_str}\nCol AC Record: {pdf_link_val}\nRemarks: {prev_rem_text}".encode('utf-8')
-                            st.download_button(
-                                label=f"📥 Download FSR Record Document ({selected_site})",
-                                data=txt_data_bytes,
-                                file_name=f"FSR_Record_{selected_site}.txt",
-                                mime="text/plain",
-                                use_container_width=True,
-                                key=f"download_txt_{selected_site}"
-                            )
+                            # Render a clickable anchor tag if it contains text or link reference
+                            st.markdown(f"""
+                            <div style="margin-top: 6px;">
+                                <a href="{pdf_link_val}" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">🔗 Click here to Open FSR Document / Link</a>
+                            </div>
+                            """, unsafe_allow_html=True)
