@@ -61,8 +61,6 @@ st.markdown("""
         color: #facc15 !important;
     }
 </style>
-
-
 """, unsafe_allow_html=True)
 
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
@@ -465,7 +463,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
         with c3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
+                <span style="color: #facc15; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
             </div>
             """, unsafe_allow_html=True)
@@ -531,45 +529,50 @@ elif page == "⏳ Daily Fault Summary":
         m1, m2, m3, m4, m5, m6 = st.columns(6)
         with m1:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                 <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">Filtered Faults</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{len(filtered_date_df):,}</span><br>
-                <span style="color: #94a3b8; font-size: 11px;">Date: {selected_date_filter}</span>
+                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Date: {selected_date_filter}</span>
             </div>
             """, unsafe_allow_html=True)
         with m2:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                 <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">Fuel Sensor Faults</span><br>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_fuel_sensor:,}</span>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_fuel_sensor:,}</span><br>
+                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Active Faults</span>
             </div>
             """, unsafe_allow_html=True)
         with m3:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                 <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">DG Battery</span><br>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_battery:,}</span>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_battery:,}</span><br>
+                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Battery Issues</span>
             </div>
             """, unsafe_allow_html=True)
         with m4:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                 <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">GCU Faults</span><br>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_gcu:,}</span>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_gcu:,}</span><br>
+                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Controller Faults</span>
             </div>
             """, unsafe_allow_html=True)
         with m5:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                 <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">OEM Spare Parts</span><br>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span><br>
+                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Spares Required</span>
             </div>
             """, unsafe_allow_html=True)
         with m6:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                 <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Master Base</span><br>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span><br>
+                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Circle Base</span>
             </div>
             """, unsafe_allow_html=True)
 
