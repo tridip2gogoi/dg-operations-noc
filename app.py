@@ -829,25 +829,29 @@ elif page == "🔍 AI Site Diagnostics":
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
                         st.markdown("##### 📄 Google Drive Link CM (Col AC)")
-                        if cm_link:
-                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}+CM")
+                        # Only show clickable button if an actual URL exists
+                        if cm_link and (cm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in cm_link):
+                            cm_url = cm_link if cm_link.startswith('http') else f"https://{cm_link}"
                             st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
                         else:
+                            # No link exists: absolutely NO clickable option/button
                             st.markdown("""
-                            <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
-                                ℹ️ No CM link attached in Col AC.
+                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
+                                🚫 No CM FSR Link Available (Col AC)
                             </div>
                             """, unsafe_allow_html=True)
 
                     with f_col2:
                         st.markdown("##### 📄 Google Drive Link PM (Col AD)")
-                        if pm_link:
-                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}+PM")
+                        # Only show clickable button if an actual URL exists
+                        if pm_link and (pm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in pm_link):
+                            pm_url = pm_link if pm_link.startswith('http') else f"https://{pm_link}"
                             st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #10b981; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
                         else:
+                            # No link exists: absolutely NO clickable option/button
                             st.markdown("""
-                            <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
-                                ℹ️ No PM link attached in Col AD.
+                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
+                                🚫 No PM FSR Link Available (Col AD)
                             </div>
                             """, unsafe_allow_html=True)
                     
