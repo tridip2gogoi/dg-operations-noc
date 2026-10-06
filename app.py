@@ -674,11 +674,22 @@ elif page == "🔍 AI Site Diagnostics":
             </div>
             """, unsafe_allow_html=True)
 
-            diag_t1, diag_t2, diag_t3 = st.tabs([
-                "📋 Technical Asset Specifications",
-                "⚡ Master Tracker (Live) Telemetry",
-                "⏳ Resolution History & Previous Dockets (Col Y to AB)"
-            ])
+            st.markdown("""
+    <style>
+        /* Make Streamlit active/inactive tab text high-contrast and golden yellow */
+        div[data-testid="stTabs"] button p {
+            color: #facc15 !important;
+            font-weight: 800 !important;
+            font-size: 14px !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    diag_t1, diag_t2, diag_t3 = st.tabs([
+        "📋 Technical Asset Specifications",
+        "⚡ Master Tracker (Live) Telemetry",
+        "⏳ Resolution History & Previous Dockets (Col Y to AB)"
+    ])
 
             with diag_t1:
                 with st.container(border=True):
