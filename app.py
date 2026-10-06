@@ -805,12 +805,23 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    # Read directly from accurately extracted Column AC & AD
+                    # Automatic Autoload: Retrieve CM (Col AC) & PM (Col AD) directly from live row data
                     cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
                     pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
                     
-                    if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', '']: cm_link = ""
-                    if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', '']: pm_link = ""
+                    # Direct positional fallback to Column AC (index 28) and Column AD (index 29)
+                    if (not cm_link or cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']) and len(site_row) > 28:
+                        val_ac = str(site_row.iloc[28]).strip()
+                        if val_ac.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null'] and not ('00:00:00' in val_ac):
+                            cm_link = val_ac
+                            
+                    if (not pm_link or pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']) and len(site_row) > 29:
+                        val_ad = str(site_row.iloc[29]).strip()
+                        if val_ad.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null'] and not ('00:00:00' in val_ad):
+                            pm_link = val_ad
+
+                    if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
+                    if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
 
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
@@ -854,28 +865,4 @@ elif page == "🔍 AI Site Diagnostics":
                                 ℹ️ No PM link attached in Col AD.
                             </div>
                             """, unsafe_allow_html=True)
-                    st.markdown("<hr style='margin: 14px 0; border-color: rgba(250,204,21,0.2);'>", unsafe_allow_html=True)
-                    with st.expander("✏️ Attach / Quick Update FSR Links for " + str(selected_site)):
-                        up_c1, up_c2 = st.columns(2)
-                        with up_c1:
-                            new_cm_input = st.text_input("CM FSR Drive Link (Col AC):", value=cm_link, key=f"edit_cm_{selected_site}", placeholder="https://drive.google.com/file/d/...")
-                        with up_c2:
-                            new_pm_input = st.text_input("PM FSR Drive Link (Col AD):", value=pm_link, key=f"edit_pm_{selected_site}", placeholder="https://drive.google.com/file/d/...")
-                        
-                        if st.button("💾 Save & Update FSR Links", type="primary", key=f"btn_save_fsr_{selected_site}", use_container_width=True):
-                            # Update in master_tracker_df
-                            if not st.session_state.master_tracker_df.empty and 'SAIP ID' in st.session_state.master_tracker_df.columns:
-                                mask = st.session_state.master_tracker_df['SAIP ID'].astype(str).str.strip() == str(selected_site).strip()
-                                if mask.any():
-                                    st.session_state.master_tracker_df.loc[mask, 'Google Drive Link CM'] = new_cm_input.strip()
-                                    st.session_state.master_tracker_df.loc[mask, 'Google Drive Link PM'] = new_pm_input.strip()
-                                    # If original columns 28/29 exist, update them too
-                                    if len(st.session_state.master_tracker_df.columns) > 28:
-                                        ac_col_real = st.session_state.master_tracker_df.columns[28]
-                                        st.session_state.master_tracker_df.loc[mask, ac_col_real] = new_cm_input.strip()
-                                    if len(st.session_state.master_tracker_df.columns) > 29:
-                                        ad_col_real = st.session_state.master_tracker_df.columns[29]
-                                        st.session_state.master_tracker_df.loc[mask, ad_col_real] = new_pm_input.strip()
-                                    save_master_to_disk()
-                                    st.success("✅ FSR Links successfully updated for site " + str(selected_site) + "!")
-                                    st.rerun()
+                    
