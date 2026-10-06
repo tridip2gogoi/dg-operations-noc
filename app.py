@@ -264,12 +264,7 @@ def is_valid_source(src):
     if isinstance(src, str) and os.path.exists(src): return True
     return False
 
-# Dynamic caching with file modification time check for desktop live sync
-@st.cache_data
-def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
-    mtime_dg = os.path.getmtime(dg_file) if isinstance(dg_file, str) and os.path.exists(dg_file) else 0
-    mtime_cm = os.path.getmtime(cm_file) if isinstance(cm_file, str) and os.path.exists(cm_file) else 0
-    
+def load_all_trackers(dg_file, cm_file, ila_file=None):
     df_status = pd.DataFrame()
     df_fuel = pd.DataFrame()
     df_open_cm = pd.DataFrame()
@@ -285,6 +280,19 @@ def load_all_trackers(dg_file, cm_file, ila_file=None, cr_file=None):
             for col in df_status.columns:
                 df_status[col] = df_status[col].astype(object)
             
+            ac_col_name = None
+            for idx, col in enumerate(df_status.columns):
+                c_str = str(col).strip().upper()
+                if 'AC' in c_str or 'PDF' in c_str or idx == 28:
+                    ac_col_name = col
+                    break
+            
+            if ac_col_name:
+                df_status['Col AC (FSR PDF link)'] = df_status[ac_col_name].apply(lambda x: "" if pd.isna(x) else str(x).strip())
+            else:
+                if 'Col AC (FSR PDF link)' not in df_status.columns:
+                    df_status['Col AC (FSR PDF link)'] = ""
+
             if 'SAIP ID' in df_status.columns:
                 df_status = df_status[df_status['SAIP ID'].notna()]
                 df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
@@ -360,7 +368,6 @@ def save_master_to_disk():
                     st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
                 if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
                     st.session_state.ila_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
-            st.cache_data.clear()
     except Exception as ex:
         pass
 
@@ -372,7 +379,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
         "Col_T_Present_Remarks": "", "Col_U_Bucket": "", "Col_V_Present_Docket_No": "",
         "Col_W_Present_Docket_raise_Date": "", "Col_X_Aging_Days": 0, "Col_Y_Timeline": "",
         "Col_Z_Previous_Remarks": "", "Col_AA_Previous_Docket_No": "", "Col_AB_Previous_Docket_raise_Date": "",
-        "source": "None"
+        "Col_AC_FSR_PDF_Link": "", "source": "None"
     }
     if not clean_id:
         return res
@@ -395,6 +402,7 @@ def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
             res["Col_Z_Previous_Remarks"] = str(prev_row.get("Previous Remarks", "")).strip()
             res["Col_AA_Previous_Docket_No"] = str(prev_row.get("Previous Docket No.", "")).strip()
             res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
+            res["Col_AC_FSR_PDF_Link"] = str(prev_row.get("Col AC (FSR PDF link)", prev_row.get("FSR PDF Link", ""))).strip()
             res["source"] = "DG Master Tracker"
 
     for k, v in res.items():
@@ -410,7 +418,8 @@ def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="",
     
     final_remarks = custom_fsr_remarks.strip() if custom_fsr_remarks.strip() else pres_rem
     if fsr_pdf_name:
-        final_remarks += f" [FSR PDF Proof: {fsr_pdf_name}]"
+        final_remarks += f" [FSR PDF: {fsr_pdf_name}]"
+        df_target.at[row_idx, 'Col AC (FSR PDF link)'] = f"Uploaded: {fsr_pdf_name}"
 
     if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
         df_target.at[row_idx, 'Previous Docket No.'] = str(pres_doc)
@@ -519,6 +528,17 @@ if st.session_state.show_control_panel:
 
         st.markdown("<hr style='margin:4px 0;'>", unsafe_allow_html=True)
 
+        rf_col1, rf_col2 = st.columns([2, 1])
+        with rf_col1:
+            st.caption("💡 If you updated your Excel file on desktop, click **Force Refresh & Sync Now** to instantly reload latest data.")
+        with rf_col2:
+            if st.button("🔄 Force Refresh & Sync Now", type="primary", use_container_width=True):
+                st.cache_data.clear()
+                if "master_tracker_df" in st.session_state:
+                    del st.session_state.master_tracker_df
+                st.success("Refreshed successfully!")
+                st.rerun()
+
         if is_viewer:
             st.info("🔒 Viewer Mode: File uploading is locked. You can download reports below.")
             uploaded_cm, uploaded_perm_master, uploaded_dg, uploaded_ila = None, None, None, None
@@ -548,7 +568,7 @@ if st.session_state.show_control_panel:
         with st.spinner("🔄 Synchronizing and loading enterprise trackers..."):
             df_status_raw, df_fuel_raw, df_open_cm, df_ila_raw, df_cr_data = load_all_trackers(perm_master_source, cm_source, ila_source)
 
-        if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
+        if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty or uploaded_perm_master is not None:
             st.session_state.master_tracker_df = df_status_raw.copy()
         if "fuel_tracker_df" not in st.session_state or st.session_state.fuel_tracker_df.empty:
             st.session_state.fuel_tracker_df = df_fuel_raw.copy()
@@ -568,7 +588,7 @@ if st.session_state.show_control_panel:
                     cols_to_update = [
                         'Fuel Sensor Status', 'Docket no.', 'Open Date', 'DG Automation Status',
                         'Present Remarks', 'Bucket', 'Present Docket No.', 'Present Docket raise Date',
-                        "Aging (Day's)", 'Timeline', 'Previous Remarks', 'Previous Docket No.', 'Previous Docket raise Date', 'Last Closed date'
+                        "Aging (Day's)", 'Timeline', 'Previous Remarks', 'Previous Docket No.', 'Previous Docket raise Date', 'Last Closed date', 'Col AC (FSR PDF link)'
                     ]
                     for c_up in cols_to_update:
                         if c_up in incoming_df.columns and c_up in existing_df.columns:
@@ -578,14 +598,6 @@ if st.session_state.show_control_panel:
                     st.success("✅ Permanent Master Base updated successfully!")
             except Exception as e:
                 pass
-
-        if st.session_state.fuel_tracker_df.empty and not df_fuel_raw.empty:
-            st.session_state.fuel_tracker_df = df_fuel_raw.copy()
-        if st.session_state.ila_tracker_df.empty and not df_ila_raw.empty:
-            st.session_state.ila_tracker_df = df_ila_raw.copy()
-
-        if uploaded_ila is not None and not df_ila_raw.empty:
-            st.session_state.ila_tracker_df = df_ila_raw.copy()
 
         df_status = st.session_state.master_tracker_df
         df_fuel = st.session_state.fuel_tracker_df
@@ -1362,7 +1374,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                             st.markdown("<h4 style='color: #facc15; margin-bottom: 10px;'>⚡ TT Closure & Record Removal Operations</h4>", unsafe_allow_html=True)
                             
                             close_fsr_remarks = st.text_input("📝 Enter FSR / Resolution Remarks (for Col Z archive):", placeholder="e.g. Self starter replaced & tested OK...", key=f"fsr_{selected_edit_site}")
-                            uploaded_fsr_pdf = st.file_uploader("📄 Upload FSR PDF Proof (Optional):", type=["pdf"], key=f"pdf_{selected_edit_site}")
+                            uploaded_fsr_pdf = st.file_uploader("📄 Upload FSR PDF Proof (Col AC Link):", type=["pdf"], key=f"pdf_{selected_edit_site}")
 
                             col_bt1, col_bt2 = st.columns(2)
                             with col_bt1:
@@ -1372,7 +1384,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
                                     
                                     st.session_state.master_tracker_df = clear_site_active_fault_data(selected_edit_site, st.session_state.master_tracker_df, final_close_remark, pdf_name)
                                     save_master_to_disk()
-                                    st.markdown('<div class="yellow-success-msg">TT Closed & FSR Remarks/PDF Proof Archived Successfully</div>', unsafe_allow_html=True)
+                                    st.markdown('<div class="yellow-success-msg">TT Closed & FSR Remarks/PDF Link (Col AC) Saved Successfully</div>', unsafe_allow_html=True)
                                     st.rerun()
                             with col_bt2:
                                 if st.button(f"🚨 Permanently Remove Site `{selected_edit_site}`", type="secondary", use_container_width=True):
@@ -1624,3 +1636,25 @@ elif page == "🔍 AI Site Diagnostics":
                         {prev_rem_text}
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    # --- COL AC (FSR PDF LINK) FULL INTEGRATION WITH CLICKABLE LINK OR BUTTON ---
+                    pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', site_row.get('FSR PDF Link', 'None'))).strip()
+                    if pdf_link_val and pdf_link_val.lower() not in ['', 'nan', 'none', '0', '0.0']:
+                        st.markdown(f"""
+                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.9); border: 1px solid #38bdf8; padding: 12px; border-radius: 6px;">
+                            <b style="color: #38bdf8;">📄 Col AC (FSR PDF Link / Record):</b><br>
+                            <span style="color: #ffffff; font-size: 13px;">{pdf_link_val}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Check if it's a URL (Google Drive or http/https)
+                        if pdf_link_val.startswith(('http://', 'https://', 'www.')):
+                            target_url = pdf_link_val if pdf_link_val.startswith('http') else f"https://{pdf_link_val}"
+                            st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_control_width=True if hasattr(st, "link_button") else False)
+                        else:
+                            # Render a clickable anchor tag if it contains text or link reference
+                            st.markdown(f"""
+                            <div style="margin-top: 6px;">
+                                <a href="{pdf_link_val}" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">🔗 Click here to Open FSR Document / Link</a>
+                            </div>
+                            """, unsafe_allow_html=True)
