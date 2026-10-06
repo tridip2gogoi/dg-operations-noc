@@ -608,11 +608,11 @@ elif page == "🔍 AI Site Diagnostics":
             
             sup_name = site_row.get('Supervisor Name', 'Mojib Kumar Saikia')
             trt_person = site_row.get('TRT Personnel', 'Manseng Marak')
-            contact_no = site_row.get('Contact No.', '8014173285.0')
+            contact_no = site_row.get('Contact No.', '7002843853.0')
             dep_sites = site_row.get('Dependent Site', 'nan')
             oem_vendor = site_row.get('OEM Vendor', 'Pratap')
             grid_conn = site_row.get('EB Grid Connection', 'EB + DG')
-            battery_backup = site_row.get('F.Battery Backup (Min)', '180')
+            battery_backup = site_row.get('F.Battery Backup (Min)', '120')
 
             st.markdown(f"""
             <div style="background-color: #0f172a; border: 2px solid #facc15; border-radius: 10px; padding: 18px 22px; margin-top: 10px; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.25);">
@@ -684,21 +684,21 @@ elif page == "🔍 AI Site Diagnostics":
                 with st.container(border=True):
                     sc1, sc2 = st.columns(2)
                     with sc1:
-                        st.markdown(f"**DG Make:** `{dg_make}`")
-                        st.markdown(f"**DG Rating:** `{dg_rating}`")
-                        st.markdown(f"**OEM Vendor:** `{oem_vendor}`")
-                        st.markdown(f"**EB Grid Connection:** `{grid_conn}`")
-                        st.markdown(f"**Battery Backup (Min):** `{battery_backup}`")
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>DG Make:</span> <span style='color: #ffffff; font-weight: 800;'>`{dg_make}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>DG Rating:</span> <span style='color: #ffffff; font-weight: 800;'>`{dg_rating}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>OEM Vendor:</span> <span style='color: #ffffff; font-weight: 800;'>`{oem_vendor}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>EB Grid Connection:</span> <span style='color: #ffffff; font-weight: 800;'>`{grid_conn}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Battery Backup (Min):</span> <span style='color: #ffffff; font-weight: 800;'>`{battery_backup}`</span>", unsafe_allow_html=True)
                     with sc2:
-                        st.markdown(f"**Supervisor Name:** `{sup_name}`")
-                        st.markdown(f"**TRT Personnel:** `{trt_person}`")
-                        st.markdown(f"**Contact Number:** `{contact_no}`")
-                        st.markdown(f"**Dependent Sites:** `{dep_sites}`")
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Supervisor Name:</span> <span style='color: #ffffff; font-weight: 800;'>`{sup_name}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>TRT Personnel:</span> <span style='color: #ffffff; font-weight: 800;'>`{trt_person}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Contact Number:</span> <span style='color: #ffffff; font-weight: 800;'>`{contact_no}`</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Dependent Sites:</span> <span style='color: #ffffff; font-weight: 800;'>`{dep_sites}`</span>", unsafe_allow_html=True)
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown(f"**Fuel Sensor Status:** `{fuel_tel}`")
-                    st.markdown(f"**Present Remarks:** `{site_row.get('Present Remarks', 'None')}`")
+                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Fuel Sensor Status:</span> <span style='color: #ffffff; font-weight: 800;'>`{fuel_tel}`</span>", unsafe_allow_html=True)
+                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Present Remarks:</span> <span style='color: #ffffff; font-weight: 800;'>`{site_row.get('Present Remarks', 'None')}`</span>", unsafe_allow_html=True)
 
             with diag_t3:
                 with st.container(border=True):
