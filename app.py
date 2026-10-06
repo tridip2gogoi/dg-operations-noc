@@ -36,7 +36,7 @@ st.markdown("""
     .badge-ok { background-color: #0284c7; color: #ffffff; }
     .badge-crit { background-color: #dc2626; color: #ffffff; }
 
-    /* Streamlit tabs yellow theme styling */
+    /* Streamlit tabs yellow theme styling overriding any red/dark highlights */
     div[data-testid="stTabs"] button p {
         color: #facc15 !important;
         font-weight: 800 !important;
@@ -50,6 +50,9 @@ st.markdown("""
     }
     div[data-testid="stTabs"] button[aria-selected="true"] {
         border-bottom-color: #facc15 !important;
+    }
+    div[data-testid="stTabs"] button:hover p {
+        color: #fef08a !important;
     }
 
     /* Force all markdown text, paragraphs, and spans to be bright white by default against dark background */
@@ -463,7 +466,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
         with c3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #facc15; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
+                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
             </div>
             """, unsafe_allow_html=True)
