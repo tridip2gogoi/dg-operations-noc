@@ -623,7 +623,7 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown(f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>', unsafe_allow_html=True)
                     
                     pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', '')).strip()
-                    if pdf_link_val and pdf_link_val.lower() not in ['', 'nan', 'none', '0', '0.0']:
+                    if pdf_link_val and pdf_link.lower() not in ['', 'nan', 'none', '0', '0.0']:
                         st.markdown(f"""
                         <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.9); border: 1px solid #38bdf8; padding: 12px; border-radius: 6px;">
                             <b style="color: #38bdf8;">📄 Col AC (FSR PDF Link / Google Drive):</b><br>
