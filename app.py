@@ -35,7 +35,24 @@ st.markdown("""
     .status-badge { padding: 4px 10px; border-radius: 9999px; font-weight: 800; font-size: 12px; text-transform: uppercase; display: inline-block; }
     .badge-ok { background-color: #0284c7; color: #ffffff; }
     .badge-crit { background-color: #dc2626; color: #ffffff; }
+
+    /* Streamlit tabs yellow theme styling */
+    div[data-testid="stTabs"] button p {
+        color: #facc15 !important;
+        font-weight: 800 !important;
+        font-size: 14px !important;
+    }
+    div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] {
+        background-color: #facc15 !important;
+    }
+    div[data-testid="stTabs"] button[aria-selected="true"] p {
+        color: #ffffff !important;
+    }
+    div[data-testid="stTabs"] button[aria-selected="true"] {
+        border-bottom-color: #facc15 !important;
+    }
 </style>
+
 """, unsafe_allow_html=True)
 
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
