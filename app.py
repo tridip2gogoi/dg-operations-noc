@@ -137,6 +137,10 @@ def load_google_sheet_tracker():
         # Extract any embedded http/https URL
         url_match = re.search(r'(https?://[^\s",\']+)', s)
         if url_match: return url_match.group(1).strip()
+        # Handle bare drive.google.com URLs
+        if 'drive.google.com' in s:
+            drive_match = re.search(r'(drive\.google\.com[^\s",\']+)', s)
+            if drive_match: return "https://" + drive_match.group(1).strip()
         # Filter out mobile phone numbers (10 digits starting with 6,7,8,9)
         cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
         if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
@@ -144,26 +148,38 @@ def load_google_sheet_tracker():
         return s
 
     if not df_status.empty:
-        # Column AC (Index 28) is strictly CM FSR Link
-        # Column AD (Index 29) is strictly PM FSR Link
         orig_cols = list(df_status.columns)
         
-        # Position 28 is Column AC, Position 29 is Column AD
         col_cm_found = None
         col_pm_found = None
-        
-        if len(orig_cols) > 28:
-            col_cm_found = orig_cols[28]
-        if len(orig_cols) > 29:
-            col_pm_found = orig_cols[29]
-            
-        # Fallback by exact column label if positional is not available or if labeled specifically
-        for idx, c in enumerate(orig_cols):
+
+        # Pass 1: Check by explicit name matching
+        for c in orig_cols:
             cu = str(c).strip().upper()
-            if cu in ['COL AC', 'COLUMN AC', 'AC']:
-                col_cm_found = c
-            elif cu in ['COL AD', 'COLUMN AD', 'AD']:
-                col_pm_found = c
+            if any(bad in cu for bad in ['CONTACT', 'ACCESS', 'ACTION', 'ACTIVITY']):
+                continue
+            # CM match
+            if cu in ['COL AC', 'COLUMN AC', 'AC'] or (('CM' in cu or 'CORRECTIVE' in cu) and any(kw in cu for kw in ['LINK', 'FSR', 'DRIVE', 'URL'])):
+                if not col_cm_found:
+                    col_cm_found = c
+            # PM match
+            if cu in ['COL AD', 'COLUMN AD', 'AD'] or (('PM' in cu or 'PREVENTIVE' in cu) and any(kw in cu for kw in ['LINK', 'FSR', 'DRIVE', 'URL'])):
+                if not col_pm_found:
+                    col_pm_found = c
+
+        # Pass 2: Positional standard Excel mapping (Column AC = Index 28, Column AD = Index 29)
+        if not col_cm_found and len(orig_cols) > 28:
+            col_cm_found = orig_cols[28]
+        if not col_pm_found and len(orig_cols) > 29:
+            col_pm_found = orig_cols[29]
+
+        # Prevent CM and PM pointing to the exact same column
+        if col_cm_found and col_pm_found and col_cm_found == col_pm_found:
+            if len(orig_cols) > 29:
+                col_cm_found = orig_cols[28]
+                col_pm_found = orig_cols[29]
+            else:
+                col_pm_found = None
 
         df_status['Google Drive Link CM'] = df_status[col_cm_found].apply(extract_clean_fsr_link) if col_cm_found else ""
         df_status['Google Drive Link PM'] = df_status[col_pm_found].apply(extract_clean_fsr_link) if col_pm_found else ""
@@ -813,12 +829,11 @@ elif page == "🔍 AI Site Diagnostics":
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
                         st.markdown("##### 📄 Google Drive Link CM (Col AC)")
-                        # Only show clickable button if an actual URL exists
+                        # Check if a valid URL is present
                         if cm_link and (cm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in cm_link):
-                            cm_url = cm_link if cm_link.startswith('http') else f"https://{cm_link}"
+                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else f"https://{cm_link}"
                             st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
                         else:
-                            # No link exists: absolutely NO clickable option/button
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No CM FSR Link Available (Col AC)
@@ -827,15 +842,13 @@ elif page == "🔍 AI Site Diagnostics":
 
                     with f_col2:
                         st.markdown("##### 📄 Google Drive Link PM (Col AD)")
-                        # Only show clickable button if an actual URL exists
+                        # Check if a valid URL is present
                         if pm_link and (pm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in pm_link):
-                            pm_url = pm_link if pm_link.startswith('http') else f"https://{pm_link}"
+                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else f"https://{pm_link}"
                             st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #10b981; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
                         else:
-                            # No link exists: absolutely NO clickable option/button
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)
-                    
+                            """, unsafe_allow_html=True)      
