@@ -32,6 +32,9 @@ st.markdown("""
     .previous-remarks-box { background-color: rgba(15, 23, 42, 0.85) !important; border: 1px solid #facc15 !important; border-radius: 8px !important; padding: 10px 14px !important; color: #ffffff !important; font-size: 14px !important; font-weight: 600 !important; }
     .custom-header-banner { background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 8px !important; padding: 14px 20px !important; margin-top: 6px !important; margin-bottom: 8px !important; }
     .yellow-success-msg { background-color: #1e293b; color: #facc15 !important; border: 1px solid #facc15; padding: 10px 15px; border-radius: 6px; font-weight: 800; margin-top: 10px; margin-bottom: 10px; }
+    .status-badge { padding: 4px 10px; border-radius: 9999px; font-weight: 800; font-size: 12px; text-transform: uppercase; display: inline-block; }
+    .badge-ok { background-color: #0284c7; color: #ffffff; }
+    .badge-crit { background-color: #dc2626; color: #ffffff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -69,11 +72,6 @@ def verify_login(username, password):
         if hashlib.sha256(password.encode()).hexdigest() == USER_CREDENTIALS[username]["password_hash"]:
             return USER_CREDENTIALS[username]
     return None
-
-def is_valid_source(src):
-    if hasattr(src, 'read'): return True
-    if isinstance(src, str) and os.path.exists(src): return True
-    return False
 
 @st.cache_data(ttl=60)
 def load_google_sheet_tracker():
@@ -200,11 +198,39 @@ if page == "📊 Executive Control Center":
         ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
         man = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
         bd = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg breakdown']) if 'DG Automation Status' in df_status.columns else 0
-        k1, k2, k3, k4 = st.columns(4)
+        ber = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
+        ovr = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
+
+        k1, k2, k3, k4, k5, k6 = st.columns(6)
         k1.metric("Total Sites", f"{tot:,}")
         k2.metric("Automation Rate", f"{round((ok/tot)*100, 1)}%" if tot else "0%")
         k3.metric("Manual Mode", man)
         k4.metric("DG Breakdown", bd)
+        k5.metric("DG BER", ber)
+        k6.metric("DG Overload", ovr)
+
+        st.markdown("---")
+        if 'State' in df_status.columns:
+            state_options = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
+            selected_state = st.selectbox("🌐 Filter Circle by State:", state_options)
+            state_filtered_df = df_status if selected_state == "All States" else df_status[df_status['State'].astype(str).str.strip() == selected_state]
+            
+            c1, c2 = st.columns([3, 2])
+            with c1:
+                with st.container(border=True):
+                    st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>JC / State Wise Automation Health</h4>", unsafe_allow_html=True)
+                    if "JC" in state_filtered_df.columns and "DG Automation Status" in state_filtered_df.columns:
+                        fig_bar = px.histogram(state_filtered_df, x="JC", color="DG Automation Status", barmode="group", color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"])
+                        fig_bar.update_layout(height=350, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="#ffffff", paper_bgcolor="#ffffff")
+                        st.plotly_chart(fig_bar, use_container_width=True)
+            with c2:
+                with st.container(border=True):
+                    st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>DG Make Fleet Allocation</h4>", unsafe_allow_html=True)
+                    if "DG Make" in state_filtered_df.columns:
+                        valid_makes = state_filtered_df[state_filtered_df['DG Make'].notna() & (state_filtered_df['DG Make'].astype(str).str.strip() != '')]
+                        fig_donut = px.pie(valid_makes, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
+                        fig_donut.update_layout(height=350, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="#ffffff", paper_bgcolor="#ffffff")
+                        st.plotly_chart(fig_donut, use_container_width=True)
 
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
@@ -259,31 +285,3 @@ elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     edited_grid = st.data_editor(df_status, use_container_width=True, height=500, disabled=is_viewer)
     if not is_viewer and st.button("Save Grid Changes", type="primary"):
-        st.session_state.master_tracker_df = edited_grid
-        save_master_to_disk()
-        st.success("Saved successfully!")
-        st.rerun()
-
-elif page == "🔍 AI Site Diagnostics":
-    st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
-    sq = st.text_input("Search Network Site (SAIP ID):", placeholder="Enter SAIP ID (e.g. 9011)...").strip().upper()
-    if sq and not df_status.empty and 'SAIP ID' in df_status.columns:
-        m = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)]
-        if not m.empty:
-            r = m.iloc[0]
-            st.markdown(f"### Site ID: {r.get('SAIP ID')} | Status: {r.get('DG Automation Status')}")
-            diag_t1, diag_t2 = st.tabs(["Technical Specs", "Resolution History & FSR Google Drive Link"])
-            with diag_t2:
-                st.markdown(f"**Previous Remarks (Col Z):** {r.get('Previous Remarks', 'None')}")
-                pdf_link = str(r.get('Col AC (FSR PDF link)', '')).strip()
-                if pdf_link and pdf_link.lower() not in ['', 'nan', 'none', '0', '0.0']:
-                    st.markdown(f"""
-                    <div style="background: rgba(30,41,59,0.9); border: 1px solid #38bdf8; padding: 14px; border-radius: 8px;">
-                        <b style="color: #38bdf8;">Col AC (FSR PDF Link / Google Drive):</b><br>
-                        <span style="color: #ffffff; word-break: break-all;">{pdf_link}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if pdf_link.startswith(('http://', 'https://', 'www.')):
-                        t_url = pdf_link if pdf_link.startswith('http') else f"https://{pdf_link}"
-                        st.link_button("Open FSR PDF / Google Drive Link", t_url, use_container_width=True)
-        else: st.error("Site not found.")
