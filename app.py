@@ -787,14 +787,17 @@ elif page == "🔍 AI Site Diagnostics":
                     with f_col1:
                         st.markdown("##### 📄 Google Drive Link CM (Col AC)")
                         if cm_link and cm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
-                            st.markdown(f"<span style='color: #ffffff; font-size: 13px; font-weight: 700;'>{cm_link}</span>", unsafe_allow_html=True)
-                            if cm_link.startswith(('http://', 'https://', 'www.')):
-                                cm_url = cm_link if cm_link.startswith('http') else f"https://{cm_link}"
-                                st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 10px 16px; border-radius: 6px; font-weight: 700; text-decoration: none; margin-top: 8px;">🌐 Open CM FSR Link (New Tab)</a>', unsafe_allow_html=True)
-                            else:
-                                st.markdown(f'<div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; padding: 10px; border-radius: 6px; margin-bottom: 8px; color: #ffffff; font-size: 13px;"><b>Docket/FSR ID:</b> <code style="color: #facc15;">{cm_link}</code></div>', unsafe_allow_html=True)
-                                search_url = f"https://drive.google.com/drive/u/0/search?q={selected_site}"
-                                st.markdown(f'<a href="{search_url}" target="_blank" style="display: block; text-align: center; background-color: #0284c7; color: #ffffff; padding: 10px 16px; border-radius: 6px; font-weight: 700; text-decoration: none; margin-top: 8px;">🔍 Search Google Drive (Site ID)</a>', unsafe_allow_html=True)
+                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}")
+                            st.caption("📋 Click to copy link directly:")
+                            st.code(cm_url, language=None)
+                            
+                            copy_html_cm = f"""
+                            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                                <button onclick="navigator.clipboard.writeText('{cm_url}'); this.innerText='✓ Link Copied!'; setTimeout(() => this.innerText='📋 Automatic Copy Link', 2000);" style="flex: 1; background: #0284c7; color: #ffffff; border: none; padding: 10px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;">📋 Automatic Copy Link</button>
+                                <a href="{cm_url}" target="_blank" style="flex: 1; text-align: center; background: #2563eb; color: #ffffff; padding: 10px 14px; border-radius: 6px; font-weight: 700; text-decoration: none;">🌐 Open CM Link</a>
+                            </div>
+                            """
+                            st.markdown(copy_html_cm, unsafe_allow_html=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
@@ -805,14 +808,17 @@ elif page == "🔍 AI Site Diagnostics":
                     with f_col2:
                         st.markdown("##### 📄 Google Drive Link PM (Col AD)")
                         if pm_link and pm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
-                            st.markdown(f"<span style='color: #ffffff; font-size: 13px; font-weight: 700;'>{pm_link}</span>", unsafe_allow_html=True)
-                            if pm_link.startswith(('http://', 'https://', 'www.')):
-                                pm_url = pm_link if pm_link.startswith('http') else f"https://{pm_link}"
-                                st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 10px 16px; border-radius: 6px; font-weight: 700; text-decoration: none; margin-top: 8px;">🌐 Open PM FSR Link (New Tab)</a>', unsafe_allow_html=True)
-                            else:
-                                st.markdown(f'<div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #38bdf8; padding: 10px; border-radius: 6px; margin-bottom: 8px; color: #ffffff; font-size: 13px;"><b>Docket/FSR ID:</b> <code style="color: #facc15;">{pm_link}</code></div>', unsafe_allow_html=True)
-                                search_url_pm = f"https://drive.google.com/drive/u/0/search?q={selected_site}"
-                                st.markdown(f'<a href="{search_url_pm}" target="_blank" style="display: block; text-align: center; background-color: #0284c7; color: #ffffff; padding: 10px 16px; border-radius: 6px; font-weight: 700; text-decoration: none; margin-top: 8px;">🔍 Search Google Drive (Site ID)</a>', unsafe_allow_html=True)
+                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}")
+                            st.caption("📋 Click to copy link directly:")
+                            st.code(pm_url, language=None)
+                            
+                            copy_html_pm = f"""
+                            <div style="display: flex; gap: 8px; margin-top: 6px;">
+                                <button onclick="navigator.clipboard.writeText('{pm_url}'); this.innerText='✓ Link Copied!'; setTimeout(() => this.innerText='📋 Automatic Copy Link', 2000);" style="flex: 1; background: #0284c7; color: #ffffff; border: none; padding: 10px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;">📋 Automatic Copy Link</button>
+                                <a href="{pm_url}" target="_blank" style="flex: 1; text-align: center; background: #2563eb; color: #ffffff; padding: 10px 14px; border-radius: 6px; font-weight: 700; text-decoration: none;">🌐 Open PM Link</a>
+                            </div>
+                            """
+                            st.markdown(copy_html_pm, unsafe_allow_html=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
