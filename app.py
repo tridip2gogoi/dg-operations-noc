@@ -702,8 +702,8 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t3:
                 with st.container(border=True):
-                    st.markdown(f"**Previous Docket No (Col AA):** `{site_row.get('Previous Docket No.', 'None')}`")
-                    st.markdown(f"**Previous Remarks (Col Z):**")
+                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Docket No (Col AA):</span> <span style='color: #ffffff; font-weight: 800;'>`{site_row.get('Previous Docket No.', 'None')}`</span>", unsafe_allow_html=True)
+                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Remarks (Col Z):</span>", unsafe_allow_html=True)
                     st.markdown(f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>', unsafe_allow_html=True)
                     
                     pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', '')).strip()
