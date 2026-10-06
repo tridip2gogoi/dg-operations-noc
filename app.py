@@ -382,11 +382,36 @@ elif page == "⛽ Fuel Sensor Telemetry":
         p_make = auto_df_fuel_filtered['DG Make'].mode()[0] if 'DG Make' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['DG Make'].mode().empty else "N/A"
         p_rat = auto_df_fuel_filtered['DG Rating'].mode()[0] if 'DG Rating' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['DG Rating'].mode().empty else "N/A"
 
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Active Faulty Sensors (Master)", tot_faults)
-        c2.metric("Most Affected JC", aff_jc)
-        c3.metric("Primary Fault Make", p_make)
-        c4.metric("Primary Fault Rating", p_rat)
+        # --- EXACT METRIC CARDS LAYOUT AS REQUESTED ---
+        fc1, fc2, fc3, fc4 = st.columns(4)
+        with fc1:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Active Faulty Sensors (Master)</span><br>
+                <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_faults}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with fc2:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Most Affected JC</span><br>
+                <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aff_jc}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with fc3:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
+                <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with fc4:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Rating</span><br>
+                <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_rat}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("---")
         with st.container(border=True):
