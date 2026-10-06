@@ -456,7 +456,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
                 st.dataframe(pd.crosstab(auto_df_fuel_filtered['DG Make'], auto_df_fuel_filtered['DG Rating'], margins=True, margins_name="Total"), use_container_width=True)
 
         with st.container(border=True):
-            st.markdown("<h4 style='color: #0f172a;'>Active Fuel Sensor Fault Site Registry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color: #0f172a;'>Active Fuel Sensor Fault Site Registry</h4>", unsafe_agent := auto_df_fuel_filtered)
             st.dataframe(auto_df_fuel_filtered, use_container_width=True)
     else:
         st.info("No active fuel sensor faults detected in Master Tracker.")
@@ -493,14 +493,53 @@ elif page == "⏳ Daily Fault Summary":
         p_dg_battery = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
         p_gcu = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'gcu']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
         p_oem = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'oem spare parts']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
+        tot_master_base = len(df_status)
 
+        # --- EXACT METRIC CARDS FOR DAILY FAULT SUMMARY AS REQUESTED IN IMAGE ---
         m1, m2, m3, m4, m5, m6 = st.columns(6)
-        m1.metric("Filtered Faults", len(filtered_date_df), f"Date: {selected_date_filter}")
-        m2.metric("Fuel Sensor Faults", p_fuel_sensor)
-        m3.metric("DG Battery", p_dg_battery)
-        m4.metric("GCU Faults", p_gcu)
-        m5.metric("OEM Spare Parts", p_oem)
-        m6.metric("Total Master Base", len(df_status))
+        with m1:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Filtered Faults</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{len(filtered_date_df):,}</span><br>
+                <span style="color: #94a3b8; font-size: 11px;">Date: {selected_date_filter}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with m2:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Fuel Sensor Faults</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_fuel_sensor:,}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with m3:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">DG Battery</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_battery:,}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with m4:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">GCU Faults</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_gcu:,}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with m5:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">OEM Spare Parts</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with m6:
+            st.markdown(f"""
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Master Base</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("---")
         with st.container(border=True):
