@@ -605,8 +605,15 @@ elif page == "🔍 AI Site Diagnostics":
             active_bucket = site_row.get('Bucket', 'IPMS')
             aging_val = site_row.get("Aging (Day's)", 62)
             fuel_tel = site_row.get('Fuel Sensor Status', 'nan')
+            
+            sup_name = site_row.get('Supervisor Name', 'Mojib Kumar Saikia')
+            trt_person = site_row.get('TRT Personnel', 'Manseng Marak')
+            contact_no = site_row.get('Contact No.', '8014173285.0')
+            dep_sites = site_row.get('Dependent Site', 'nan')
+            oem_vendor = site_row.get('OEM Vendor', 'Pratap')
+            grid_conn = site_row.get('EB Grid Connection', 'EB + DG')
+            battery_backup = site_row.get('F.Battery Backup (Min)', '180')
 
-            # --- EXACT BANNER STYLE AS SHOWN IN IMAGE_75D868.PNG ---
             st.markdown(f"""
             <div style="background-color: #0f172a; border: 2px solid #facc15; border-radius: 10px; padding: 18px 22px; margin-top: 10px; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.25);">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -626,7 +633,6 @@ elif page == "🔍 AI Site Diagnostics":
             </div>
             """, unsafe_allow_html=True)
 
-            # --- 4 METRIC CARDS EXACTLY AS SHOWN IN IMAGE_75D868.PNG ---
             mc1, mc2, mc3, mc4 = st.columns(4)
             with mc1:
                 st.markdown(f"""
@@ -661,7 +667,6 @@ elif page == "🔍 AI Site Diagnostics":
                 </div>
                 """, unsafe_allow_html=True)
 
-            # --- AI DIAGNOSTIC INFERENCE BOX ---
             st.markdown(f"""
             <div style="background: rgba(240, 246, 255, 0.98); border: 1px solid #38bdf8; padding: 12px 16px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #0f172a; font-size: 13px; font-weight: 600;">
                 🧠 <b>AI Diagnostic Inference:</b> ⚠️ **Attention Required:** Manual mode active. Problem classified under `{active_bucket}`.<br>
@@ -671,15 +676,24 @@ elif page == "🔍 AI Site Diagnostics":
 
             diag_t1, diag_t2, diag_t3 = st.tabs([
                 "📋 Technical Asset Specifications",
-                "⚡ Master Tracker Live Telemetry",
-                "⏳ Resolution History & FSR Google Drive Link"
+                "⚡ Master Tracker (Live) Telemetry",
+                "⏳ Resolution History & Previous Dockets (Col Y to AB)"
             ])
 
             with diag_t1:
                 with st.container(border=True):
-                    st.markdown(f"**DG Make:** `{dg_make}`")
-                    st.markdown(f"**DG Rating:** `{dg_rating}`")
-                    st.markdown(f"**OEM Vendor:** `{site_row.get('OEM Vendor', 'N/A')}`")
+                    sc1, sc2 = st.columns(2)
+                    with sc1:
+                        st.markdown(f"**DG Make:** `{dg_make}`")
+                        st.markdown(f"**DG Rating:** `{dg_rating}`")
+                        st.markdown(f"**OEM Vendor:** `{oem_vendor}`")
+                        st.markdown(f"**EB Grid Connection:** `{grid_conn}`")
+                        st.markdown(f"**Battery Backup (Min):** `{battery_backup}`")
+                    with sc2:
+                        st.markdown(f"**Supervisor Name:** `{sup_name}`")
+                        st.markdown(f"**TRT Personnel:** `{trt_person}`")
+                        st.markdown(f"**Contact Number:** `{contact_no}`")
+                        st.markdown(f"**Dependent Sites:** `{dep_sites}`")
 
             with diag_t2:
                 with st.container(border=True):
