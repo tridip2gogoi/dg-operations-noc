@@ -828,16 +828,7 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown("##### 📄 Google Drive Link CM (Col AC)")
                         if cm_link and cm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
                             cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}")
-                            st.caption("📋 Click to copy link directly:")
-                            st.code(cm_url, language=None)
-                            
-                            copy_html_cm = f"""
-                            <div style="display: flex; gap: 8px; margin-top: 6px;">
-                                <button onclick="navigator.clipboard.writeText('{cm_url}'); this.innerText='✓ Link Copied!'; setTimeout(() => this.innerText='📋 Automatic Copy Link', 2000);" style="flex: 1; background: #0284c7; color: #ffffff; border: none; padding: 10px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;">📋 Automatic Copy Link</button>
-                                <a href="{cm_url}" target="_blank" style="flex: 1; text-align: center; background: #2563eb; color: #ffffff; padding: 10px 14px; border-radius: 6px; font-weight: 700; text-decoration: none;">🌐 Open CM Link</a>
-                            </div>
-                            """
-                            st.markdown(copy_html_cm, unsafe_allow_html=True)
+                            st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
@@ -849,16 +840,7 @@ elif page == "🔍 AI Site Diagnostics":
                         st.markdown("##### 📄 Google Drive Link PM (Col AD)")
                         if pm_link and pm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
                             pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}")
-                            st.caption("📋 Click to copy link directly:")
-                            st.code(pm_url, language=None)
-                            
-                            copy_html_pm = f"""
-                            <div style="display: flex; gap: 8px; margin-top: 6px;">
-                                <button onclick="navigator.clipboard.writeText('{pm_url}'); this.innerText='✓ Link Copied!'; setTimeout(() => this.innerText='📋 Automatic Copy Link', 2000);" style="flex: 1; background: #0284c7; color: #ffffff; border: none; padding: 10px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;">📋 Automatic Copy Link</button>
-                                <a href="{pm_url}" target="_blank" style="flex: 1; text-align: center; background: #2563eb; color: #ffffff; padding: 10px 14px; border-radius: 6px; font-weight: 700; text-decoration: none;">🌐 Open PM Link</a>
-                            </div>
-                            """
-                            st.markdown(copy_html_pm, unsafe_allow_html=True)
+                            st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
