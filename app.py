@@ -114,94 +114,21 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
     except Exception as e:
-        source_status = "Local File (Backup)"
-        err_msg = str(e)
-        if os.path.exists(DEFAULT_EXCEL):
-            try:
-                xls_local = pd.ExcelFile(DEFAULT_EXCEL)
-                s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
-                df_status = pd.read_excel(xls_local, sheet_name=s_name)
-                for col in df_status.columns: df_status[col] = df_status[col].astype(object)
-            except Exception as e2:
-                err_msg += " | " + str(e2)
-
-    import re
-    def extract_clean_fsr_link(val):
-        if pd.isna(val) or val is None: return ""
-        s = str(val).strip()
-        if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', 'null'] or '00:00:00' in s: return ""
-        # Handle Google Sheets =HYPERLINK("url", "text")
-        if 'HYPERLINK' in s.upper():
-            m = re.search(r'HYPERLINK\s*\(\s*["\']([^"\']+)["\']', s, re.I)
-            if m: return m.group(1).strip()
-        # Extract any embedded http/https URL
-        url_match = re.search(r'(https?://[^\s",\']+)', s)
-        if url_match: return url_match.group(1).strip()
-        # Handle bare drive.google.com URLs
-        if 'drive.google.com' in s:
-            drive_match = re.search(r'(drive\.google\.com[^\s",\']+)', s)
-            if drive_match: return "https://" + drive_match.group(1).strip()
-        # Filter out mobile phone numbers (10 digits starting with 6,7,8,9)
-        cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
-        if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
-            return ""
-        return s
-
-    if not df_status.empty:
-        cm_links = []
-        pm_links = []
-        
-        for idx, row in df_status.iterrows():
-            c_link = ""
-            p_link = ""
-            
-            if len(df_status.columns) > 28:
-                val_ac = row.iloc[28]
-                cleaned_ac = extract_clean_fsr_link(val_ac)
-                if cleaned_ac:
-                    c_link = cleaned_ac
-                    
-            if len(df_status.columns) > 29:
-                val_ad = row.iloc[29]
-                cleaned_ad = extract_clean_fsr_link(val_ad)
-                if cleaned_ad:
-                    p_link = cleaned_ad
-
-            for col_name in df_status.columns:
-                cu = str(col_name).strip().upper()
-                if any(bad in cu for bad in ['CONTACT', 'ACCESS', 'ACTION', 'ACTIVITY']):
-                    continue
-                cell_val = row[col_name]
-                cleaned_val = extract_clean_fsr_link(cell_val)
-                if cleaned_val:
-                    if ('CM' in cu or 'CORRECTIVE' in cu or 'COL AC' in cu or 'AC' == cu) and not c_link and 'PM' not in cu:
-                        c_link = cleaned_val
-                    elif ('PM' in cu or 'PREVENTIVE' in cu or 'COL AD' in cu or 'AD' == cu) and not p_link and 'CM' not in cu:
-                        p_link = cleaned_val
-
-            cm_links.append(c_link)
-            pm_links.append(p_link)
-            
-        df_status['Google Drive Link CM'] = cm_links
-        df_status['Google Drive Link PM'] = pm_links
-
-        if 'SAIP ID' in df_status.columns:
-            df_status = df_status[df_status['SAIP ID'].notna()]
-            df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
-            df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
-        if 'DG Make' in df_status.columns:
-            df_status = df_status[df_status['DG Make'].notna()]
-            df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
-        if 'JC' in df_status.columns: df_status['JC'] = df_status['JC'].astype(str).str.strip()
-        if 'State' in df_status.columns: df_status['State'] = df_status['State'].astype(str).str.strip()
-        if 'Bucket' in df_status.columns:
-            df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
-            df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
-            
-    st.session_state['data_source_mode'] = source_status
-    if err_msg:
-        st.session_state['data_source_err'] = err_msg
-    return df_status
+        try:
+            csv_url = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
+            df_status = pd.read_csv(csv_url)
+            for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+        except Exception as e_csv:
+            source_status = "Local File (Backup)"
+            err_msg = str(e) + " | " + str(e_csv)
+            if os.path.exists(DEFAULT_EXCEL):
+                try:
+                    xls_local = pd.ExcelFile(DEFAULT_EXCEL)
+                    s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
+                    df_status = pd.read_excel(xls_local, sheet_name=s_name)
+                    for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+                except Exception as e2:
+                    err_msg += " | " + str(e2)
 
 def load_ila_tracker():
     df_ila = pd.DataFrame()
@@ -852,4 +779,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)    
+                            """, unsafe_allow_html=True)     
