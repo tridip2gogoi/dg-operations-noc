@@ -51,7 +51,17 @@ st.markdown("""
     div[data-testid="stTabs"] button[aria-selected="true"] {
         border-bottom-color: #facc15 !important;
     }
+
+    /* Force all markdown text, paragraphs, and spans to be bright white by default against dark background */
+    .stApp p, .stApp span, .stApp div, .stApp label, .stMarkdownContainer p, .element-container p {
+        color: #ffffff !important;
+    }
+    /* Keep headings and highlights golden yellow */
+    h1, h2, h3, h4, h5, h6, .stMarkdownContainer h1, .stMarkdownContainer h2, .stMarkdownContainer h3 {
+        color: #facc15 !important;
+    }
 </style>
+
 
 """, unsafe_allow_html=True)
 
