@@ -112,9 +112,25 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         
-        # Ensure CM and PM link columns exist
-        if 'Google Drive Link CM' not in df_status.columns: df_status['Google Drive Link CM'] = ""
-        if 'Google Drive Link PM' not in df_status.columns: df_status['Google Drive Link PM'] = ""
+        # Map exact columns for CM (Col AC) and PM (Col AD)
+        ac_col = None
+        ad_col = None
+        for idx, col in enumerate(df_status.columns):
+            c_str = str(col).strip().upper()
+            if idx == 28 or 'AC' in c_str:
+                ac_col = col
+            if idx == 29 or 'AD' in c_str:
+                ad_col = col
+                
+        if ac_col:
+            df_status['Google Drive Link CM'] = df_status[ac_col].apply(lambda x: "" if pd.isna(x) else str(x).strip())
+        else:
+            if 'Google Drive Link CM' not in df_status.columns: df_status['Google Drive Link CM'] = ""
+            
+        if ad_col:
+            df_status['Google Drive Link PM'] = df_status[ad_col].apply(lambda x: "" if pd.isna(x) else str(x).strip())
+        else:
+            if 'Google Drive Link PM' not in df_status.columns: df_status['Google Drive Link PM'] = ""
 
         if 'SAIP ID' in df_status.columns:
             df_status = df_status[df_status['SAIP ID'].notna()]
