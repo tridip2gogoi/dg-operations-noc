@@ -153,4 +153,281 @@ st.markdown("""
         background: linear-gradient(135deg, #f59e0b, #d97706) !important;
         color: #ffffff !important;
         border: 1px solid #fef3c7 !important;
-        padding: 12px
+        padding: 12px 16px !important;
+        border-radius: 8px !important;
+        font-weight: 800 !important;
+        font-size: 16px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+    .yellow-alert-box * {
+        color: #ffffff !important;
+    }
+
+    .yellow-success-msg {
+        background-color: #1e293b;
+        color: #facc15 !important;
+        border: 1px solid #facc15;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-weight: 800;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-weight: 800;
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        display: inline-block;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .badge-ok { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #38bdf8; }
+    .badge-warn { background-color: #ca8a04 !important; color: #ffffff !important; border: 1px solid #facc15; }
+    .badge-crit { background-color: #dc2626 !important; color: #ffffff !important; border: 1px solid #f87171; }
+</style>
+""", unsafe_allow_html=True)
+
+DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
+DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
+
+DEFAULT_ILA = None
+for f in os.listdir('.'):
+    if "ILA" in f.upper() and f.endswith(('.xlsx', '.xls')) and not f.startswith('~$'):
+        DEFAULT_ILA = f
+        break
+
+BUCKET_LIST = [
+    "GCU", "Fuel Sensor", "DG Breakdown", "DG battery", "IPMS",
+    "OEM Spare parts", "New DG Req", "AMF Req", "Owner issue",
+    "Access issue", "Theft case", "Jio Support", "Other Issue"
+]
+
+STATUS_CHOICES = [
+    "Automation Ok", "Manual Mode", "DG Breakdown",
+    "DG BER", "DG Overload", "Access issue"
+]
+
+FUEL_STATUS_CHOICES = ["Ok", "Fuel Sensor faulty"]
+
+def clean_date_str(val):
+    if pd.isna(val) or val is None:
+        return ""
+    val_str = str(val).strip()
+    if val_str.lower() in ['nat', 'nan', 'none', '', '0']:
+        return ""
+    try:
+        dt = pd.to_datetime(val)
+        return dt.strftime('%Y-%m-%d')
+    except Exception:
+        return val_str.split(' ')[0] if ' ' in val_str else val_str
+
+USER_CREDENTIALS = {
+    "tridip2.gogoi": {
+        "password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(),
+        "role": "Super Admin / Operations Head",
+        "name": "Tridip Gogoi (Operations Head)",
+        "access": ["all"]
+    },
+    "ptpl": {
+        "password_hash": hashlib.sha256("Rintu@2026".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "PTPL Operations Desk",
+        "access": ["read_only"]
+    },
+    "sukanta.biswas": {
+        "password_hash": hashlib.sha256("Biswas@2027".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "Sukanta Biswas",
+        "access": ["read_only"]
+    },
+    "state": {
+        "password_hash": hashlib.sha256("NIPL@2026".encode()).hexdigest(),
+        "role": "NOC Viewer / Executive",
+        "name": "State Operations Desk",
+        "access": ["read_only"]
+    }
+}
+
+def verify_login(username, password):
+    if username in USER_CREDENTIALS:
+        hashed_pwd = hashlib.sha256(password.encode()).hexdigest()
+        if hashed_pwd == USER_CREDENTIALS[username]["password_hash"]:
+            return USER_CREDENTIALS[username]
+    return None
+
+def is_valid_source(src):
+    if hasattr(src, 'read'): return True
+    if isinstance(src, str) and os.path.exists(src): return True
+    return False
+
+def load_all_trackers(dg_file, cm_file, ila_file=None):
+    df_status = pd.DataFrame()
+    df_fuel = pd.DataFrame()
+    df_open_cm = pd.DataFrame()
+    df_ila = pd.DataFrame()
+    df_cr_data = pd.DataFrame()
+    
+    if is_valid_source(dg_file):
+        try:
+            xls_dg = pd.ExcelFile(dg_file)
+            sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
+            df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
+            
+            for col in df_status.columns:
+                df_status[col] = df_status[col].astype(object)
+            
+            ac_col_name = None
+            for idx, col in enumerate(df_status.columns):
+                c_str = str(col).strip().upper()
+                if 'AC' in c_str or 'PDF' in c_str or idx == 28:
+                    ac_col_name = col
+                    break
+            
+            if ac_col_name:
+                df_status['Col AC (FSR PDF link)'] = df_status[ac_col_name].apply(lambda x: "" if pd.isna(x) else str(x).strip())
+            else:
+                if 'Col AC (FSR PDF link)' not in df_status.columns:
+                    df_status['Col AC (FSR PDF link)'] = ""
+
+            if 'SAIP ID' in df_status.columns:
+                df_status = df_status[df_status['SAIP ID'].notna()]
+                df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
+                df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
+            
+            if 'DG Make' in df_status.columns:
+                df_status = df_status[df_status['DG Make'].notna()]
+                df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
+                df_status = df_status[~df_status['DG Make'].str.lower().isin(['', 'nan', 'none', 'null', 'no dg', 'non dg'])]
+            
+            if 'JC' in df_status.columns:
+                df_status['JC'] = df_status['JC'].astype(str).str.strip()
+            if 'State' in df_status.columns:
+                df_status['State'] = df_status['State'].astype(str).str.strip()
+            if 'Bucket' in df_status.columns:
+                df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
+                df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
+            if 'DG Automation Status' in df_status.columns:
+                df_status['DG Automation Status'] = df_status['DG Automation Status'].astype(str).str.strip()
+            
+            for d_col in ['Open Date', 'Present Docket raise Date', 'Previous Docket raise Date', 'Last Closed date', 'Last Closed date.1']:
+                if d_col in df_status.columns:
+                    df_status[d_col] = df_status[d_col].apply(clean_date_str).astype(str)
+            
+            aging_col_target = None
+            for col in df_status.columns:
+                if 'aging' in col.lower() or 'ageing' in col.lower():
+                    aging_col_target = col
+                    break
+            
+            if aging_col_target:
+                df_status['Aging_Num'] = pd.to_numeric(df_status[aging_col_target], errors='coerce').fillna(0)
+            else:
+                df_status['Aging_Num'] = 0
+        except Exception as e:
+            pass
+
+    if is_valid_source(cm_file):
+        try:
+            xls_cm = pd.ExcelFile(cm_file)
+            target_cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
+            df_open_cm = pd.read_excel(xls_cm, sheet_name=target_cm_sheet)
+        except Exception as e:
+            pass
+
+    if ila_file and is_valid_source(ila_file):
+        try:
+            xls_ila = pd.ExcelFile(ila_file)
+            ila_sheet_target = "IPMS Site Automation Status" if "IPMS Site Automation Status" in xls_ila.sheet_names else xls_ila.sheet_names[0]
+            df_ila = pd.read_excel(xls_ila, sheet_name=ila_sheet_target)
+            for col in df_ila.columns:
+                df_ila[col] = df_ila[col].astype(object)
+            if 'Sap ID' in df_ila.columns:
+                df_ila = df_ila[df_ila['Sap ID'].notna()]
+                df_ila['Sap ID'] = df_ila['Sap ID'].astype(str).str.strip()
+        except Exception as e:
+            pass
+
+    return df_status, df_fuel, df_open_cm, df_ila, df_cr_data
+
+def save_master_to_disk():
+    try:
+        target_file = DEFAULT_EXCEL
+        if not os.path.exists(target_file):
+            local_files = [f for f in os.listdir('.') if f.endswith(('.xlsx', '.xls')) and not f.startswith('~$')]
+            if local_files:
+                target_file = local_files[0]
+        
+        if "master_tracker_df" in st.session_state and not st.session_state.master_tracker_df.empty:
+            with pd.ExcelWriter(target_file, engine='openpyxl') as writer:
+                st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
+                if "fuel_tracker_df" in st.session_state and not st.session_state.fuel_tracker_df.empty:
+                    st.session_state.fuel_tracker_df.to_excel(writer, sheet_name="Fuel Sensor faulty", index=False)
+                if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
+                    st.session_state.ila_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
+    except Exception as ex:
+        pass
+
+def ai_capture_o_to_ab(site_id, df_open_cm, df_status, df_cr_data=None):
+    clean_id = str(site_id).strip().upper() if site_id else ""
+    res = {
+        "JC": "", "Col_O_Fuel_Sensor_Status": "Ok", "Col_P_Docket_no": "",
+        "Col_Q_Open_Date": "", "Col_S_DG_Automation_Status": "Automation Ok",
+        "Col_T_Present_Remarks": "", "Col_U_Bucket": "", "Col_V_Present_Docket_No": "",
+        "Col_W_Present_Docket_raise_Date": "", "Col_X_Aging_Days": 0, "Col_Y_Timeline": "",
+        "Col_Z_Previous_Remarks": "", "Col_AA_Previous_Docket_No": "", "Col_AB_Previous_Docket_raise_Date": "",
+        "Col_AC_FSR_PDF_Link": "", "source": "None"
+    }
+    if not clean_id:
+        return res
+
+    if not df_status.empty and 'SAIP ID' in df_status.columns:
+        dg_match = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == clean_id]
+        if not dg_match.empty:
+            prev_row = dg_match.iloc[0]
+            res["JC"] = str(prev_row.get("JC", "")).strip()
+            res["Col_O_Fuel_Sensor_Status"] = str(prev_row.get("Fuel Sensor Status", "Ok")).strip()
+            res["Col_P_Docket_no"] = str(prev_row.get("Docket no.", "")).strip()
+            res["Col_Q_Open_Date"] = clean_date_str(prev_row.get("Open Date", ""))
+            res["Col_S_DG_Automation_Status"] = str(prev_row.get("DG Automation Status", "Manual Mode")).strip()
+            res["Col_T_Present_Remarks"] = str(prev_row.get("Present Remarks", "")).strip()
+            res["Col_U_Bucket"] = str(prev_row.get("Bucket", "")).strip()
+            res["Col_V_Present_Docket_No"] = str(prev_row.get("Present Docket No.", "")).strip()
+            res["Col_W_Present_Docket_raise_Date"] = clean_date_str(prev_row.get("Present Docket raise Date", ""))
+            res["Col_X_Aging_Days"] = prev_row.get("Aging (Day's)", 0)
+            res["Col_Y_Timeline"] = str(prev_row.get("Timeline", "")).strip()
+            res["Col_Z_Previous_Remarks"] = str(prev_row.get("Previous Remarks", "")).strip()
+            res["Col_AA_Previous_Docket_No"] = str(prev_row.get("Previous Docket No.", "")).strip()
+            res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
+            res["Col_AC_FSR_PDF_Link"] = str(prev_row.get("Col AC (FSR PDF link)", prev_row.get("FSR PDF Link", ""))).strip()
+            res["source"] = "DG Master Tracker"
+
+    for k, v in res.items():
+        if str(v).lower() == 'nan' or str(v) == 'nat':
+            res[k] = ""
+    return res
+
+def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
+    r = df_target.loc[row_idx]
+    pres_doc = str(r.get('Present Docket No.', '')).strip()
+    pres_date = str(r.get('Present Docket raise Date', '')).strip()
+    pres_rem = str(r.get('Present Remarks', '')).strip()
+    
+    final_remarks = custom_fsr_remarks.strip() if custom_fsr_remarks.strip() else pres_rem
+    if fsr_pdf_name:
+        final_remarks += f" [FSR PDF: {fsr_pdf_name}]"
+        df_target.at[row_idx, 'Col AC (FSR PDF link)'] = f"Uploaded: {fsr_pdf_name}"
+
+    if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
+        df_target.at[row_idx, 'Previous Docket No.'] = str(pres_doc)
+        df_target.at[row_idx, 'Previous Docket raise Date'] = str(pres_date)
+        df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
+    elif final_remarks and final_remarks.lower() not in ['', 'nan', 'none']:
+        df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
+    return df_target
+
+def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
+    if df_target.empty or not site_id:
