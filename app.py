@@ -112,37 +112,37 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         
-        # Robustly scan all columns for CM and PM links or use index 28 (Col AC) and 29 (Col AD)
-        cm_vals = []
-        pm_vals = []
-        for idx, row_series in df_status.iterrows():
+        # Ensure CM (Col AC / index 28) and PM (Col AD / index 29) are correctly captured
+        cm_list = []
+        pm_list = []
+        for idx, row in df_status.iterrows():
             c_val = ""
             p_val = ""
-            # Check by index if available
-            if len(df_status.columns) > 28 and pd.notna(row_series.iloc[28]):
-                v = str(row_series.iloc[28]).strip()
+            # Check by index 28 and 29
+            if len(df_status.columns) > 28 and pd.notna(row.iloc[28]):
+                v = str(row.iloc[28]).strip()
                 if v and v.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v):
                     c_val = v
-            if len(df_status.columns) > 29 and pd.notna(row_series.iloc[29]):
-                v = str(row_series.iloc[29]).strip()
+            if len(df_status.columns) > 29 and pd.notna(row.iloc[29]):
+                v = str(row.iloc[29]).strip()
                 if v and v.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v):
                     p_val = v
+                    
+            # Fallback scan across all columns
+            for col_name in df_status.columns:
+                c_up = str(col_name).upper()
+                val_str = str(row[col_name]).strip() if pd.notna(row[col_name]) else ""
+                if val_str and val_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in val_str):
+                    if ('CM' in c_up or 'AC' in c_up) and not c_val:
+                        c_val = val_str
+                    elif ('PM' in c_up or 'AD' in c_up) and not p_val:
+                        p_val = val_str
             
-            # Also check by column name if index is empty
-            for col in df_status.columns:
-                col_up = str(col).upper()
-                cell_v = str(row_series[col]).strip() if pd.notna(row_series[col]) else ""
-                if cell_v and cell_v.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in cell_v):
-                    if ('CM' in col_up or 'AC' in col_up) and not c_val:
-                        c_val = cell_v
-                    elif ('PM' in col_up or 'AD' in col_up) and not p_val:
-                        p_val = cell_v
+            cm_list.append(c_val)
+            pm_list.append(p_val)
             
-            cm_vals.append(c_val)
-            pm_vals.append(p_val)
-            
-        df_status['Google Drive Link CM'] = cm_vals
-        df_status['Google Drive Link PM'] = pm_vals
+        df_status['Google Drive Link CM'] = cm_list
+        df_status['Google Drive Link PM'] = pm_list
 
         if 'SAIP ID' in df_status.columns:
             df_status = df_status[df_status['SAIP ID'].notna()]
@@ -774,16 +774,29 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
-                    pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
-                    
-                    if cm_link.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', '00:00:00']: cm_link = ""
-                    if pm_link.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', '00:00:00']: pm_link = ""
+                    # Check site_row directly for any column containing CM or PM
+                    cm_link = ""
+                    pm_link = ""
+                    for col_k, col_v in site_row.items():
+                        ck_up = str(col_k).upper()
+                        if pd.notna(col_v):
+                            val_s = str(col_v).strip()
+                            if val_s and val_s.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in val_s):
+                                if ('CM' in ck_up or 'AC' in ck_up) and not cm_link:
+                                    cm_link = val_s
+                                elif ('PM' in ck_up or 'AD' in ck_up) and not pm_link:
+                                    pm_link = val_s
+
+                    # Fallback to session state dataframe columns if needed
+                    if not cm_link and 'Google Drive Link CM' in site_row:
+                        cm_link = str(site_row['Google Drive Link CM']).strip()
+                    if not pm_link and 'Google Drive Link PM' in site_row:
+                        pm_link = str(site_row['Google Drive Link PM']).strip()
 
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
                         st.markdown("##### 📄 Google Drive Link CM")
-                        if cm_link:
+                        if cm_link and cm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
                             st.markdown(f"<span style='color: #ffffff; font-size: 13px; font-weight: 700;'>{cm_link}</span>", unsafe_allow_html=True)
                             cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={cm_link}")
                             st.link_button("🌐 Open CM FSR Link", cm_url, use_container_width=True)
@@ -796,7 +809,7 @@ elif page == "🔍 AI Site Diagnostics":
 
                     with f_col2:
                         st.markdown("##### 📄 Google Drive Link PM")
-                        if pm_link:
+                        if pm_link and pm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
                             st.markdown(f"<span style='color: #ffffff; font-size: 13px; font-weight: 700;'>{pm_link}</span>", unsafe_allow_html=True)
                             pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={pm_link}")
                             st.link_button("🌐 Open PM FSR Link", pm_url, use_container_width=True)
