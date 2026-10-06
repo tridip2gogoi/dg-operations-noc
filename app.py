@@ -33,7 +33,8 @@ st.markdown("""
     .custom-header-banner { background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 8px !important; padding: 14px 20px !important; margin-top: 6px !important; margin-bottom: 8px !important; }
     .yellow-success-msg { background-color: #1e293b; color: #facc15 !important; border: 1px solid #facc15; padding: 10px 15px; border-radius: 6px; font-weight: 800; margin-top: 10px; margin-bottom: 10px; }
     .status-badge { padding: 4px 10px; border-radius: 9999px; font-weight: 800; font-size: 12px; text-transform: uppercase; display: inline-block; }
-    .badge-ok { background-color: #0284c7; color: #ffffff; }
+    .badge-ok { background-color: #10b981; color: #ffffff; }
+    .badge-warn { background-color: #f59e0b; color: #ffffff; }
     .badge-crit { background-color: #dc2626; color: #ffffff; }
 
     /* Streamlit tabs yellow theme styling */
@@ -627,8 +628,22 @@ elif page == "🔍 AI Site Diagnostics":
             selected_matches = matches[matches['SAIP ID'].astype(str) == str(chosen_site_id)]
             site_row = selected_matches.iloc[0] if not selected_matches.empty else matches.iloc[0]
             selected_site = site_row['SAIP ID']
-            status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
+            status_val = str(site_row.get('DG Automation Status', 'Automation Ok')).strip()
             
+            # --- DYNAMIC STATUS BADGE BACKGROUND COLOR AS REQUESTED ---
+            # Automation ok -> Green (#10b981)
+            # Manual mode -> Yellow/Amber (#f59e0b)
+            # DG breakdown & DG BER -> Red (#dc2626)
+            s_lower = status_val.lower()
+            if 'ok' in s_lower:
+                badge_bg = "#10b981"
+            elif 'manual' in s_lower:
+                badge_bg = "#f59e0b"
+            elif 'breakdown' in s_lower or 'ber' in s_lower:
+                badge_bg = "#dc2626"
+            else:
+                badge_bg = "#f59e0b"
+
             jc_val = site_row.get('JC', 'N/A')
             state_val = site_row.get('State', 'N/A')
             site_type_val = site_row.get('Site Type', 'P1')
@@ -654,7 +669,7 @@ elif page == "🔍 AI Site Diagnostics":
                         <span style="color: #f97316; font-size: 22px; font-weight: 800;">⚡ {selected_site}</span>
                     </div>
                     <div>
-                        <span style="background-color: #f59e0b; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;">{status_val}</span>
+                        <span style="background-color: {badge_bg}; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;">{status_val}</span>
                     </div>
                 </div>
                 <div style="margin-top: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">
@@ -702,7 +717,7 @@ elif page == "🔍 AI Site Diagnostics":
 
             st.markdown(f"""
             <div style="background: rgba(240, 246, 255, 0.98); border: 1px solid #38bdf8; padding: 12px 16px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #0f172a; font-size: 13px; font-weight: 600;">
-                🧠 <b>AI Diagnostic Inference:</b> ⚠️ **Attention Required:** Manual mode active. Problem classified under `{active_bucket}`.<br>
+                🧠 <b>AI Diagnostic Inference:</b> ⚠️ **Attention Required:** Status active (`{status_val}`). Problem classified under `{active_bucket}`.<br>
                 🎯 <b>Recommended Operational Action (SOP):</b> Verify site access and contact the local supervisor for direct diagnosis.
             </div>
             """, unsafe_allow_html=True)
