@@ -327,22 +327,17 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
                 docket_df = df_status.copy()
                 if not docket_df.empty:
-                    # Exclude Automation Ok
                     if 'DG Automation Status' in docket_df.columns:
                         docket_df = docket_df[docket_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
-                    
-                    # Filter strictly for DG Breakdown, GCU, OEM Spare parts
                     if 'Bucket' in docket_df.columns:
                         docket_df['Bucket_Clean'] = docket_df['Bucket'].astype(str).str.strip().str.title()
                         target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
                         docket_df = docket_df[docket_df['Bucket_Clean'].isin(target_bkts)]
-                    
                     if chosen_p_state != "All States" and 'State' in docket_df.columns:
                         docket_df = docket_df[docket_df['State'].astype(str).str.strip() == chosen_p_state]
                     if chosen_p_jc != "All JCs" and 'JC' in docket_df.columns:
                         docket_df = docket_df[docket_df['JC'].astype(str).str.strip() == chosen_p_jc]
 
-                    # Determine Docket Status: Received vs Pending (Col V: Present Docket No.)
                     def get_docket_status(row):
                         doc = str(row.get('Present Docket No.', '')).strip()
                         if doc and doc.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat']:
@@ -352,12 +347,9 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
                     if not docket_df.empty:
                         docket_df['Docket_Status'] = docket_df.apply(get_docket_status, axis=1)
-                        
                         st.markdown("##### JC-Wise Cross-Tabulation: Bucket vs Docket Status")
-                        # Multi-index crosstab: JC vs (Bucket, Docket_Status)
                         docket_matrix = pd.crosstab(docket_df['JC'], [docket_df['Bucket_Clean'], docket_df['Docket_Status']], margins=True, margins_name="Total")
                         st.dataframe(docket_matrix, use_container_width=True)
-                        
                         st.markdown("##### Detailed Docket Summary Records")
                         st.dataframe(docket_df, use_container_width=True)
                     else:
@@ -367,9 +359,51 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
-    if not df_status.empty and 'Bucket' in df_status.columns:
-        f_df = df_status[(df_status['Bucket'].astype(str).str.strip().str.upper() == 'FUEL SENSOR') | (df_status['Fuel Sensor Status'].astype(str).str.strip().str.upper() == 'FUEL SENSOR FAULTY')]
-        st.dataframe(f_df, use_container_width=True)
+    st.caption("Active fuel sensor fault distribution automatically scanned from Master Tracker and cross-tabulated strictly by JC, DG Make, and KVA rating.")
+
+    auto_df_fuel = pd.DataFrame()
+    if not df_status.empty:
+        bkt_match = df_status['Bucket'].astype(str).str.strip().str.upper() == "FUEL SENSOR" if 'Bucket' in df_status.columns else pd.Series([False]*len(df_status))
+        stat_match = df_status['Fuel Sensor Status'].astype(str).str.strip().str.upper() == "FUEL SENSOR FAULTY" if 'Fuel Sensor Status' in df_status.columns else pd.Series([False]*len(df_status))
+        auto_df_fuel = df_status[bkt_match | stat_match].copy()
+
+    if not auto_df_fuel.empty:
+        # --- JC FILTER FOR FUEL SENSOR TELEMETRY ---
+        fuel_jcs = ["All JCs"] + sorted([str(x) for x in auto_df_fuel['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in auto_df_fuel.columns else ["All JCs"]
+        chosen_fuel_jc = st.selectbox("🌐 Filter JC for Fuel Sensor Telemetry:", fuel_jcs, key="fuel_jc_filter")
+        
+        if chosen_fuel_jc != "All JCs" and 'JC' in auto_df_fuel.columns:
+            auto_df_fuel_filtered = auto_df_fuel[auto_df_fuel['JC'].astype(str).str.strip() == chosen_fuel_jc]
+        else:
+            auto_df_fuel_filtered = auto_df_fuel
+
+        tot_faults = len(auto_df_fuel_filtered)
+        aff_jc = auto_df_fuel_filtered['JC'].mode()[0] if 'JC' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['JC'].mode().empty else "N/A"
+        p_make = auto_df_fuel_filtered['DG Make'].mode()[0] if 'DG Make' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['DG Make'].mode().empty else "N/A"
+        p_rat = auto_df_fuel_filtered['DG Rating'].mode()[0] if 'DG Rating' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['DG Rating'].mode().empty else "N/A"
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Active Faulty Sensors (Master)", tot_faults)
+        c2.metric("Most Affected JC", aff_jc)
+        c3.metric("Primary Fault Make", p_make)
+        c4.metric("Primary Fault Rating", p_rat)
+
+        st.markdown("---")
+        with st.container(border=True):
+            st.markdown("<h4 style='color: #0f172a;'>JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
+            if 'JC' in auto_df_fuel_filtered.columns and 'DG Make' in auto_df_fuel_filtered.columns:
+                st.dataframe(pd.crosstab(auto_df_fuel_filtered['JC'], auto_df_fuel_filtered['DG Make'], margins=True, margins_name="Total"), use_container_width=True)
+
+        with st.container(border=True):
+            st.markdown("<h4 style='color: #0f172a;'>DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
+            if 'DG Make' in auto_df_fuel_filtered.columns and 'DG Rating' in auto_df_fuel_filtered.columns:
+                st.dataframe(pd.crosstab(auto_df_fuel_filtered['DG Make'], auto_df_fuel_filtered['DG Rating'], margins=True, margins_name="Total"), use_container_width=True)
+
+        with st.container(border=True):
+            st.markdown("<h4 style='color: #0f172a;'>Active Fuel Sensor Fault Site Registry</h4>", unsafe_allow_html=True)
+            st.dataframe(auto_df_fuel_filtered, use_container_width=True)
+    else:
+        st.info("No active fuel sensor faults detected in Master Tracker.")
 
 elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
