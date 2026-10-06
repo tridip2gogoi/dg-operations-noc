@@ -170,10 +170,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- GOOGLE SHEET LIVE EXPORT URL ---
-# (Note: আপুনি নিজৰ Google Sheet ID টো তলৰ লিংকত বহুৱাই দিব পাৰে)
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
-DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
+DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
+
+DEFAULT_ILA = None
+for f in os.listdir('.'):
+    if "ILA" in f.upper() and f.endswith(('.xlsx', '.xls')) and not f.startswith('~$'):
+        DEFAULT_ILA = f
+        break
 
 BUCKET_LIST = [
     "GCU", "Fuel Sensor", "DG Breakdown", "DG battery", "IPMS",
@@ -234,11 +239,15 @@ def verify_login(username, password):
             return USER_CREDENTIALS[username]
     return None
 
+def is_valid_source(src):
+    if hasattr(src, 'read'): return True
+    if isinstance(src, str) and os.path.exists(src): return True
+    return False
+
 @st.cache_data(ttl=60)
 def load_google_sheet_tracker():
     df_status = pd.DataFrame()
     try:
-        # Pোনপটীয়াকৈ Google Drive Sheet ৰ পৰা লাইভ এক্সেল পঢ়ি ল'ব
         xls_dg = pd.ExcelFile(GOOGLE_SHEET_URL)
         sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
@@ -294,13 +303,128 @@ def load_google_sheet_tracker():
         else:
             df_status['Aging_Num'] = 0
     except Exception as e:
-        # Fallback to local file if online google sheet export fails
         if os.path.exists(DEFAULT_EXCEL):
             try:
                 df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
             except:
                 pass
     return df_status
+
+def load_ila_tracker(ila_file=None):
+    df_ila = pd.DataFrame()
+    target_ila = ila_file
+    if not target_ila and DEFAULT_ILA:
+        target_ila = DEFAULT_ILA
+    if target_ila and is_valid_source(target_ila):
+        try:
+            xls_ila = pd.ExcelFile(target_ila)
+            ila_sheet = "IPMS Site Automation Status" if "IPMS Site Automation Status" in xls_ila.sheet_names else xls_ila.sheet_names[0]
+            df_ila = pd.read_excel(xls_ila, sheet_name=ila_sheet)
+            for col in df_ila.columns:
+                df_ila[col] = df_ila[col].astype(object)
+            if 'Sap ID' in df_ila.columns:
+                df_ila = df_ila[df_ila['Sap ID'].notna()]
+                df_ila['Sap ID'] = df_ila['Sap ID'].astype(str).str.strip()
+        except:
+            pass
+    return df_ila
+
+def load_cm_tracker():
+    df_cm = pd.DataFrame()
+    if os.path.exists(DEFAULT_CM_TRACKER):
+        try:
+            xls_cm = pd.ExcelFile(DEFAULT_CM_TRACKER)
+            cm_sheet = "Open Site" if "Open Site" in xls_cm.sheet_names else xls_cm.sheet_names[0]
+            df_cm = pd.read_excel(xls_cm, sheet_name=cm_sheet)
+        except:
+            pass
+    return df_cm
+
+def save_master_to_disk():
+    try:
+        target_file = DEFAULT_EXCEL
+        if "master_tracker_df" in st.session_state and not st.session_state.master_tracker_df.empty:
+            with pd.ExcelWriter(target_file, engine='openpyxl') as writer:
+                st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
+                if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
+                    st.session_state.ila_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
+    except:
+        pass
+
+def ai_capture_o_to_ab(site_id, df_open_cm, df_status):
+    clean_id = str(site_id).strip().upper() if site_id else ""
+    res = {
+        "JC": "", "Col_O_Fuel_Sensor_Status": "Ok", "Col_P_Docket_no": "",
+        "Col_Q_Open_Date": "", "Col_S_DG_Automation_Status": "Automation Ok",
+        "Col_T_Present_Remarks": "", "Col_U_Bucket": "", "Col_V_Present_Docket_No": "",
+        "Col_W_Present_Docket_raise_Date": "", "Col_X_Aging_Days": 0, "Col_Y_Timeline": "",
+        "Col_Z_Previous_Remarks": "", "Col_AA_Previous_Docket_No": "", "Col_AB_Previous_Docket_raise_Date": "",
+        "Col_AC_FSR_PDF_Link": "", "source": "None"
+    }
+    if not clean_id: return res
+    if not df_status.empty and 'SAIP ID' in df_status.columns:
+        dg_match = df_status[df_status['SAIP ID'].astype(str).str.strip().str.upper() == clean_id]
+        if not dg_match.empty:
+            prev_row = dg_match.iloc[0]
+            res["JC"] = str(prev_row.get("JC", "")).strip()
+            res["Col_O_Fuel_Sensor_Status"] = str(prev_row.get("Fuel Sensor Status", "Ok")).strip()
+            res["Col_P_Docket_no"] = str(prev_row.get("Docket no.", "")).strip()
+            res["Col_Q_Open_Date"] = clean_date_str(prev_row.get("Open Date", ""))
+            res["Col_S_DG_Automation_Status"] = str(prev_row.get("DG Automation Status", "Manual Mode")).strip()
+            res["Col_T_Present_Remarks"] = str(prev_row.get("Present Remarks", "")).strip()
+            res["Col_U_Bucket"] = str(prev_row.get("Bucket", "")).strip()
+            res["Col_V_Present_Docket_No"] = str(prev_row.get("Present Docket No.", "")).strip()
+            res["Col_W_Present_Docket_raise_Date"] = clean_date_str(prev_row.get("Present Docket raise Date", ""))
+            res["Col_X_Aging_Days"] = prev_row.get("Aging (Day's)", 0)
+            res["Col_Y_Timeline"] = str(prev_row.get("Timeline", "")).strip()
+            res["Col_Z_Previous_Remarks"] = str(prev_row.get("Previous Remarks", "")).strip()
+            res["Col_AA_Previous_Docket_No"] = str(prev_row.get("Previous Docket No.", "")).strip()
+            res["Col_AB_Previous_Docket_raise_Date"] = clean_date_str(prev_row.get("Previous Docket raise Date", ""))
+            res["Col_AC_FSR_PDF_Link"] = str(prev_row.get("Col AC (FSR PDF link)", prev_row.get("FSR PDF Link", ""))).strip()
+            res["source"] = "DG Master Tracker"
+    return res
+
+def archive_current_fault_to_previous(row_idx, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
+    r = df_target.loc[row_idx]
+    pres_doc = str(r.get('Present Docket No.', '')).strip()
+    pres_date = str(r.get('Present Docket raise Date', '')).strip()
+    pres_rem = str(r.get('Present Remarks', '')).strip()
+    final_remarks = custom_fsr_remarks.strip() if custom_fsr_remarks.strip() else pres_rem
+    if fsr_pdf_name:
+        final_remarks += f" [FSR PDF: {fsr_pdf_name}]"
+        df_target.at[row_idx, 'Col AC (FSR PDF link)'] = f"Uploaded: {fsr_pdf_name}"
+    if pres_doc and pres_doc.lower() not in ['', 'nan', 'none']:
+        df_target.at[row_idx, 'Previous Docket No.'] = str(pres_doc)
+        df_target.at[row_idx, 'Previous Docket raise Date'] = str(pres_date)
+        df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
+    elif final_remarks and final_remarks.lower() not in ['', 'nan', 'none']:
+        df_target.at[row_idx, 'Previous Remarks'] = str(final_remarks)
+    return df_target
+
+def clear_site_active_fault_data(site_id, df_target, custom_fsr_remarks="", fsr_pdf_name=""):
+    if df_target.empty or not site_id: return df_target
+    updated = df_target.copy()
+    for col in updated.columns: updated[col] = updated[col].astype(object)
+    clean_id = str(site_id).strip().upper()
+    match_idx = updated[updated["SAIP ID"].astype(str).str.strip().str.upper() == clean_id].index
+    if not match_idx.empty:
+        i = match_idx[0]
+        updated = archive_current_fault_to_previous(i, updated, custom_fsr_remarks, fsr_pdf_name)
+        if "DG Automation Status" in updated.columns: updated.at[i, "DG Automation Status"] = "Automation Ok"
+        if "Present Remarks" in updated.columns: updated.at[i, "Present Remarks"] = ""
+        if "Bucket" in updated.columns: updated.at[i, "Bucket"] = None
+        if "Present Docket No." in updated.columns: updated.at[i, "Present Docket No."] = ""
+        if "Present Docket raise Date" in updated.columns: updated.at[i, "Present Docket raise Date"] = ""
+        if "Aging (Day's)" in updated.columns: updated.at[i, "Aging (Day's)"] = 0
+        if "Aging_Num" in updated.columns: updated.at[i, "Aging_Num"] = 0
+        today_date_str = datetime.now(IST).strftime('%Y-%m-%d')
+        target_closed_col = 'Last Closed date'
+        for col in updated.columns:
+            if 'last closed' in str(col).lower():
+                target_closed_col = col
+                break
+        updated.at[i, target_closed_col] = str(today_date_str)
+    return updated
 
 # --- AUTHENTICATION GATEWAY ---
 if "authenticated" not in st.session_state:
@@ -344,26 +468,31 @@ admin_role = user_data["role"]
 user_perms = user_data.get("access", ["all"])
 is_viewer = ("read_only" in user_perms)
 
-# --- TOP CONTROL BAR FOR REFRESH & SYNC ---
+# --- TOP CONTROL BAR FOR REFRESH & LIVE SYNC ---
 with st.container(border=True):
     top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1])
     with top_c1:
-        st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}` | ☁️ **Source:** `Google Drive (Live Sync)`")
+        st.markdown(f"🛡️ **Operator:** `{admin_name}` | **Role:** `{admin_role}` | ☁️ **Source:** `Google Drive Live`")
     with top_c2:
         st.markdown(f"🕒 **IST:** `{datetime.now(IST).strftime('%d %b %Y, %I:%M:%S %p')}`")
     with top_c3:
-        if st.button("🔄 Force Refresh Data", type="primary", use_container_width=True):
+        if st.button("🔄 Force Refresh & Sync", type="primary", use_container_width=True):
             st.cache_data.clear()
             if "master_tracker_df" in st.session_state:
                 del st.session_state.master_tracker_df
-            st.success("Refreshed successfully!")
+            st.success("Synced successfully!")
             st.rerun()
 
-# Load tracker data from Google Drive Sheet
 if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
     st.session_state.master_tracker_df = load_google_sheet_tracker()
+if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
+    st.session_state.ila_tracker_df = load_ila_tracker()
+if "open_cm_df" not in st.session_state:
+    st.session_state.open_cm_df = load_cm_tracker()
 
 df_status = st.session_state.master_tracker_df
+df_ila = st.session_state.ila_tracker_df
+df_open_cm = st.session_state.open_cm_df
 
 # --- TOP HORIZONTAL NAVIGATION MENU ---
 page = st.radio(
@@ -373,6 +502,8 @@ page = st.radio(
         "⚙️ Fleet Analytics & Problem Buckets",
         "⛽ Fuel Sensor Telemetry",
         "⏳ Daily Fault Summary",
+        "📈 ILA-AG1 Operations Tracker",
+        "✏️ In-Portal Master Tracker Editor",
         "🔍 AI Site Diagnostics"
     ],
     horizontal=True,
@@ -386,132 +517,45 @@ st.markdown("<hr style='margin:2px 0;'>", unsafe_allow_html=True)
 # ---------------------------------------------------------
 if page == "📊 Executive Control Center":
     st.markdown("## ⚡ North East Circle - DG Operations Control Center")
-    st.caption(f"System State: Operational | Live Auto-Sync from Google Drive Enabled")
-
     if not df_status.empty:
         total_sites = len(df_status)
         auto_ok = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Automation Ok']) if 'DG Automation Status' in df_status.columns else 0
         manual_mode = len(df_status[df_status['DG Automation Status'].astype(str).str.strip() == 'Manual Mode']) if 'DG Automation Status' in df_status.columns else 0
-
         dg_breakdown_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg breakdown']) if 'DG Automation Status' in df_status.columns else 0
-        dg_ber_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg ber']) if 'DG Automation Status' in df_status.columns else 0
-        dg_overload_count = len(df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() == 'dg overload']) if 'DG Automation Status' in df_status.columns else 0
 
-        k1, k2, k3, k4, k5, k6 = st.columns(6)
+        k1, k2, k3, k4 = st.columns(4)
         k1.metric("Total Sites", f"{total_sites:,}")
         k2.metric("Automation Rate", f"{round((auto_ok/total_sites)*100, 1)}%" if total_sites else "0%")
         k3.metric("Manual Mode", manual_mode)
         k4.metric("DG Breakdown", dg_breakdown_count)
-        k5.metric("DG BER", dg_ber_count)
-        k6.metric("DG Overload", dg_overload_count)
 
         st.markdown("---")
-        
         if 'State' in df_status.columns:
             state_options = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
             selected_state = st.selectbox("🌐 Filter Circle by State:", state_options)
-            
-            if selected_state != "All States":
-                state_filtered_df = df_status[df_status['State'].astype(str).str.strip() == selected_state]
-                st.info(f"Showing telemetry stats for State: **{selected_state}** ({len(state_filtered_df)} Sites Active)")
-            else:
-                state_filtered_df = df_status
-
-        c1, c2 = st.columns([3, 2])
-        
-        with c1:
-            with st.container(border=True):
-                st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>JC / State Wise Automation Health</h4>", unsafe_allow_html=True)
-                target_df_for_chart = state_filtered_df if 'State' in df_status.columns else df_status
-                if "JC" in target_df_for_chart.columns and "DG Automation Status" in target_df_for_chart.columns:
-                    fig_bar = px.histogram(
-                        target_df_for_chart, x="JC", color="DG Automation Status", barmode="group",
-                        color_discrete_sequence=["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
-                    )
-                    fig_bar.update_layout(
-                        height=350, margin=dict(l=10, r=10, t=10, b=10),
-                        plot_bgcolor="#ffffff", paper_bgcolor="#ffffff",
-                        font=dict(color="#0f172a", family="Inter, sans-serif"),
-                        xaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
-                        yaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
-                        legend=dict(font=dict(color="#0f172a"), bgcolor="rgba(255,255,255,0.9)")
-                    )
-                    st.plotly_chart(fig_bar, use_container_width=True)
-
-        with c2:
-            with st.container(border=True):
-                st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>DG Make Fleet Allocation</h4>", unsafe_allow_html=True)
-                target_df_for_chart = state_filtered_df if 'State' in df_status.columns else df_status
-                if "DG Make" in target_df_for_chart.columns:
-                    valid_makes = target_df_for_chart[target_df_for_chart['DG Make'].notna() & (target_df_for_chart['DG Make'].astype(str).str.strip() != '')]
-                    fig_donut = px.pie(valid_makes, names="DG Make", hole=0.58, color_discrete_sequence=px.colors.qualitative.Safe)
-                    fig_donut.update_layout(
-                        height=350, margin=dict(l=10, r=10, t=10, b=10),
-                        paper_bgcolor="#ffffff", plot_bgcolor="#ffffff",
-                        font=dict(color="#0f172a", family="Inter, sans-serif"),
-                        legend=dict(font=dict(color="#0f172a"))
-                    )
-                    st.plotly_chart(fig_donut, use_container_width=True)
-    else:
-        st.info("No data loaded from Google Sheet. Please check your Google Sheet export URL or permissions.")
+            state_filtered_df = df_status if selected_state == "All States" else df_status[df_status['State'].astype(str).str.strip() == selected_state]
+            st.dataframe(state_filtered_df, use_container_width=True)
 
 # ---------------------------------------------------------
-# 2. FLEET ANALYTICS & ROOT-CAUSE
+# 2. FLEET ANALYTICS & PROBLEM BUCKETS
 # ---------------------------------------------------------
 elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
-    st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
-
-    jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
-    selected_fleet_jc = st.selectbox("Select JC Circle:", jc_options)
-
-    filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'].astype(str).str.strip() == selected_fleet_jc]
-    
-    if 'DG Automation Status' in filtered_status.columns:
-        valid_bucket_base = filtered_status[filtered_status['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok'].copy()
-    else:
-        valid_bucket_base = filtered_status.copy()
-
-    valid_bucket = valid_bucket_base[valid_bucket_base['Bucket'].notna() & (valid_bucket_base['Bucket'].astype(str).str.strip() != '')] if 'Bucket' in valid_bucket_base.columns else pd.DataFrame()
-
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Status Summary ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
-            if 'DG Automation Status' in filtered_status.columns:
-                stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
-                stat_summary.columns = ['Status Category', 'Site Count']
-                st.dataframe(stat_summary, use_container_width=True, hide_index=True)
-
-    with col2:
-        with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket Distribution ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
-            if not valid_bucket.empty:
-                b_summary = valid_bucket['Bucket'].value_counts().reset_index()
-                b_summary.columns = ['Root-Cause Bucket', 'Incidents']
-                fig_b = px.bar(b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents", color="Incidents", color_continuous_scale="Blues")
-                fig_b.update_layout(height=340, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="#ffffff", paper_bgcolor="#ffffff")
-                st.plotly_chart(fig_b, use_container_width=True)
-            else:
-                st.info("No active problem bucket recorded for this selection.")
+    if not df_status.empty:
+        if 'JC' in df_status.columns:
+            jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
+            sel_jc = st.selectbox("Select JC Circle:", jcs)
+            f_st = df_status if sel_jc == "All JCs" else df_status[df_status['JC'].astype(str).str.strip() == sel_jc]
+            st.dataframe(f_st, use_container_width=True)
 
 # ---------------------------------------------------------
 # 3. FUEL SENSOR TELEMETRY
 # ---------------------------------------------------------
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
-    auto_df_fuel = pd.DataFrame()
-    if not df_status.empty:
-        bkt_match = df_status['Bucket'].astype(str).str.strip().str.upper() == "FUEL SENSOR" if 'Bucket' in df_status.columns else pd.Series([False]*len(df_status))
-        stat_match = df_status['Fuel Sensor Status'].astype(str).str.strip().str.upper() == "FUEL SENSOR FAULTY" if 'Fuel Sensor Status' in df_status.columns else pd.Series([False]*len(df_status))
-        auto_df_fuel = df_status[bkt_match | stat_match].copy()
-
-    if not auto_df_fuel.empty:
-        st.metric("Active Faulty Sensors (Master)", len(auto_df_fuel))
-        st.dataframe(auto_df_fuel, use_container_width=True)
-    else:
-        st.info("No active fuel sensor faults detected in Master Tracker.")
+    if not df_status.empty and 'Bucket' in df_status.columns:
+        f_df = df_status[(df_status['Bucket'].astype(str).str.strip().str.upper() == 'FUEL SENSOR') | (df_status['Fuel Sensor Status'].astype(str).str.strip().str.upper() == 'FUEL SENSOR FAULTY')]
+        st.dataframe(f_df, use_container_width=True)
 
 # ---------------------------------------------------------
 # 4. DAILY FAULT SUMMARY
@@ -520,22 +564,32 @@ elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
     if not df_status.empty:
         st.dataframe(df_status, use_container_width=True)
-    else:
-        st.info("No records available.")
 
 # ---------------------------------------------------------
-# 5. AI SITE DIAGNOSTICS & FSR LINK VIEWER
+# 5. ILA-AG1 OPERATIONS TRACKER
+# ---------------------------------------------------------
+elif page == "📈 ILA-AG1 Operations Tracker":
+    st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
+    if not df_ila.empty:
+        st.dataframe(df_ila, use_container_width=True)
+    else:
+        st.info("ILA Tracker not loaded.")
+
+# ---------------------------------------------------------
+# 6. IN-PORTAL MASTER TRACKER EDITOR
+# ---------------------------------------------------------
+elif page == "✏️ In-Portal Master Tracker Editor":
+    st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
+    if not df_status.empty:
+        st.dataframe(df_status, use_container_width=True)
+
+# ---------------------------------------------------------
+# 7. AI SITE DIAGNOSTICS & FSR GOOGLE DRIVE LINK VIEWER
 # ---------------------------------------------------------
 elif page == "🔍 AI Site Diagnostics":
     st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
-    st.caption("Circle-wide deep diagnostics, equipment specs, telemetry mapping, and FSR Google Drive access.")
-
-    with st.container(border=True):
-        sq = st.text_input(
-            "Search Network Site (SAIP ID):",
-            placeholder="Enter SAIP ID (e.g. 9011)..."
-        ).strip().upper()
-
+    sq = st.text_input("Search Network Site (SAIP ID):", placeholder="Enter SAIP ID (e.g. 9011)...").strip().upper()
+    
     if sq and not df_status.empty and 'SAIP ID' in df_status.columns:
         matches = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)]
         if matches.empty:
