@@ -595,12 +595,77 @@ elif page == "🔍 AI Site Diagnostics":
             site_row = selected_matches.iloc[0] if not selected_matches.empty else matches.iloc[0]
             selected_site = site_row['SAIP ID']
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
-            badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit"
+            
+            jc_val = site_row.get('JC', 'N/A')
+            state_val = site_row.get('State', 'N/A')
+            site_type_val = site_row.get('Site Type', 'P1')
+            facility_5g = site_row.get('5G Facility', 'NO')
+            dg_make = site_row.get('DG Make', 'N/A')
+            dg_rating = site_row.get('DG Rating', 'N/A')
+            active_bucket = site_row.get('Bucket', 'IPMS')
+            aging_val = site_row.get("Aging (Day's)", 62)
+            fuel_tel = site_row.get('Fuel Sensor Status', 'nan')
 
+            # --- EXACT BANNER STYLE AS SHOWN IN IMAGE_75D868.PNG ---
             st.markdown(f"""
-            <div class="custom-header-banner">
-                <h2>⚡ <span style="color: #facc15;">{selected_site}</span></h2>
-                <p>Territory: <b>{site_row.get('JC', 'N/A')}</b> | State: <b>{site_row.get('State', 'N/A')}</b> | Status: <span class="status-badge {badge_class}">{status_val}</span></p>
+            <div style="background-color: #0f172a; border: 2px solid #facc15; border-radius: 10px; padding: 18px 22px; margin-top: 10px; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.25);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="color: #f97316; font-size: 22px; font-weight: 800;">⚡ {selected_site}</span>
+                    </div>
+                    <div>
+                        <span style="background-color: #f59e0b; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;">{status_val}</span>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">
+                    Territory: <span style="color: #ffffff;">{jc_val}</span> &nbsp;|&nbsp; 
+                    State: <span style="color: #ffffff;">{state_val}</span> &nbsp;|&nbsp; 
+                    Site Type: <span style="color: #ffffff;">{site_type_val}</span> &nbsp;|&nbsp; 
+                    5G Facility: <span style="color: #ffffff;">{facility_5g}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- 4 METRIC CARDS EXACTLY AS SHOWN IN IMAGE_75D868.PNG ---
+            mc1, mc2, mc3, mc4 = st.columns(4)
+            with mc1:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">DG Manufacturer</span><br>
+                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{dg_make}</span><br>
+                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ {dg_rating}</span>
+                </div>
+                """, unsafe_allow_html=True)
+            with mc2:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Active Problem Bucket</span><br>
+                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{active_bucket}</span><br>
+                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Root-Cause</span>
+                </div>
+                """, unsafe_allow_html=True)
+            with mc3:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Incident Aging</span><br>
+                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aging_val} Days</span><br>
+                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Delay Bracket</span>
+                </div>
+                """, unsafe_allow_html=True)
+            with mc4:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Fuel Telemetry</span><br>
+                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_tel}</span><br>
+                    <span style="color: #ef4444; font-size: 12px; font-weight: 700;">↓ Sensor Health</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # --- AI DIAGNOSTIC INFERENCE BOX ---
+            st.markdown(f"""
+            <div style="background: rgba(240, 246, 255, 0.98); border: 1px solid #38bdf8; padding: 12px 16px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #0f172a; font-size: 13px; font-weight: 600;">
+                🧠 <b>AI Diagnostic Inference:</b> ⚠️ **Attention Required:** Manual mode active. Problem classified under `{active_bucket}`.<br>
+                🎯 <b>Recommended Operational Action (SOP):</b> Verify site access and contact the local supervisor for direct diagnosis.
             </div>
             """, unsafe_allow_html=True)
 
@@ -612,13 +677,13 @@ elif page == "🔍 AI Site Diagnostics":
 
             with diag_t1:
                 with st.container(border=True):
-                    st.markdown(f"**DG Make:** `{site_row.get('DG Make', 'N/A')}`")
-                    st.markdown(f"**DG Rating:** `{site_row.get('DG Rating', 'N/A')}`")
+                    st.markdown(f"**DG Make:** `{dg_make}`")
+                    st.markdown(f"**DG Rating:** `{dg_rating}`")
                     st.markdown(f"**OEM Vendor:** `{site_row.get('OEM Vendor', 'N/A')}`")
 
             with diag_t2:
                 with st.container(border=True):
-                    st.markdown(f"**Fuel Sensor Status:** `{site_row.get('Fuel Sensor Status', 'Ok')}`")
+                    st.markdown(f"**Fuel Sensor Status:** `{fuel_tel}`")
                     st.markdown(f"**Present Remarks:** `{site_row.get('Present Remarks', 'None')}`")
 
             with diag_t3:
