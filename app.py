@@ -144,42 +144,26 @@ def load_google_sheet_tracker():
         return s
 
     if not df_status.empty:
-        # Strictly find Col AC (CM) vs Col AD (PM)
+        # Column AC (Index 28) is strictly CM FSR Link
+        # Column AD (Index 29) is strictly PM FSR Link
         orig_cols = list(df_status.columns)
+        
+        # Position 28 is Column AC, Position 29 is Column AD
         col_cm_found = None
         col_pm_found = None
         
-        # 1. Check by explicit CM vs PM keywords in column header
-        for c in orig_cols:
-            cu = str(c).strip().upper()
-            if 'CONTACT' in cu or 'ACCESS' in cu or 'ACTION' in cu:
-                continue
-            if 'CM' in cu and not col_cm_found and 'PM' not in cu:
-                col_cm_found = c
-            elif 'PM' in cu and not col_pm_found and 'CM' not in cu:
-                col_pm_found = c
-
-        # 2. Check by column AC / AD letter designation
-        for c in orig_cols:
-            cu = str(c).strip().upper()
-            if cu in ['COL AC', 'COLUMN AC', 'AC'] and not col_cm_found:
-                col_cm_found = c
-            elif cu in ['COL AD', 'COLUMN AD', 'AD'] and not col_pm_found:
-                col_pm_found = c
-
-        # 3. Positional fallback: Column index 28 (Col AC) and index 29 (Col AD)
-        if not col_cm_found and len(orig_cols) > 28:
+        if len(orig_cols) > 28:
             col_cm_found = orig_cols[28]
-        if not col_pm_found and len(orig_cols) > 29:
+        if len(orig_cols) > 29:
             col_pm_found = orig_cols[29]
-
-        # Ensure CM and PM NEVER point to the exact same column!
-        if col_cm_found and col_pm_found and col_cm_found == col_pm_found:
-            if len(orig_cols) > 29:
-                col_cm_found = orig_cols[28]
-                col_pm_found = orig_cols[29]
-            else:
-                col_pm_found = None
+            
+        # Fallback by exact column label if positional is not available or if labeled specifically
+        for idx, c in enumerate(orig_cols):
+            cu = str(c).strip().upper()
+            if cu in ['COL AC', 'COLUMN AC', 'AC']:
+                col_cm_found = c
+            elif cu in ['COL AD', 'COLUMN AD', 'AD']:
+                col_pm_found = c
 
         df_status['Google Drive Link CM'] = df_status[col_cm_found].apply(extract_clean_fsr_link) if col_cm_found else ""
         df_status['Google Drive Link PM'] = df_status[col_pm_found].apply(extract_clean_fsr_link) if col_pm_found else ""
