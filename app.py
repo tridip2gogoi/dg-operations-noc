@@ -451,28 +451,28 @@ elif page == "⛽ Fuel Sensor Telemetry":
         with c1:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Active Faulty Sensors (Master)</span><br>
+                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Active Faulty Sensors (Master)</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_faults}</span>
             </div>
             """, unsafe_allow_html=True)
         with c2:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Most Affected JC</span><br>
+                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Most Affected JC</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aff_jc}</span>
             </div>
             """, unsafe_allow_html=True)
         with c3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
+                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
             </div>
             """, unsafe_allow_html=True)
         with c4:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Rating</span><br>
+                <span style="color: #facc15; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Rating</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_rat}</span>
             </div>
             """, unsafe_allow_html=True)
@@ -532,7 +532,7 @@ elif page == "⏳ Daily Fault Summary":
         with m1:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Filtered Faults</span><br>
+                <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">Filtered Faults</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{len(filtered_date_df):,}</span><br>
                 <span style="color: #94a3b8; font-size: 11px;">Date: {selected_date_filter}</span>
             </div>
@@ -540,35 +540,35 @@ elif page == "⏳ Daily Fault Summary":
         with m2:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Fuel Sensor Faults</span><br>
+                <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">Fuel Sensor Faults</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_fuel_sensor:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">DG Battery</span><br>
+                <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">DG Battery</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_battery:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m4:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">GCU Faults</span><br>
+                <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">GCU Faults</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_gcu:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m5:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">OEM Spare Parts</span><br>
+                <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">OEM Spare Parts</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m6:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
-                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Master Base</span><br>
+                <span style="color: #facc15; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Master Base</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span>
             </div>
             """, unsafe_allow_html=True)
@@ -664,7 +664,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc1:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">DG Manufacturer</span><br>
+                    <span style="color: #facc15; font-size: 11px; font-weight: 700; text-transform: uppercase;">DG Manufacturer</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{dg_make}</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ {dg_rating}</span>
                 </div>
@@ -672,7 +672,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc2:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Active Problem Bucket</span><br>
+                    <span style="color: #facc15; font-size: 11px; font-weight: 700; text-transform: uppercase;">Active Problem Bucket</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{active_bucket}</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Root-Cause</span>
                 </div>
@@ -680,7 +680,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc3:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Incident Aging</span><br>
+                    <span style="color: #facc15; font-size: 11px; font-weight: 700; text-transform: uppercase;">Incident Aging</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aging_val} Days</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Delay Bracket</span>
                 </div>
@@ -688,7 +688,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc4:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Fuel Telemetry</span><br>
+                    <span style="color: #facc15; font-size: 11px; font-weight: 700; text-transform: uppercase;">Fuel Telemetry</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_tel}</span><br>
                     <span style="color: #ef4444; font-size: 12px; font-weight: 700;">↓ Sensor Health</span>
                 </div>
