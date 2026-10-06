@@ -103,7 +103,7 @@ def verify_login(username, password):
             return USER_CREDENTIALS[username]
     return None
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=5)
 def load_google_sheet_tracker():
     df_status = pd.DataFrame()
     try:
