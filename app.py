@@ -119,6 +119,10 @@ def load_ila_tracker():
             xls_ila = pd.ExcelFile(DEFAULT_ILA)
             ila_sheet = "IPMS Site Automation Status" if "IPMS Site Automation Status" in xls_ila.sheet_names else xls_ila.sheet_names[0]
             df_ila = pd.read_excel(xls_ila, sheet_name=ila_sheet)
+            for col in df_ila.columns: df_ila[col] = df_ila[col].astype(object)
+            if 'Sap ID' in df_ila.columns:
+                df_ila = df_ila[df_ila['Sap ID'].notna()]
+                df_ila['Sap ID'] = df_ila['Sap ID'].astype(str).str.strip()
         except: pass
     return df_ila
 
@@ -127,6 +131,8 @@ def save_master_to_disk():
         if "master_tracker_df" in st.session_state and not st.session_state.master_tracker_df.empty:
             with pd.ExcelWriter(DEFAULT_EXCEL, engine='openpyxl') as writer:
                 st.session_state.master_tracker_df.to_excel(writer, sheet_name="Automation Status", index=False)
+                if "ila_tracker_df" in st.session_state and not st.session_state.ila_tracker_df.empty:
+                    st.session_state.ila_tracker_df.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
     except: pass
 
 if "authenticated" not in st.session_state:
@@ -311,7 +317,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                         st.dataframe(pd.crosstab([df_gcu['JC'], df_gcu['DG Make']], df_gcu['DG Rating'], margins=True, margins_name="Total"), use_container_width=True)
         with t4:
             with st.container(border=True):
-                st.markdown("### JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)")
+                st.markdown("<h4 style='color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>", unsafe_allow_html=True)
                 bm_f1, bm_f2, bm_f3, bm_f4 = st.columns(4)
                 with bm_f1:
                     b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
@@ -347,7 +353,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
         with t5:
             with st.container(border=True):
-                st.markdown("### JC-Wise Docket Received & Pending Summary (DG Breakdown, GCU, OEM Spare part)")
+                st.markdown("<h4 style='color: #facc15;'>JC-Wise Docket Received & Pending Summary (DG Breakdown, GCU, OEM Spare part)</h4>", unsafe_allow_html=True)
                 st.caption("Filters strictly for Buckets: **DG Breakdown**, **GCU**, and **OEM Spare parts**, categorized by Docket Received vs Docket Pending.")
                 
                 p_f1, p_f2 = st.columns(2)
@@ -495,7 +501,6 @@ elif page == "⏳ Daily Fault Summary":
         p_oem = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'oem spare parts']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
         tot_master_base = len(df_status)
 
-        # --- EXACT METRIC CARDS FOR DAILY FAULT SUMMARY AS REQUESTED IN IMAGE ---
         m1, m2, m3, m4, m5, m6 = st.columns(6)
         with m1:
             st.markdown(f"""
@@ -557,8 +562,94 @@ elif page == "⏳ Daily Fault Summary":
 
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
-    if not df_ila.empty: st.dataframe(df_ila, use_container_width=True)
-    else: st.info("ILA Tracker not loaded.")
+    st.caption("Integrated tracking, editing, fault clearance, removal, and new case entries for ILA-AG1 operational logs.")
+
+    if df_ila.empty:
+        st.info("📂 Please upload the **ILA-AG1 Tracker** file to initialize this module.")
+    else:
+        ila_tab1, ila_tab2, ila_tab3 = st.tabs([
+            "📊 Registry & Spreadsheet Grid",
+            "📝 Single Site Quick Editor, Clear & Removal",
+            "➕ New Case / Site Entry"
+        ])
+
+        with ila_tab1:
+            with st.container(border=True):
+                st.markdown(f"<h3 style='margin:0 0 10px 0; color: #facc15;'>ILA-AG1 Registry Summary ({len(df_ila):,} Records)</h3>", unsafe_allow_html=True)
+                
+                # --- MULTI-CRITERIA FILTERS FOR ILA-AG1 REGISTRY ---
+                ila_f1, ila_f2, ila_f3, ila_f4 = st.columns(4)
+                with ila_f1:
+                    ila_search_query = st.text_input("🔍 Search Sap ID / Facility:", "").strip().upper()
+                with ila_f2:
+                    ila_states = ["All States"] + sorted([str(x) for x in df_ila['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_ila.columns else ["All States"]
+                    chosen_ila_state = st.selectbox("🌐 Filter State:", ila_states, key="ila_state_filter")
+                with ila_f3:
+                    ila_jcs = ["All JCs"] + sorted([str(x) for x in df_ila['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_ila.columns else ["All JCs"]
+                    chosen_ila_jc = st.selectbox("🌐 Filter JC:", ila_jcs, key="ila_jc_filter")
+                with ila_f4:
+                    ila_statuses = ["All Statuses"] + sorted([str(x) for x in df_ila['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'DG Automation Status' in df_ila.columns else ["All Statuses"]
+                    chosen_ila_status = st.selectbox("⚡ Filter Status:", ila_statuses, key="ila_status_filter")
+
+                filtered_ila_df = df_ila.copy()
+                if chosen_ila_state != "All States" and 'State' in filtered_ila_df.columns:
+                    filtered_ila_df = filtered_ila_df[filtered_ila_df['State'].astype(str).str.strip() == chosen_ila_state]
+                if chosen_ila_jc != "All JCs" and 'JC' in filtered_ila_df.columns:
+                    filtered_ila_df = filtered_ila_df[filtered_ila_df['JC'].astype(str).str.strip() == chosen_ila_jc]
+                if chosen_ila_status != "All Statuses" and 'DG Automation Status' in filtered_ila_df.columns:
+                    filtered_ila_df = filtered_ila_df[filtered_ila_df['DG Automation Status'].astype(str).str.strip() == chosen_ila_status]
+                if ila_search_query:
+                    ila_mask = filtered_ila_df.astype(str).apply(lambda col: col.str.contains(ila_search_query, case=False, na=False)).any(axis=1)
+                    filtered_ila_df = filtered_ila_df[ila_mask]
+
+                st.info(f"Showing {len(filtered_ila_df):,} matching rows out of {len(df_ila):,} total records.")
+
+                edited_ila_data = st.data_editor(filtered_ila_df, use_container_width=True, height=450, disabled=is_viewer)
+                if not is_viewer and st.button("💾 Save Grid Changes to ILA Tracker", type="primary", use_container_width=True):
+                    for col in st.session_state.ila_tracker_df.columns:
+                        st.session_state.ila_tracker_df[col] = st.session_state.ila_tracker_df[col].astype(object)
+                    
+                    full_ila = df_ila.copy()
+                    full_ila.update(edited_ila_data)
+                    st.session_state.ila_tracker_df = full_ila
+                    save_master_to_disk()
+                    st.success("ILA-AG1 grid updates saved successfully!")
+                    st.rerun()
+
+        with ila_tab2:
+            with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>Single Site Quick Editor, Fault Clearance & Removal</h3>", unsafe_allow_html=True)
+                target_sap_id = st.text_input("Enter Sap ID to Modify / Clear / Remove:", placeholder="Enter Sap ID (e.g. 9011)...").strip().upper()
+                if target_sap_id and 'Sap ID' in df_ila.columns:
+                    matches_ila = df_ila[df_ila['Sap ID'].astype(str).str.contains(target_sap_id, case=False, na=False)]
+                    if not matches_ila.empty:
+                        selected_ila_sap = matches_ila.iloc[0]['Sap ID']
+                        match_ila_idx = df_ila[df_ila['Sap ID'].astype(str).str.strip().str.upper() == str(selected_ila_sap).strip().upper()].index
+                        if not match_ila_idx.empty:
+                            i_idx = match_ila_idx[0]
+                            st.info(f"Selected Record: **{selected_ila_sap}**")
+                            if not is_viewer and st.button("🧹 Clear & Reset Status to OK", type="primary"):
+                                st.session_state.ila_tracker_df.at[i_idx, 'DG Automation Status'] = "Automation Ok"
+                                st.session_state.ila_tracker_df.at[i_idx, 'Present Remarks'] = "OK"
+                                save_master_to_disk()
+                                st.success("Cleared successfully!")
+                                st.rerun()
+
+        with ila_tab3:
+            with st.container(border=True):
+                st.markdown("<h3 style='margin:0 0 10px 0; color: #facc15;'>Add New Case / Site Entry</h3>", unsafe_allow_html=True)
+                if not is_viewer:
+                    with st.form("new_ila_case_form"):
+                        new_sap = st.text_input("Sap ID (Required):").strip().upper()
+                        new_stat_c = st.selectbox("DG Automation Status:", STATUS_CHOICES)
+                        if st.form_submit_button("➕ Add New Case Entry", type="primary", use_container_width=True):
+                            if new_sap:
+                                new_row_data = {'Sap ID': str(new_sap), 'DG Automation Status': str(new_stat_c)}
+                                new_df_row = pd.DataFrame([new_row_data])
+                                st.session_state.ila_tracker_df = pd.concat([st.session_state.ila_tracker_df, new_df_row], ignore_index=True)
+                                save_master_to_disk()
+                                st.success("Added successfully!")
+                                st.rerun()
 
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
