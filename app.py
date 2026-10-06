@@ -148,41 +148,42 @@ def load_google_sheet_tracker():
         return s
 
     if not df_status.empty:
-        orig_cols = list(df_status.columns)
+        cm_links = []
+        pm_links = []
         
-        col_cm_found = None
-        col_pm_found = None
+        for idx, row in df_status.iterrows():
+            c_link = ""
+            p_link = ""
+            
+            if len(df_status.columns) > 28:
+                val_ac = row.iloc[28]
+                cleaned_ac = extract_clean_fsr_link(val_ac)
+                if cleaned_ac:
+                    c_link = cleaned_ac
+                    
+            if len(df_status.columns) > 29:
+                val_ad = row.iloc[29]
+                cleaned_ad = extract_clean_fsr_link(val_ad)
+                if cleaned_ad:
+                    p_link = cleaned_ad
 
-        # Pass 1: Check by explicit name matching
-        for c in orig_cols:
-            cu = str(c).strip().upper()
-            if any(bad in cu for bad in ['CONTACT', 'ACCESS', 'ACTION', 'ACTIVITY']):
-                continue
-            # CM match
-            if cu in ['COL AC', 'COLUMN AC', 'AC'] or (('CM' in cu or 'CORRECTIVE' in cu) and any(kw in cu for kw in ['LINK', 'FSR', 'DRIVE', 'URL'])):
-                if not col_cm_found:
-                    col_cm_found = c
-            # PM match
-            if cu in ['COL AD', 'COLUMN AD', 'AD'] or (('PM' in cu or 'PREVENTIVE' in cu) and any(kw in cu for kw in ['LINK', 'FSR', 'DRIVE', 'URL'])):
-                if not col_pm_found:
-                    col_pm_found = c
+            for col_name in df_status.columns:
+                cu = str(col_name).strip().upper()
+                if any(bad in cu for bad in ['CONTACT', 'ACCESS', 'ACTION', 'ACTIVITY']):
+                    continue
+                cell_val = row[col_name]
+                cleaned_val = extract_clean_fsr_link(cell_val)
+                if cleaned_val:
+                    if ('CM' in cu or 'CORRECTIVE' in cu or 'COL AC' in cu or 'AC' == cu) and not c_link and 'PM' not in cu:
+                        c_link = cleaned_val
+                    elif ('PM' in cu or 'PREVENTIVE' in cu or 'COL AD' in cu or 'AD' == cu) and not p_link and 'CM' not in cu:
+                        p_link = cleaned_val
 
-        # Pass 2: Positional standard Excel mapping (Column AC = Index 28, Column AD = Index 29)
-        if not col_cm_found and len(orig_cols) > 28:
-            col_cm_found = orig_cols[28]
-        if not col_pm_found and len(orig_cols) > 29:
-            col_pm_found = orig_cols[29]
-
-        # Prevent CM and PM pointing to the exact same column
-        if col_cm_found and col_pm_found and col_cm_found == col_pm_found:
-            if len(orig_cols) > 29:
-                col_cm_found = orig_cols[28]
-                col_pm_found = orig_cols[29]
-            else:
-                col_pm_found = None
-
-        df_status['Google Drive Link CM'] = df_status[col_cm_found].apply(extract_clean_fsr_link) if col_cm_found else ""
-        df_status['Google Drive Link PM'] = df_status[col_pm_found].apply(extract_clean_fsr_link) if col_pm_found else ""
+            cm_links.append(c_link)
+            pm_links.append(p_link)
+            
+        df_status['Google Drive Link CM'] = cm_links
+        df_status['Google Drive Link PM'] = pm_links
 
         if 'SAIP ID' in df_status.columns:
             df_status = df_status[df_status['SAIP ID'].notna()]
@@ -819,19 +820,9 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    # Strictly separate CM (Col AC = index 28) and PM (Col AD = index 29) links with direct positional fallback
+                    # Strictly separate CM (Col AC) and PM (Col AD) links
                     cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
                     pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
-
-                    if (not cm_link or cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null', '']) and len(site_row) > 28:
-                        val_28 = str(site_row.iloc[28]).strip()
-                        if val_28.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null', '', '00:00:00']:
-                            cm_link = val_28
-
-                    if (not pm_link or pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null', '']) and len(site_row) > 29:
-                        val_29 = str(site_row.iloc[29]).strip()
-                        if val_29.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null', '', '00:00:00']:
-                            pm_link = val_29
 
                     if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
                     if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
@@ -861,4 +852,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)  
+                            """, unsafe_allow_html=True) 
