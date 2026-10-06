@@ -137,38 +137,52 @@ def load_google_sheet_tracker():
         # Extract any embedded http/https URL
         url_match = re.search(r'(https?://[^\s",\']+)', s)
         if url_match: return url_match.group(1).strip()
-        # Filter out mobile phone numbers
+        # Filter out mobile phone numbers (10 digits starting with 6,7,8,9)
         cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
         if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
             return ""
         return s
 
     if not df_status.empty:
-        # Map Col AC (Column index 28) -> Google Drive Link CM
-        # Map Col AD (Column index 29) -> Google Drive Link PM
-        col_ac_target = None
-        col_ad_target = None
+        # Strictly find Col AC (CM) vs Col AD (PM)
+        orig_cols = list(df_status.columns)
+        col_cm_found = None
+        col_pm_found = None
         
-        for idx, c in enumerate(df_status.columns):
+        # 1. Check by explicit CM vs PM keywords in column header
+        for c in orig_cols:
             cu = str(c).strip().upper()
-            if idx == 28 or cu in ['COL AC', 'COLUMN AC', 'AC', 'CM FSR LINK', 'GOOGLE DRIVE LINK CM']:
-                col_ac_target = c
-            elif idx == 29 or cu in ['COL AD', 'COLUMN AD', 'AD', 'PM FSR LINK', 'GOOGLE DRIVE LINK PM']:
-                col_ad_target = c
-                
-        if col_ac_target is not None:
-            df_status['Google Drive Link CM'] = df_status[col_ac_target].apply(extract_clean_fsr_link)
-        elif len(df_status.columns) > 28:
-            df_status['Google Drive Link CM'] = df_status.iloc[:, 28].apply(extract_clean_fsr_link)
-        else:
-            df_status['Google Drive Link CM'] = ""
+            if 'CONTACT' in cu or 'ACCESS' in cu or 'ACTION' in cu:
+                continue
+            if 'CM' in cu and not col_cm_found and 'PM' not in cu:
+                col_cm_found = c
+            elif 'PM' in cu and not col_pm_found and 'CM' not in cu:
+                col_pm_found = c
 
-        if col_ad_target is not None:
-            df_status['Google Drive Link PM'] = df_status[col_ad_target].apply(extract_clean_fsr_link)
-        elif len(df_status.columns) > 29:
-            df_status['Google Drive Link PM'] = df_status.iloc[:, 29].apply(extract_clean_fsr_link)
-        else:
-            df_status['Google Drive Link PM'] = ""
+        # 2. Check by column AC / AD letter designation
+        for c in orig_cols:
+            cu = str(c).strip().upper()
+            if cu in ['COL AC', 'COLUMN AC', 'AC'] and not col_cm_found:
+                col_cm_found = c
+            elif cu in ['COL AD', 'COLUMN AD', 'AD'] and not col_pm_found:
+                col_pm_found = c
+
+        # 3. Positional fallback: Column index 28 (Col AC) and index 29 (Col AD)
+        if not col_cm_found and len(orig_cols) > 28:
+            col_cm_found = orig_cols[28]
+        if not col_pm_found and len(orig_cols) > 29:
+            col_pm_found = orig_cols[29]
+
+        # Ensure CM and PM NEVER point to the exact same column!
+        if col_cm_found and col_pm_found and col_cm_found == col_pm_found:
+            if len(orig_cols) > 29:
+                col_cm_found = orig_cols[28]
+                col_pm_found = orig_cols[29]
+            else:
+                col_pm_found = None
+
+        df_status['Google Drive Link CM'] = df_status[col_cm_found].apply(extract_clean_fsr_link) if col_cm_found else ""
+        df_status['Google Drive Link PM'] = df_status[col_pm_found].apply(extract_clean_fsr_link) if col_pm_found else ""
 
         if 'SAIP ID' in df_status.columns:
             df_status = df_status[df_status['SAIP ID'].notna()]
@@ -805,20 +819,9 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    # Automatic Autoload: Retrieve CM (Col AC) & PM (Col AD) directly from live row data
+                    # Strictly separate CM (Col AC) and PM (Col AD) links
                     cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
                     pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
-                    
-                    # Direct positional fallback to Column AC (index 28) and Column AD (index 29)
-                    if (not cm_link or cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']) and len(site_row) > 28:
-                        val_ac = str(site_row.iloc[28]).strip()
-                        if val_ac.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null'] and not ('00:00:00' in val_ac):
-                            cm_link = val_ac
-                            
-                    if (not pm_link or pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']) and len(site_row) > 29:
-                        val_ad = str(site_row.iloc[29]).strip()
-                        if val_ad.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null'] and not ('00:00:00' in val_ad):
-                            pm_link = val_ad
 
                     if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
                     if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
@@ -826,8 +829,8 @@ elif page == "🔍 AI Site Diagnostics":
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
                         st.markdown("##### 📄 Google Drive Link CM (Col AC)")
-                        if cm_link and cm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
-                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}")
+                        if cm_link:
+                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}+CM")
                             st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
                         else:
                             st.markdown("""
@@ -838,9 +841,9 @@ elif page == "🔍 AI Site Diagnostics":
 
                     with f_col2:
                         st.markdown("##### 📄 Google Drive Link PM (Col AD)")
-                        if pm_link and pm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
-                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}")
-                            st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
+                        if pm_link:
+                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={selected_site}+PM")
+                            st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #10b981; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
