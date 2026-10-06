@@ -130,6 +130,72 @@ def load_google_sheet_tracker():
                 except Exception as e2:
                     err_msg += " | " + str(e2)
 
+    def extract_clean_fsr_link(val):
+        if pd.isna(val) or val is None: return ""
+        s = str(val).strip()
+        if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', 'null'] or '00:00:00' in s: return ""
+        if 'http://' in s or 'https://' in s:
+            for part in s.split():
+                if part.startswith('http://') or part.startswith('https://'):
+                    return part.strip('"\'')
+        if 'drive.google.com' in s:
+            for part in s.split():
+                if 'drive.google.com' in part:
+                    return "https://" + part.strip('"\'')
+        cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
+        if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
+            return ""
+        return s
+
+    if not df_status.empty:
+        orig_cols = list(df_status.columns)
+        col_cm_found = None
+        col_pm_found = None
+
+        for c in orig_cols:
+            cu = str(c).strip().upper()
+            if any(bad in cu for bad in ['CONTACT', 'ACCESS', 'ACTION', 'ACTIVITY']):
+                continue
+            if cu in ['COL AC', 'COLUMN AC', 'AC'] or (('CM' in cu or 'CORRECTIVE' in cu) and any(kw in cu for kw in ['LINK', 'FSR', 'DRIVE', 'URL'])):
+                if not col_cm_found:
+                    col_cm_found = c
+            if cu in ['COL AD', 'COLUMN AD', 'AD'] or (('PM' in cu or 'PREVENTIVE' in cu) and any(kw in cu for kw in ['LINK', 'FSR', 'DRIVE', 'URL'])):
+                if not col_pm_found:
+                    col_pm_found = c
+
+        if not col_cm_found and len(orig_cols) > 28:
+            col_cm_found = orig_cols[28]
+        if not col_pm_found and len(orig_cols) > 29:
+            col_pm_found = orig_cols[29]
+
+        if col_cm_found and col_pm_found and col_cm_found == col_pm_found:
+            if len(orig_cols) > 29:
+                col_cm_found = orig_cols[28]
+                col_pm_found = orig_cols[29]
+            else:
+                col_pm_found = None
+
+        df_status['Google Drive Link CM'] = df_status[col_cm_found].apply(extract_clean_fsr_link) if col_cm_found else ""
+        df_status['Google Drive Link PM'] = df_status[col_pm_found].apply(extract_clean_fsr_link) if col_pm_found else ""
+
+        if 'SAIP ID' in df_status.columns:
+            df_status = df_status[df_status['SAIP ID'].notna()]
+            df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
+            df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
+        if 'DG Make' in df_status.columns:
+            df_status = df_status[df_status['DG Make'].notna()]
+            df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
+        if 'JC' in df_status.columns: df_status['JC'] = df_status['JC'].astype(str).str.strip()
+        if 'State' in df_status.columns: df_status['State'] = df_status['State'].astype(str).str.strip()
+        if 'Bucket' in df_status.columns:
+            df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
+            df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
+            
+    st.session_state['data_source_mode'] = source_status
+    if err_msg:
+        st.session_state['data_source_err'] = err_msg
+    return df_status
+
 def load_ila_tracker():
     df_ila = pd.DataFrame()
     if DEFAULT_ILA and os.path.exists(DEFAULT_ILA):
@@ -779,4 +845,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)  
+                            """, unsafe_allow_html=True)     
