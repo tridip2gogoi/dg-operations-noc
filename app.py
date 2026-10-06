@@ -795,11 +795,15 @@ elif page == "🔍 AI Site Diagnostics":
 
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
-                        st.markdown("##### 📄 Google Drive Link CM")
+                        st.markdown("##### 📄 Google Drive Link CM (Col AC)")
                         if cm_link and cm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
                             st.markdown(f"<span style='color: #ffffff; font-size: 13px; font-weight: 700;'>{cm_link}</span>", unsafe_allow_html=True)
-                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={cm_link}")
-                            st.link_button("🌐 Open CM FSR Link", cm_url, use_container_width=True)
+                            if cm_link.startswith(('http://', 'https://', 'www.')):
+                                cm_url = cm_link if cm_link.startswith('http') else f"https://{cm_link}"
+                                st.link_button("🌐 Open CM FSR Link", cm_url, use_container_width=True)
+                            else:
+                                st.markdown(f'<div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #facc15; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; color: #facc15; font-size: 13px;"><b>Docket/ID:</b> {cm_link} (Update Col AC with full Drive link if needed)</div>', unsafe_allow_html=True)
+                                st.link_button("🔍 Search Google Drive", f"https://drive.google.com/drive/u/0/search?q={selected_site}+{cm_link}", use_container_width=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
@@ -808,11 +812,15 @@ elif page == "🔍 AI Site Diagnostics":
                             """, unsafe_allow_html=True)
 
                     with f_col2:
-                        st.markdown("##### 📄 Google Drive Link PM")
+                        st.markdown("##### 📄 Google Drive Link PM (Col AD)")
                         if pm_link and pm_link.lower() not in ['nan', 'none', '0', '0.0', '', 'nat']:
                             st.markdown(f"<span style='color: #ffffff; font-size: 13px; font-weight: 700;'>{pm_link}</span>", unsafe_allow_html=True)
-                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={pm_link}")
-                            st.link_button("🌐 Open PM FSR Link", pm_url, use_container_width=True)
+                            if pm_link.startswith(('http://', 'https://', 'www.')):
+                                pm_url = pm_link if pm_link.startswith('http') else f"https://{pm_link}"
+                                st.link_button("🌐 Open PM FSR Link", pm_url, use_container_width=True)
+                            else:
+                                st.markdown(f'<div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #facc15; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; color: #facc15; font-size: 13px;"><b>Docket/ID:</b> {pm_link} (Update Col AD with full Drive link if needed)</div>', unsafe_allow_html=True)
+                                st.link_button("🔍 Search Google Drive", f"https://drive.google.com/drive/u/0/search?q={selected_site}+{pm_link}", use_container_width=True)
                         else:
                             st.markdown("""
                             <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
