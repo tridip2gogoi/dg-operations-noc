@@ -249,34 +249,13 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.markdown("## ⚙️ Fleet Automation Classification & Root-Cause Analysis")
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
     
-    if not df_status.empty and 'JC' in df_status.columns:
-        jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']])
-        sel_jc = st.selectbox("Select JC Circle:", jcs)
-        f_st = df_status if sel_jc == "All JCs" else df_status[df_status['JC'].astype(str).str.strip() == sel_jc]
-        
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            with st.container(border=True):
-                st.markdown(f"<h4 style='color: #0f172a;'>Status Summary ({sel_jc})</h4>", unsafe_allow_html=True)
-                if 'DG Automation Status' in f_st.columns:
-                    st.dataframe(f_st['DG Automation Status'].value_counts().reset_index(), use_container_width=True, hide_index=True)
-        with col2:
-            with st.container(border=True):
-                st.markdown(f"<h4 style='color: #0f172a;'>Bucket Distribution ({sel_jc})</h4>", unsafe_allow_html=True)
-                if 'Bucket' in f_st.columns:
-                    b_df = f_st[f_st['Bucket'].notna() & (f_st['Bucket'].astype(str).str.strip() != '')]
-                    if not b_df.empty:
-                        fig_b = px.bar(b_df['Bucket'].value_counts().reset_index(), x='Bucket', y='count', color='count', color_continuous_scale="Blues")
-                        fig_b.update_layout(height=320, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="#ffffff", paper_bgcolor="#ffffff")
-                        st.plotly_chart(fig_b, use_container_width=True)
-
-        st.markdown("---")
+    if not df_status.empty:
         t1, t2, t3, t4, t5 = st.tabs([
             "📊 JC-Wise Automation Status Matrix",
             "🗂️ JC-Wise Problem Bucket Matrix",
             "⚡ GCU Sites: JC vs DG Make & KVA",
-            "🛠️ DG Breakdown & Manual",
-            "📋 JC-Wise Bucket Summary"
+            "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
+            "📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)"
         ])
         
         with t1:
@@ -299,12 +278,79 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
                         st.dataframe(pd.crosstab([df_gcu['JC'], df_gcu['DG Make']], df_gcu['DG Rating'], margins=True, margins_name="Total"), use_container_width=True)
         with t4:
             with st.container(border=True):
-                st.markdown("<h4 style='color: #0f172a;'>DG Breakdown & Manual Records</h4>", unsafe_allow_html=True)
-                st.dataframe(f_st[f_st['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok'], use_container_width=True)
+                st.markdown("### JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)")
+                bm_f1, bm_f2, bm_f3, bm_f4 = st.columns(4)
+                with bm_f1:
+                    b_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+                    chosen_b_state = st.selectbox("Filter State:", b_states, key="breakdown_state_filter")
+                with bm_f2:
+                    b_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+                    chosen_b_jc = st.selectbox("Filter JC:", b_jcs, key="breakdown_jc_filter")
+                with bm_f3:
+                    b_statuses = ["All Statuses"] + sorted([str(x) for x in df_status['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none', 'automation ok']]) if 'DG Automation Status' in df_status.columns else ["All Statuses"]
+                    chosen_b_status = st.selectbox("Filter Status:", b_statuses, key="breakdown_status_filter")
+                with bm_f4:
+                    b_buckets = ["All Buckets"] + sorted([str(x) for x in df_status['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'Bucket' in df_status.columns else ["All Buckets"]
+                    chosen_b_bucket = st.selectbox("Filter Bucket:", b_buckets, key="breakdown_bucket_filter")
+
+                filtered_b_df = df_status.copy()
+                if not filtered_b_df.empty:
+                    if 'DG Automation Status' in filtered_b_df.columns:
+                        filtered_b_df = filtered_b_df[filtered_b_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+                    if chosen_b_state != "All States" and 'State' in filtered_b_df.columns:
+                        filtered_b_df = filtered_b_df[filtered_b_df['State'].astype(str).str.strip() == chosen_b_state]
+                    if chosen_b_jc != "All JCs" and 'JC' in filtered_b_df.columns:
+                        filtered_b_df = filtered_b_df[filtered_b_df['JC'].astype(str).str.strip() == chosen_b_jc]
+                    if chosen_b_status != "All Statuses" and 'DG Automation Status' in filtered_b_df.columns:
+                        filtered_b_df = filtered_b_df[filtered_b_df['DG Automation Status'].astype(str).str.strip() == chosen_b_status]
+                    if chosen_b_bucket != "All Buckets" and 'Bucket' in filtered_b_df.columns:
+                        filtered_b_df = filtered_b_df[filtered_b_df['Bucket'].astype(str).str.strip() == chosen_b_bucket]
+
+                st.markdown("##### JC-Wise Summary: Bucket Distribution")
+                if 'JC' in filtered_b_df.columns and 'Bucket' in filtered_b_df.columns and not filtered_b_df.empty:
+                    st.dataframe(pd.crosstab(filtered_b_df['JC'], filtered_b_df['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
+                st.markdown("##### Detailed Site Records")
+                st.dataframe(filtered_b_df, use_container_width=True)
+
         with t5:
             with st.container(border=True):
-                st.markdown("<h4 style='color: #0f172a;'>JC-Wise Bucket Summary</h4>", unsafe_allow_html=True)
-                st.dataframe(f_st, use_container_width=True)
+                st.markdown("### JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)")
+                p_f1, p_f2, p_f3, p_f4 = st.columns(4)
+                with p_f1:
+                    p_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+                    chosen_p_state = st.selectbox("Filter State:", p_states, key="pending_state_filter")
+                with p_f2:
+                    p_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+                    chosen_p_jc = st.selectbox("Filter JC:", p_jcs, key="pending_jc_filter")
+                with p_f3:
+                    p_statuses = ["All Statuses"] + sorted([str(x) for x in df_status['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none', 'automation ok']]) if 'DG Automation Status' in df_status.columns else ["All Statuses"]
+                    chosen_p_status = st.selectbox("Filter Status:", p_statuses, key="pending_status_filter")
+                with p_f4:
+                    p_buckets = ["All Buckets"] + sorted([str(x) for x in df_status['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'Bucket' in df_status.columns else ["All Buckets"]
+                    chosen_p_bucket = st.selectbox("Filter Bucket:", p_buckets, key="pending_bucket_filter")
+
+                pending_df = df_status.copy()
+                if not pending_df.empty:
+                    if 'DG Automation Status' in pending_df.columns:
+                        pending_df = pending_df[pending_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+                    if 'Bucket' in pending_df.columns:
+                        pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
+                        target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
+                        pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
+                    if chosen_p_state != "All States" and 'State' in pending_df.columns:
+                        pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
+                    if chosen_p_jc != "All JCs" and 'JC' in pending_df.columns:
+                        pending_df = pending_df[pending_df['JC'].astype(str).str.strip() == chosen_p_jc]
+                    if chosen_p_status != "All Statuses" and 'DG Automation Status' in pending_df.columns:
+                        pending_df = pending_df[pending_df['DG Automation Status'].astype(str).str.strip() == chosen_p_status]
+                    if chosen_p_bucket != "All Buckets" and 'Bucket' in pending_df.columns:
+                        pending_df = pending_df[pending_df['Bucket'].astype(str).str.strip() == chosen_p_bucket]
+
+                st.markdown("##### JC-Wise & Bucket-Wise Summary")
+                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and not pending_df.empty:
+                    st.dataframe(pd.crosstab(pending_df['JC'], pending_df['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
+                st.markdown("##### Detailed Site Records")
+                st.dataframe(pending_df, use_container_width=True)
 
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
@@ -336,7 +382,7 @@ elif page == "🔍 AI Site Diagnostics":
     if sq and not df_status.empty and 'SAIP ID' in df_status.columns:
         m = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)]
         if not m.empty:
-            r = m.iloc[0]
+            r = m.iloc[5] if len(m) > 5 else m.iloc[0]
             st.markdown(f"### Site ID: {r.get('SAIP ID')} | Status: {r.get('DG Automation Status')}")
             diag_t1, diag_t2 = st.tabs(["Technical Specs", "Resolution History & FSR Google Drive Link"])
             with diag_t2:
