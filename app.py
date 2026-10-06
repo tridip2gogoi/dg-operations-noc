@@ -217,7 +217,7 @@ if page == "📊 Executive Control Center":
         k1, k2, k3, k4, k5, k6 = st.columns(6)
         k1.metric("Total Sites", f"{tot:,}")
         k2.metric("Automation Rate", f"{round((ok/tot)*100, 1)}%" if tot else "0%")
-        k3.metric("Manual Mode", man)
+        k3.metric("Manual Mode", manual_mode if 'manual_mode' in locals() else man)
         k4.metric("DG Breakdown", bd)
         k5.metric("DG BER", ber)
         k6.metric("DG Overload", ovr)
@@ -255,7 +255,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
             "🗂️ JC-Wise Problem Bucket Matrix",
             "⚡ GCU Sites: JC vs DG Make & KVA",
             "🛠️ DG Breakdown & Manual (GCU, OEM, Breakdown)",
-            "📋 JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)"
+            "📋 JC-Wise Docket Received & Pending Summary"
         ])
         
         with t1:
@@ -314,43 +314,56 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
 
         with t5:
             with st.container(border=True):
-                st.markdown("### JC-Wise Bucket Summary (DG Breakdown, GCU, OEM Spare part)")
-                p_f1, p_f2, p_f3, p_f4 = st.columns(4)
+                st.markdown("### JC-Wise Docket Received & Pending Summary (DG Breakdown, GCU, OEM Spare part)")
+                st.caption("Filters strictly for Buckets: **DG Breakdown**, **GCU**, and **OEM Spare parts**, categorized by Docket Received vs Docket Pending.")
+                
+                p_f1, p_f2 = st.columns(2)
                 with p_f1:
                     p_states = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
-                    chosen_p_state = st.selectbox("Filter State:", p_states, key="pending_state_filter")
+                    chosen_p_state = st.selectbox("Filter State:", p_states, key="docket_state_filter")
                 with p_f2:
                     p_jcs = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
-                    chosen_p_jc = st.selectbox("Filter JC:", p_jcs, key="pending_jc_filter")
-                with p_f3:
-                    p_statuses = ["All Statuses"] + sorted([str(x) for x in df_status['DG Automation Status'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none', 'automation ok']]) if 'DG Automation Status' in df_status.columns else ["All Statuses"]
-                    chosen_p_status = st.selectbox("Filter Status:", p_statuses, key="pending_status_filter")
-                with p_f4:
-                    p_buckets = ["All Buckets"] + sorted([str(x) for x in df_status['Bucket'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'Bucket' in df_status.columns else ["All Buckets"]
-                    chosen_p_bucket = st.selectbox("Filter Bucket:", p_buckets, key="pending_bucket_filter")
+                    chosen_p_jc = st.selectbox("Filter JC:", p_jcs, key="docket_jc_filter")
 
-                pending_df = df_status.copy()
-                if not pending_df.empty:
-                    if 'DG Automation Status' in pending_df.columns:
-                        pending_df = pending_df[pending_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
-                    if 'Bucket' in pending_df.columns:
-                        pending_df['Bucket_Clean'] = pending_df['Bucket'].astype(str).str.strip().str.title()
+                docket_df = df_status.copy()
+                if not docket_df.empty:
+                    # Exclude Automation Ok
+                    if 'DG Automation Status' in docket_df.columns:
+                        docket_df = docket_df[docket_df['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
+                    
+                    # Filter strictly for DG Breakdown, GCU, OEM Spare parts
+                    if 'Bucket' in docket_df.columns:
+                        docket_df['Bucket_Clean'] = docket_df['Bucket'].astype(str).str.strip().str.title()
                         target_bkts = [b.title() for b in ["DG Breakdown", "GCU", "OEM Spare parts"]]
-                        pending_df = pending_df[pending_df['Bucket_Clean'].isin(target_bkts)]
-                    if chosen_p_state != "All States" and 'State' in pending_df.columns:
-                        pending_df = pending_df[pending_df['State'].astype(str).str.strip() == chosen_p_state]
-                    if chosen_p_jc != "All JCs" and 'JC' in pending_df.columns:
-                        pending_df = pending_df[pending_df['JC'].astype(str).str.strip() == chosen_p_jc]
-                    if chosen_p_status != "All Statuses" and 'DG Automation Status' in pending_df.columns:
-                        pending_df = pending_df[pending_df['DG Automation Status'].astype(str).str.strip() == chosen_p_status]
-                    if chosen_p_bucket != "All Buckets" and 'Bucket' in pending_df.columns:
-                        pending_df = pending_df[pending_df['Bucket'].astype(str).str.strip() == chosen_p_bucket]
+                        docket_df = docket_df[docket_df['Bucket_Clean'].isin(target_bkts)]
+                    
+                    if chosen_p_state != "All States" and 'State' in docket_df.columns:
+                        docket_df = docket_df[docket_df['State'].astype(str).str.strip() == chosen_p_state]
+                    if chosen_p_jc != "All JCs" and 'JC' in docket_df.columns:
+                        docket_df = docket_df[docket_df['JC'].astype(str).str.strip() == chosen_p_jc]
 
-                st.markdown("##### JC-Wise & Bucket-Wise Summary")
-                if 'JC' in pending_df.columns and 'Bucket' in pending_df.columns and not pending_df.empty:
-                    st.dataframe(pd.crosstab(pending_df['JC'], pending_df['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
-                st.markdown("##### Detailed Site Records")
-                st.dataframe(pending_df, use_container_width=True)
+                    # Determine Docket Status: Received vs Pending (Col V: Present Docket No.)
+                    def get_docket_status(row):
+                        doc = str(row.get('Present Docket No.', '')).strip()
+                        if doc and doc.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat']:
+                            return 'Docket Received'
+                        else:
+                            return 'Docket Pending'
+
+                    if not docket_df.empty:
+                        docket_df['Docket_Status'] = docket_df.apply(get_docket_status, axis=1)
+                        
+                        st.markdown("##### JC-Wise Cross-Tabulation: Bucket vs Docket Status")
+                        # Multi-index crosstab: JC vs (Bucket, Docket_Status)
+                        docket_matrix = pd.crosstab(docket_df['JC'], [docket_df['Bucket_Clean'], docket_df['Docket_Status']], margins=True, margins_name="Total")
+                        st.dataframe(docket_matrix, use_container_width=True)
+                        
+                        st.markdown("##### Detailed Docket Summary Records")
+                        st.dataframe(docket_df, use_container_width=True)
+                    else:
+                        st.info("No records matching the selected buckets and filters.")
+                else:
+                    st.info("No data available.")
 
 elif page == "⛽ Fuel Sensor Telemetry":
     st.markdown("## ⛽ Fuel Sensor Fault Telemetry")
