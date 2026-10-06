@@ -746,23 +746,20 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    # --- DUAL FSR LINKS: GOOGLE DRIVE LINK CM & GOOGLE DRIVE LINK PM ---
+                    # --- ROBUST DUAL FSR LINKS (CM & PM) ---
                     cm_link = ""
                     pm_link = ""
                     
-                    for k in ['Google Drive Link CM', 'Drive Link CM', 'CM Link', 'Google Drive Link (CM)', 'CM FSR']:
-                        if k in site_row and pd.notna(site_row[k]):
-                            val = str(site_row[k]).strip()
-                            if val and val.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in val):
-                                cm_link = val
-                                break
-
-                    for k in ['Google Drive Link PM', 'Drive Link PM', 'PM Link', 'Google Drive Link (PM)', 'PM FSR']:
-                        if k in site_row and pd.notna(site_row[k]):
-                            val = str(site_row[k]).strip()
-                            if val and val.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in val):
-                                pm_link = val
-                                break
+                    for col_col in site_row.index:
+                        c_upper = str(col_col).upper()
+                        val = site_row[col_col]
+                        if pd.notna(val):
+                            v_str = str(val).strip()
+                            if v_str and v_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v_str):
+                                if 'CM' in c_upper and not cm_link:
+                                    cm_link = v_str
+                                elif 'PM' in c_upper and not pm_link:
+                                    pm_link = v_str
 
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
