@@ -250,6 +250,39 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     st.caption("JC-wise breakdown of network automation health, problem buckets, and docket fulfillment statuses.")
     
     if not df_status.empty:
+        jc_options = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+        selected_fleet_jc = st.selectbox("Select JC Circle:", jc_options)
+        
+        filtered_status = df_status if selected_fleet_jc == "All JCs" or 'JC' not in df_status.columns else df_status[df_status['JC'].astype(str).str.strip() == selected_fleet_jc]
+        
+        if 'DG Automation Status' in filtered_status.columns:
+            valid_bucket_base = filtered_status[filtered_status['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok'].copy()
+        else:
+            valid_bucket_base = filtered_status.copy()
+
+        valid_bucket = valid_bucket_base[valid_bucket_base['Bucket'].notna() & (valid_bucket_base['Bucket'].astype(str).str.strip() != '')] if 'Bucket' in valid_bucket_base.columns else pd.DataFrame()
+
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            with st.container(border=True):
+                st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Status Summary ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
+                if 'DG Automation Status' in filtered_status.columns:
+                    stat_summary = filtered_status['DG Automation Status'].value_counts(dropna=False).reset_index()
+                    stat_summary.columns = ['Status Category', 'Site Count']
+                    st.dataframe(stat_summary, use_container_width=True, hide_index=True)
+        with col2:
+            with st.container(border=True):
+                st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket Distribution ({selected_fleet_jc})</h4>", unsafe_allow_html=True)
+                if not valid_bucket.empty:
+                    b_summary = valid_bucket['Bucket'].value_counts().reset_index()
+                    b_summary.columns = ['Root-Cause Bucket', 'Incidents']
+                    fig_b = px.bar(b_summary, x="Root-Cause Bucket", y="Incidents", text="Incidents", color="Incidents", color_continuous_scale="Blues")
+                    fig_b.update_layout(height=340, margin=dict(l=10, r=10, t=10, b=10), plot_bgcolor="#ffffff", paper_bgcolor="#ffffff")
+                    st.plotly_chart(fig_b, use_container_width=True)
+                else:
+                    st.info("No active problem bucket recorded.")
+
+        st.markdown("---")
         t1, t2, t3, t4, t5 = st.tabs([
             "📊 JC-Wise Automation Status Matrix",
             "🗂️ JC-Wise Problem Bucket Matrix",
@@ -368,7 +401,6 @@ elif page == "⛽ Fuel Sensor Telemetry":
         auto_df_fuel = df_status[bkt_match | stat_match].copy()
 
     if not auto_df_fuel.empty:
-        # --- JC FILTER FOR FUEL SENSOR TELEMETRY ---
         fuel_jcs = ["All JCs"] + sorted([str(x) for x in auto_df_fuel['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in auto_df_fuel.columns else ["All JCs"]
         chosen_fuel_jc = st.selectbox("🌐 Filter JC for Fuel Sensor Telemetry:", fuel_jcs, key="fuel_jc_filter")
         
@@ -382,30 +414,29 @@ elif page == "⛽ Fuel Sensor Telemetry":
         p_make = auto_df_fuel_filtered['DG Make'].mode()[0] if 'DG Make' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['DG Make'].mode().empty else "N/A"
         p_rat = auto_df_fuel_filtered['DG Rating'].mode()[0] if 'DG Rating' in auto_df_fuel_filtered.columns and not auto_df_fuel_filtered['DG Rating'].mode().empty else "N/A"
 
-        # --- EXACT METRIC CARDS LAYOUT AS REQUESTED ---
-        fc1, fc2, fc3, fc4 = st.columns(4)
-        with fc1:
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
                 <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Active Faulty Sensors (Master)</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_faults}</span>
             </div>
             """, unsafe_allow_html=True)
-        with fc2:
+        with c2:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
                 <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Most Affected JC</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aff_jc}</span>
             </div>
             """, unsafe_allow_html=True)
-        with fc3:
+        with c3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
                 <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
             </div>
             """, unsafe_allow_html=True)
-        with fc4:
+        with c4:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
                 <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Rating</span><br>
