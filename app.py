@@ -112,37 +112,47 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         
-        # 1. Determine Column AC (Index 28) and Column AD (Index 29)
-        col_ac = None
-        col_ad = None
-        for i, c in enumerate(df_status.columns):
-            cu = str(c).strip().upper()
-            if i == 28 or cu in ['COL AC', 'COLUMN AC', 'AC', 'CM FSR LINK', 'GOOGLE DRIVE LINK CM']:
-                col_ac = c
-            elif i == 29 or cu in ['COL AD', 'COLUMN AD', 'AD', 'PM FSR LINK', 'GOOGLE DRIVE LINK PM']:
-                col_ad = c
-
-        def clean_fsr_val(val):
+        import re
+        def extract_clean_fsr_link(val):
             if pd.isna(val) or val is None: return ""
             s = str(val).strip()
             if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', 'null'] or '00:00:00' in s: return ""
-            # Exclude contact phone numbers
-            digits_only = s.replace('.0', '').replace('-', '').replace(' ', '')
-            if digits_only.isdigit() and len(digits_only) == 10 and digits_only[0] in ['6', '7', '8', '9']:
+            # Handle Google Sheets =HYPERLINK("url", "text")
+            if 'HYPERLINK' in s.upper():
+                m = re.search(r'HYPERLINK\s*\(\s*["\']([^"\']+)["\']', s, re.I)
+                if m: return m.group(1).strip()
+            # Extract any embedded http/https URL
+            url_match = re.search(r'(https?://[^\s",\']+)', s)
+            if url_match: return url_match.group(1).strip()
+            # Filter out mobile phone numbers
+            cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
+            if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
                 return ""
             return s
 
-        if col_ac:
-            df_status['Google Drive Link CM'] = df_status[col_ac].apply(clean_fsr_val)
+        # Map Col AC (Column index 28) -> Google Drive Link CM
+        # Map Col AD (Column index 29) -> Google Drive Link PM
+        col_ac_target = None
+        col_ad_target = None
+        
+        for idx, c in enumerate(df_status.columns):
+            cu = str(c).strip().upper()
+            if idx == 28 or cu in ['COL AC', 'COLUMN AC', 'AC', 'CM FSR LINK', 'GOOGLE DRIVE LINK CM']:
+                col_ac_target = c
+            elif idx == 29 or cu in ['COL AD', 'COLUMN AD', 'AD', 'PM FSR LINK', 'GOOGLE DRIVE LINK PM']:
+                col_ad_target = c
+                
+        if col_ac_target is not None:
+            df_status['Google Drive Link CM'] = df_status[col_ac_target].apply(extract_clean_fsr_link)
         elif len(df_status.columns) > 28:
-            df_status['Google Drive Link CM'] = df_status.iloc[:, 28].apply(clean_fsr_val)
+            df_status['Google Drive Link CM'] = df_status.iloc[:, 28].apply(extract_clean_fsr_link)
         else:
             df_status['Google Drive Link CM'] = ""
 
-        if col_ad:
-            df_status['Google Drive Link PM'] = df_status[col_ad].apply(clean_fsr_val)
+        if col_ad_target is not None:
+            df_status['Google Drive Link PM'] = df_status[col_ad_target].apply(extract_clean_fsr_link)
         elif len(df_status.columns) > 29:
-            df_status['Google Drive Link PM'] = df_status.iloc[:, 29].apply(clean_fsr_val)
+            df_status['Google Drive Link PM'] = df_status.iloc[:, 29].apply(extract_clean_fsr_link)
         else:
             df_status['Google Drive Link PM'] = ""
 
