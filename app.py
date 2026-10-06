@@ -112,12 +112,14 @@ def load_google_sheet_tracker():
         xls_dg = pd.ExcelFile(GOOGLE_SHEET_URL)
         sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
-        for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+        if df_status is not None and not df_status.empty:
+            for col in df_status.columns: df_status[col] = df_status[col].astype(object)
     except Exception as e:
         try:
             csv_url = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
             df_status = pd.read_csv(csv_url)
-            for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+            if df_status is not None and not df_status.empty:
+                for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         except Exception as e_csv:
             source_status = "Local File (Backup)"
             err_msg = str(e) + " | " + str(e_csv)
@@ -126,9 +128,13 @@ def load_google_sheet_tracker():
                     xls_local = pd.ExcelFile(DEFAULT_EXCEL)
                     s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
                     df_status = pd.read_excel(xls_local, sheet_name=s_name)
-                    for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+                    if df_status is not None and not df_status.empty:
+                        for col in df_status.columns: df_status[col] = df_status[col].astype(object)
                 except Exception as e2:
                     err_msg += " | " + str(e2)
+
+    if df_status is None:
+        df_status = pd.DataFrame()
 
     def extract_clean_fsr_link(val):
         if pd.isna(val) or val is None: return ""
