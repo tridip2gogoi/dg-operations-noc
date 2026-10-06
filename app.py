@@ -115,7 +115,7 @@ def load_google_sheet_tracker():
         ac_col_name = None
         for idx, col in enumerate(df_status.columns):
             c_str = str(col).strip().upper()
-            if 'AC' in c_str or 'PDF' in c_str or idx == 28:
+            if 'AC' in c_str or 'PDF' in c_str or 'LINK' in c_str or 'FSR' in c_str or idx == 28:
                 ac_col_name = col
                 break
         if ac_col_name:
@@ -582,14 +582,14 @@ elif page == "⏳ Daily Fault Summary":
 
         st.markdown("---")
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
             if 'JC' in filtered_date_df.columns and 'Bucket' in filtered_date_df.columns and not filtered_date_df.empty:
                 st.dataframe(pd.crosstab(filtered_date_df['JC'], filtered_date_df['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
             else:
                 st.info("No records matching current filters.")
 
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
             st.dataframe(filtered_date_df, use_container_width=True)
     else:
         st.info("No data available.")
@@ -630,10 +630,6 @@ elif page == "🔍 AI Site Diagnostics":
             selected_site = site_row['SAIP ID']
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok')).strip()
             
-            # --- DYNAMIC STATUS BADGE BACKGROUND COLOR AS REQUESTED ---
-            # Automation ok -> Green (#10b981)
-            # Manual mode -> Yellow/Amber (#f59e0b)
-            # DG breakdown & DG BER -> Red (#dc2626)
             s_lower = status_val.lower()
             if 'ok' in s_lower:
                 badge_bg = "#10b981"
@@ -754,19 +750,36 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Remarks (Col Z):</span>", unsafe_allow_html=True)
                     st.markdown(f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>', unsafe_allow_html=True)
                     
-                    pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', '')).strip()
-                    if pdf_link_val and pdf_link.lower() not in ['', 'nan', 'none', '0', '0.0']:
+                    # Robust check for Col AC or any link column
+                    pdf_link_val = ""
+                    for col_key in ['Col AC (FSR PDF link)', 'Col AC', 'FSR PDF link', 'PDF Link', 'Google Drive Link', 'Link']:
+                        if col_key in site_row and pd.notna(site_row[col_key]):
+                            val_str = str(site_row[col_key]).strip()
+                            if val_str and val_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat']:
+                                pdf_link_val = val_str
+                                break
+                    if not pdf_link_val:
+                        # Fallback: check 28th index or similar columns
+                        for idx, val in enumerate(site_row.values):
+                            if idx in [27, 28, 29] and pd.notna(val):
+                                v_str = str(val).strip()
+                                if v_str and v_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat']:
+                                    pdf_link_val = v_str
+                                    break
+
+                    if pdf_link_val:
                         st.markdown(f"""
                         <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.9); border: 1px solid #38bdf8; padding: 12px; border-radius: 6px;">
                             <b style="color: #38bdf8;">📄 Col AC (FSR PDF Link / Google Drive):</b><br>
-                            <span style="color: #ffffff; font-size: 13px;">{pdf_link_val}</span>
+                            <span style="color: #ffffff; font-size: 13px; font-weight: 700;">{pdf_link_val}</span>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        if pdf_link_val.startswith(('http://', 'https://', 'www.')):
-                            target_url = pdf_link_val if pdf_link_val.startswith('http') else f"https://{pdf_link_val}"
-                            st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
-                        else:
-                            st.info(f"Col AC Record: {pdf_link_val}")
+                        target_url = pdf_link_val if pdf_link_val.startswith(('http://', 'https://')) else (f"https://{pdf_link_val}" if pdf_link_val.startswith('www.') else f"https://drive.google.com/search?q={pdf_link_val}")
+                        st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
                     else:
-                        st.info("No FSR PDF or Google Drive link attached in Col AC for this site.")
+                        st.markdown("""
+                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
+                            ℹ️ No FSR PDF or Google Drive link attached in Col AC for this site. (You can update this record in the "In-Portal Master Tracker Editor").
+                        </div>
+                        """, unsafe_allow_html=True)
