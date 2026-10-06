@@ -819,9 +819,19 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    # Strictly separate CM (Col AC) and PM (Col AD) links
+                    # Strictly separate CM (Col AC = index 28) and PM (Col AD = index 29) links with direct positional fallback
                     cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
                     pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
+
+                    if (not cm_link or cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null', '']) and len(site_row) > 28:
+                        val_28 = str(site_row.iloc[28]).strip()
+                        if val_28.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null', '', '00:00:00']:
+                            cm_link = val_28
+
+                    if (not pm_link or pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null', '']) and len(site_row) > 29:
+                        val_29 = str(site_row.iloc[29]).strip()
+                        if val_29.lower() not in ['nan', 'none', '0', '0.0', 'nat', 'null', '', '00:00:00']:
+                            pm_link = val_29
 
                     if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
                     if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
@@ -851,4 +861,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)      
+                            """, unsafe_allow_html=True) 
