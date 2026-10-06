@@ -463,7 +463,58 @@ elif page == "⛽ Fuel Sensor Telemetry":
 
 elif page == "⏳ Daily Fault Summary":
     st.markdown("## ⏳ Daily Fault Summary & JC-Wise Breakdown")
-    if not df_status.empty: st.dataframe(df_status, use_container_width=True)
+    st.caption("Filter faults by specific date (scanned from Col W: Present Docket raise Date) and analyze State, JC, and Problem Buckets.")
+
+    if not df_status.empty:
+        dc_f1, dc_f2, dc_f3 = st.columns(3)
+        with dc_f1:
+            selected_date_filter = "All Dates"
+            if 'Present Docket raise Date' in df_status.columns:
+                valid_dates = sorted([str(x) for x in df_status['Present Docket raise Date'].dropna().unique() if str(x).strip().lower() not in ['', 'nat', 'nan', 'none', '0']])
+                date_options = ["All Dates"] + valid_dates
+                selected_date_filter = st.selectbox("📅 Select Date (Col W):", date_options)
+        with dc_f2:
+            summary_state_opts = ["All States"] + sorted([str(x) for x in df_status['State'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'State' in df_status.columns else ["All States"]
+            chosen_summary_state = st.selectbox("🌐 Filter by State:", summary_state_opts, key="summary_state_filter")
+        with dc_f3:
+            summary_jc_opts = ["All JCs"] + sorted([str(x) for x in df_status['JC'].dropna().unique() if str(x).strip().lower() not in ['', 'nan', 'none']]) if 'JC' in df_status.columns else ["All JCs"]
+            chosen_summary_jc = st.selectbox("🌐 Filter by JC Circle:", summary_jc_opts, key="summary_jc_filter")
+
+        filtered_date_df = df_status.copy()
+        if not filtered_date_df.empty:
+            if selected_date_filter != "All Dates" and 'Present Docket raise Date' in filtered_date_df.columns:
+                filtered_date_df = filtered_date_df[filtered_date_df['Present Docket raise Date'].astype(str).str.startswith(selected_date_filter)]
+            if chosen_summary_state != "All States" and 'State' in filtered_date_df.columns:
+                filtered_date_df = filtered_date_df[filtered_date_df['State'].astype(str).str.strip() == chosen_summary_state]
+            if chosen_summary_jc != "All JCs" and 'JC' in filtered_date_df.columns:
+                filtered_date_df = filtered_date_df[filtered_date_df['JC'].astype(str).str.strip() == chosen_summary_jc]
+
+        p_fuel_sensor = len(filtered_date_df[(filtered_date_df['Bucket'].astype(str).str.strip().str.upper() == 'FUEL SENSOR') | (filtered_date_df['Fuel Sensor Status'].astype(str).str.strip().str.upper() == 'FUEL SENSOR FAULTY')]) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
+        p_dg_battery = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'dg battery']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
+        p_gcu = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'gcu']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
+        p_oem = len(filtered_date_df[filtered_date_df['Bucket'].astype(str).str.strip().str.lower() == 'oem spare parts']) if not filtered_date_df.empty and 'Bucket' in filtered_date_df.columns else 0
+
+        m1, m2, m3, m4, m5, m6 = st.columns(6)
+        m1.metric("Filtered Faults", len(filtered_date_df), f"Date: {selected_date_filter}")
+        m2.metric("Fuel Sensor Faults", p_fuel_sensor)
+        m3.metric("DG Battery", p_dg_battery)
+        m4.metric("GCU Faults", p_gcu)
+        m5.metric("OEM Spare Parts", p_oem)
+        m6.metric("Total Master Base", len(df_status))
+
+        st.markdown("---")
+        with st.container(border=True):
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
+            if 'JC' in filtered_date_df.columns and 'Bucket' in filtered_date_df.columns and not filtered_date_df.empty:
+                st.dataframe(pd.crosstab(filtered_date_df['JC'], filtered_date_df['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
+            else:
+                st.info("No records matching current filters.")
+
+        with st.container(border=True):
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
+            st.dataframe(filtered_date_df, use_container_width=True)
+    else:
+        st.info("No data available.")
 
 elif page == "📈 ILA-AG1 Operations Tracker":
     st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
