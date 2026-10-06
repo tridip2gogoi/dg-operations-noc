@@ -775,7 +775,7 @@ elif page == "🔍 AI Site Diagnostics":
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        target_url = pdf_link_val if pdf_link_val.startswith(('http://', 'https://')) else (f"https://{pdf_link_val}" if pdf_link_val.startswith('www.') else f"https://drive.google.com/search?q={pdf_link_val}")
+                        target_url = pdf_link_val if pdf_link_val.startswith(('http://', 'https://')) else (f"https://{pdf_link_val}" if pdf_link_val.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={pdf_link_val}")
                         st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
                     else:
                         st.markdown("""
