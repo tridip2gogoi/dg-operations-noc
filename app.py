@@ -112,18 +112,37 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         
-        # Explicitly map Column AC (index 28) -> Google Drive Link CM, Column AD (index 29) -> Google Drive Link PM
-        if len(df_status.columns) > 28:
-            ac_col = df_status.columns[28]
-            df_status['Google Drive Link CM'] = df_status[ac_col].apply(lambda x: "" if pd.isna(x) else str(x).strip())
-        else:
-            df_status['Google Drive Link CM'] = ""
-
-        if len(df_status.columns) > 29:
-            ad_col = df_status.columns[29]
-            df_status['Google Drive Link PM'] = df_status[ad_col].apply(lambda x: "" if pd.isna(x) else str(x).strip())
-        else:
-            df_status['Google Drive Link PM'] = ""
+        # Robustly scan all columns for CM and PM links or use index 28 (Col AC) and 29 (Col AD)
+        cm_vals = []
+        pm_vals = []
+        for idx, row_series in df_status.iterrows():
+            c_val = ""
+            p_val = ""
+            # Check by index if available
+            if len(df_status.columns) > 28 and pd.notna(row_series.iloc[28]):
+                v = str(row_series.iloc[28]).strip()
+                if v and v.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v):
+                    c_val = v
+            if len(df_status.columns) > 29 and pd.notna(row_series.iloc[29]):
+                v = str(row_series.iloc[29]).strip()
+                if v and v.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v):
+                    p_val = v
+            
+            # Also check by column name if index is empty
+            for col in df_status.columns:
+                col_up = str(col).upper()
+                cell_v = str(row_series[col]).strip() if pd.notna(row_series[col]) else ""
+                if cell_v and cell_v.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in cell_v):
+                    if ('CM' in col_up or 'AC' in col_up) and not c_val:
+                        c_val = cell_v
+                    elif ('PM' in col_up or 'AD' in col_up) and not p_val:
+                        p_val = cell_v
+            
+            cm_vals.append(c_val)
+            pm_vals.append(p_val)
+            
+        df_status['Google Drive Link CM'] = cm_vals
+        df_status['Google Drive Link PM'] = pm_vals
 
         if 'SAIP ID' in df_status.columns:
             df_status = df_status[df_status['SAIP ID'].notna()]
