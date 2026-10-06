@@ -37,6 +37,7 @@ st.markdown("""
     .badge-warn { background-color: #f59e0b; color: #ffffff; }
     .badge-crit { background-color: #dc2626; color: #ffffff; }
 
+    /* Streamlit tabs yellow theme styling */
     div[data-testid="stTabs"] button p {
         color: #facc15 !important;
         font-weight: 800 !important;
@@ -55,9 +56,11 @@ st.markdown("""
         color: #fef08a !important;
     }
 
+    /* Force all markdown text, paragraphs, and spans to be bright white by default against dark background */
     .stApp p, .stApp span, .stApp div, .stApp label, .stMarkdownContainer p, .element-container p {
         color: #ffffff !important;
     }
+    /* Keep headings and count headlines golden yellow */
     h1, h2, h3, h4, h5, h6, .stMarkdownContainer h1, .stMarkdownContainer h2, .stMarkdownContainer h3, .stMarkdownContainer h4 {
         color: #facc15 !important;
     }
@@ -109,36 +112,37 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         
-        col_ac_name = None
-        col_ad_name = None
-        
-        for idx, col in enumerate(df_status.columns):
-            c_name = str(col).strip().upper()
-            if idx == 28 or c_name == 'AC' or 'COL AC' in c_name or 'COLUMN AC' in c_name or ('CM' in c_name and 'LINK' in c_name):
-                col_ac_name = col
-            elif idx == 29 or c_name == 'AD' or 'COL AD' in c_name or 'COLUMN AD' in c_name or ('PM' in c_name and 'LINK' in c_name):
-                col_ad_name = col
+        # 1. Determine Column AC (Index 28) and Column AD (Index 29)
+        col_ac = None
+        col_ad = None
+        for i, c in enumerate(df_status.columns):
+            cu = str(c).strip().upper()
+            if i == 28 or cu in ['COL AC', 'COLUMN AC', 'AC', 'CM FSR LINK', 'GOOGLE DRIVE LINK CM']:
+                col_ac = c
+            elif i == 29 or cu in ['COL AD', 'COLUMN AD', 'AD', 'PM FSR LINK', 'GOOGLE DRIVE LINK PM']:
+                col_ad = c
 
-        def is_valid_link_val(val):
+        def clean_fsr_val(val):
             if pd.isna(val) or val is None: return ""
             s = str(val).strip()
-            if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat'] or '00:00:00' in s: return ""
-            cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
-            if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
+            if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', 'null'] or '00:00:00' in s: return ""
+            # Exclude contact phone numbers
+            digits_only = s.replace('.0', '').replace('-', '').replace(' ', '')
+            if digits_only.isdigit() and len(digits_only) == 10 and digits_only[0] in ['6', '7', '8', '9']:
                 return ""
             return s
 
-        if col_ac_name:
-            df_status['Google Drive Link CM'] = df_status[col_ac_name].apply(is_valid_link_val)
+        if col_ac:
+            df_status['Google Drive Link CM'] = df_status[col_ac].apply(clean_fsr_val)
         elif len(df_status.columns) > 28:
-            df_status['Google Drive Link CM'] = df_status.iloc[:, 28].apply(is_valid_link_val)
+            df_status['Google Drive Link CM'] = df_status.iloc[:, 28].apply(clean_fsr_val)
         else:
             df_status['Google Drive Link CM'] = ""
 
-        if col_ad_name:
-            df_status['Google Drive Link PM'] = df_status[col_ad_name].apply(is_valid_link_val)
+        if col_ad:
+            df_status['Google Drive Link PM'] = df_status[col_ad].apply(clean_fsr_val)
         elif len(df_status.columns) > 29:
-            df_status['Google Drive Link PM'] = df_status.iloc[:, 29].apply(is_valid_link_val)
+            df_status['Google Drive Link PM'] = df_status.iloc[:, 29].apply(clean_fsr_val)
         else:
             df_status['Google Drive Link PM'] = ""
 
@@ -772,6 +776,7 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
+                    # Read directly from accurately extracted Column AC & AD
                     cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
                     pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
                     
@@ -814,3 +819,28 @@ elif page == "🔍 AI Site Diagnostics":
                                 ℹ️ No PM link attached in Col AD.
                             </div>
                             """, unsafe_allow_html=True)
+                    st.markdown("<hr style='margin: 14px 0; border-color: rgba(250,204,21,0.2);'>", unsafe_allow_html=True)
+                    with st.expander("✏️ Attach / Quick Update FSR Links for " + str(selected_site)):
+                        up_c1, up_c2 = st.columns(2)
+                        with up_c1:
+                            new_cm_input = st.text_input("CM FSR Drive Link (Col AC):", value=cm_link, key=f"edit_cm_{selected_site}", placeholder="https://drive.google.com/file/d/...")
+                        with up_c2:
+                            new_pm_input = st.text_input("PM FSR Drive Link (Col AD):", value=pm_link, key=f"edit_pm_{selected_site}", placeholder="https://drive.google.com/file/d/...")
+                        
+                        if st.button("💾 Save & Update FSR Links", type="primary", key=f"btn_save_fsr_{selected_site}", use_container_width=True):
+                            # Update in master_tracker_df
+                            if not st.session_state.master_tracker_df.empty and 'SAIP ID' in st.session_state.master_tracker_df.columns:
+                                mask = st.session_state.master_tracker_df['SAIP ID'].astype(str).str.strip() == str(selected_site).strip()
+                                if mask.any():
+                                    st.session_state.master_tracker_df.loc[mask, 'Google Drive Link CM'] = new_cm_input.strip()
+                                    st.session_state.master_tracker_df.loc[mask, 'Google Drive Link PM'] = new_pm_input.strip()
+                                    # If original columns 28/29 exist, update them too
+                                    if len(st.session_state.master_tracker_df.columns) > 28:
+                                        ac_col_real = st.session_state.master_tracker_df.columns[28]
+                                        st.session_state.master_tracker_df.loc[mask, ac_col_real] = new_cm_input.strip()
+                                    if len(st.session_state.master_tracker_df.columns) > 29:
+                                        ad_col_real = st.session_state.master_tracker_df.columns[29]
+                                        st.session_state.master_tracker_df.loc[mask, ad_col_real] = new_pm_input.strip()
+                                    save_master_to_disk()
+                                    st.success("✅ FSR Links successfully updated for site " + str(selected_site) + "!")
+                                    st.rerun()
