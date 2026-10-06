@@ -293,18 +293,18 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
         
         with t1:
             with st.container(border=True):
-                st.markdown("<h4 style='color: #0f172a;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #facc15;'>JC vs DG Automation Status Cross-Tabulation</h4>", unsafe_allow_html=True)
                 if 'JC' in df_status.columns and 'DG Automation Status' in df_status.columns:
                     st.dataframe(pd.crosstab(df_status['JC'], df_status['DG Automation Status'], margins=True, margins_name="Total"), use_container_width=True)
         with t2:
             with st.container(border=True):
-                st.markdown("<h4 style='color: #0f172a;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #facc15;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>", unsafe_allow_html=True)
                 if 'JC' in df_status.columns and 'Bucket' in df_status.columns:
                     clean_bkt = df_status[df_status['DG Automation Status'].astype(str).str.strip().str.lower() != 'automation ok']
                     st.dataframe(pd.crosstab(clean_bkt['JC'], clean_bkt['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
         with t3:
             with st.container(border=True):
-                st.markdown("<h4 style='color: #0f172a;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color: #facc15;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>", unsafe_allow_html=True)
                 if 'Bucket' in df_status.columns:
                     df_gcu = df_status[df_status['Bucket'].astype(str).str.strip().str.upper() == 'GCU']
                     if not df_gcu.empty and 'DG Make' in df_gcu.columns and 'DG Rating' in df_gcu.columns:
@@ -446,17 +446,17 @@ elif page == "⛽ Fuel Sensor Telemetry":
 
         st.markdown("---")
         with st.container(border=True):
-            st.markdown("<h4 style='color: #0f172a;'>JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color: #facc15;'>JC-Wise Faulty Sensors Breakdown</h4>", unsafe_allow_html=True)
             if 'JC' in auto_df_fuel_filtered.columns and 'DG Make' in auto_df_fuel_filtered.columns:
                 st.dataframe(pd.crosstab(auto_df_fuel_filtered['JC'], auto_df_fuel_filtered['DG Make'], margins=True, margins_name="Total"), use_container_width=True)
 
         with st.container(border=True):
-            st.markdown("<h4 style='color: #0f172a;'>DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color: #facc15;'>DG Make Wise & KVA Rating Fault Telemetry</h4>", unsafe_allow_html=True)
             if 'DG Make' in auto_df_fuel_filtered.columns and 'DG Rating' in auto_df_fuel_filtered.columns:
                 st.dataframe(pd.crosstab(auto_df_fuel_filtered['DG Make'], auto_df_fuel_filtered['DG Rating'], margins=True, margins_name="Total"), use_container_width=True)
 
         with st.container(border=True):
-            st.markdown("<h4 style='color: #0f172a;'>Active Fuel Sensor Fault Site Registry</h4>", unsafe_agent := auto_df_fuel_filtered)
+            st.markdown("<h4 style='color: #facc15;'>Active Fuel Sensor Fault Site Registry</h4>", unsafe_agent := auto_df_fuel_filtered)
             st.dataframe(auto_df_fuel_filtered, use_container_width=True)
     else:
         st.info("No active fuel sensor faults detected in Master Tracker.")
