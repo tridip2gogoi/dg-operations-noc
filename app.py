@@ -8,7 +8,7 @@ import hashlib
 from io import BytesIO
 
 IST = timezone(timedelta(hours=5, minutes=30))
-st.set_page_config(page_title="NE Circle Telecom DG Ops Center | Enterprise NOC", layout="wide", page_icon="⚡", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="NE Circle Telecom DG Ops Center | Enterprise NOC", layout="wide", page_icon="⚡", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -62,3 +62,7 @@ def clean_date_str(val):
 USER_CREDENTIALS = {
     "tridip2.gogoi": {"password_hash": hashlib.sha256("Gogoi@6095".encode()).hexdigest(), "role": "Super Admin / Operations Head", "name": "Tridip Gogoi", "access": ["all"]},
     "ptpl": {"password_hash": hashlib.sha256("Rintu@2026".encode()).hexdigest(), "role": "NOC Viewer", "name": "PTPL Operations Desk", "access": ["read_only"]}
+}
+
+def verify_login(username, password):
+    if username
