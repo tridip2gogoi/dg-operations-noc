@@ -106,30 +106,44 @@ def verify_login(username, password):
 @st.cache_data(ttl=5)
 def load_google_sheet_tracker():
     df_status = pd.DataFrame()
+    source_status = "Google Sheet Live"
+    err_msg = ""
     try:
         xls_dg = pd.ExcelFile(GOOGLE_SHEET_URL)
         sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
-        
-        import re
-        def extract_clean_fsr_link(val):
-            if pd.isna(val) or val is None: return ""
-            s = str(val).strip()
-            if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', 'null'] or '00:00:00' in s: return ""
-            # Handle Google Sheets =HYPERLINK("url", "text")
-            if 'HYPERLINK' in s.upper():
-                m = re.search(r'HYPERLINK\s*\(\s*["\']([^"\']+)["\']', s, re.I)
-                if m: return m.group(1).strip()
-            # Extract any embedded http/https URL
-            url_match = re.search(r'(https?://[^\s",\']+)', s)
-            if url_match: return url_match.group(1).strip()
-            # Filter out mobile phone numbers
-            cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
-            if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
-                return ""
-            return s
+    except Exception as e:
+        source_status = "Local File (Backup)"
+        err_msg = str(e)
+        if os.path.exists(DEFAULT_EXCEL):
+            try:
+                xls_local = pd.ExcelFile(DEFAULT_EXCEL)
+                s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
+                df_status = pd.read_excel(xls_local, sheet_name=s_name)
+                for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+            except Exception as e2:
+                err_msg += " | " + str(e2)
 
+    import re
+    def extract_clean_fsr_link(val):
+        if pd.isna(val) or val is None: return ""
+        s = str(val).strip()
+        if s.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', 'null'] or '00:00:00' in s: return ""
+        # Handle Google Sheets =HYPERLINK("url", "text")
+        if 'HYPERLINK' in s.upper():
+            m = re.search(r'HYPERLINK\s*\(\s*["\']([^"\']+)["\']', s, re.I)
+            if m: return m.group(1).strip()
+        # Extract any embedded http/https URL
+        url_match = re.search(r'(https?://[^\s",\']+)', s)
+        if url_match: return url_match.group(1).strip()
+        # Filter out mobile phone numbers
+        cleaned_num = s.replace('.0', '').replace('-', '').replace(' ', '')
+        if cleaned_num.isdigit() and len(cleaned_num) == 10 and cleaned_num[0] in ['6', '7', '8', '9']:
+            return ""
+        return s
+
+    if not df_status.empty:
         # Map Col AC (Column index 28) -> Google Drive Link CM
         # Map Col AD (Column index 29) -> Google Drive Link PM
         col_ac_target = None
@@ -168,10 +182,10 @@ def load_google_sheet_tracker():
         if 'Bucket' in df_status.columns:
             df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
             df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
-    except Exception:
-        if os.path.exists(DEFAULT_EXCEL):
-            try: df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
-            except: pass
+            
+    st.session_state['data_source_mode'] = source_status
+    if err_msg:
+        st.session_state['data_source_err'] = err_msg
     return df_status
 
 def load_ila_tracker():
@@ -239,7 +253,12 @@ df_ila = st.session_state.ila_tracker_df
 
 with st.container(border=True):
     top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1.2])
-    with top_c1: st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** `Google Drive Live`")
+    with top_c1: 
+        curr_mode = st.session_state.get('data_source_mode', 'Google Sheet Live')
+        mode_badge = f"`{curr_mode}`" if "Live" in curr_mode else f"⚠️ `{curr_mode}`"
+        st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** {mode_badge}")
+        if 'data_source_err' in st.session_state and "Local" in curr_mode:
+            st.caption(f"⚠️ Live Sheet Sync Error: {st.session_state['data_source_err'][:90]}")
     with top_c2:
         if st.button("🔄 Force Refresh & Sync", type="primary", use_container_width=True):
             st.cache_data.clear()
