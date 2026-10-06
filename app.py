@@ -112,25 +112,18 @@ def load_google_sheet_tracker():
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
         for col in df_status.columns: df_status[col] = df_status[col].astype(object)
         
-        # Map exact columns for CM (Col AC) and PM (Col AD)
-        ac_col = None
-        ad_col = None
-        for idx, col in enumerate(df_status.columns):
-            c_str = str(col).strip().upper()
-            if idx == 28 or 'AC' in c_str:
-                ac_col = col
-            if idx == 29 or 'AD' in c_str:
-                ad_col = col
-                
-        if ac_col:
+        # Explicitly map Column AC (index 28) -> Google Drive Link CM, Column AD (index 29) -> Google Drive Link PM
+        if len(df_status.columns) > 28:
+            ac_col = df_status.columns[28]
             df_status['Google Drive Link CM'] = df_status[ac_col].apply(lambda x: "" if pd.isna(x) else str(x).strip())
         else:
-            if 'Google Drive Link CM' not in df_status.columns: df_status['Google Drive Link CM'] = ""
-            
-        if ad_col:
+            df_status['Google Drive Link CM'] = ""
+
+        if len(df_status.columns) > 29:
+            ad_col = df_status.columns[29]
             df_status['Google Drive Link PM'] = df_status[ad_col].apply(lambda x: "" if pd.isna(x) else str(x).strip())
         else:
-            if 'Google Drive Link PM' not in df_status.columns: df_status['Google Drive Link PM'] = ""
+            df_status['Google Drive Link PM'] = ""
 
         if 'SAIP ID' in df_status.columns:
             df_status = df_status[df_status['SAIP ID'].notna()]
@@ -762,20 +755,11 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
                     st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
                     
-                    # --- ROBUST DUAL FSR LINKS (CM & PM) ---
-                    cm_link = ""
-                    pm_link = ""
+                    cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
+                    pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
                     
-                    for col_col in site_row.index:
-                        c_upper = str(col_col).upper()
-                        val = site_row[col_col]
-                        if pd.notna(val):
-                            v_str = str(val).strip()
-                            if v_str and v_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v_str):
-                                if 'CM' in c_upper and not cm_link:
-                                    cm_link = v_str
-                                elif 'PM' in c_upper and not pm_link:
-                                    pm_link = v_str
+                    if cm_link.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', '00:00:00']: cm_link = ""
+                    if pm_link.lower() in ['', 'nan', 'none', '0', '0.0', 'nat', '00:00:00']: pm_link = ""
 
                     f_col1, f_col2 = st.columns(2)
                     with f_col1:
@@ -785,7 +769,11 @@ elif page == "🔍 AI Site Diagnostics":
                             cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else (f"https://{cm_link}" if cm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={cm_link}")
                             st.link_button("🌐 Open CM FSR Link", cm_url, use_container_width=True)
                         else:
-                            st.info("No CM link attached.")
+                            st.markdown("""
+                            <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
+                                ℹ️ No CM link attached in Col AC.
+                            </div>
+                            """, unsafe_allow_html=True)
 
                     with f_col2:
                         st.markdown("##### 📄 Google Drive Link PM")
@@ -794,4 +782,8 @@ elif page == "🔍 AI Site Diagnostics":
                             pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else (f"https://{pm_link}" if pm_link.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={pm_link}")
                             st.link_button("🌐 Open PM FSR Link", pm_url, use_container_width=True)
                         else:
-                            st.info("No PM link attached.")
+                            st.markdown("""
+                            <div style="background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
+                                ℹ️ No PM link attached in Col AD.
+                            </div>
+                            """, unsafe_allow_html=True)
