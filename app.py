@@ -587,7 +587,12 @@ elif page == "🔍 AI Site Diagnostics":
         if matches.empty:
             st.error(f"❌ No network records found matching `{sq}`.")
         else:
-            site_row = matches.iloc[0]
+            site_options_list = matches['SAIP ID'].tolist()
+            st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Multiple Sites Found ({len(site_options_list)}):</span>", unsafe_allow_html=True)
+            chosen_site_id = st.selectbox("Select Site ID:", site_options_list, label_visibility="collapsed")
+            
+            selected_matches = matches[matches['SAIP ID'].astype(str) == str(chosen_site_id)]
+            site_row = selected_matches.iloc[0] if not selected_matches.empty else matches.iloc[0]
             selected_site = site_row['SAIP ID']
             status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             badge_class = "badge-ok" if status_val == "Automation Ok" else "badge-crit"
