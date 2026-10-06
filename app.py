@@ -716,9 +716,9 @@ elif page == "🔍 AI Site Diagnostics":
                 """, unsafe_allow_html=True)
 
             st.markdown(f"""
-            <div style="background: rgba(240, 246, 255, 0.98); border: 1px solid #38bdf8; padding: 12px 16px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #0f172a; font-size: 13px; font-weight: 600;">
-                🧠 <b>AI Diagnostic Inference:</b> ⚠️ **Attention Required:** Status active (`{status_val}`). Problem classified under `{active_bucket}`.<br>
-                🎯 <b>Recommended Operational Action (SOP):</b> Verify site access and contact the local supervisor for direct diagnosis.
+            <div style="background-color: #1e293b; border: 2px solid #facc15; padding: 14px 18px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #ffffff; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                <span style="color: #facc15; font-weight: 800; font-size: 14px;">🧠 AI Diagnostic Inference:</span> <span style="color: #f8fafc;">⚠️ <b>Attention Required:</b> Status active (`{status_val}`). Problem classified under `{active_bucket}`.</span><br>
+                <span style="color: #38bdf8; font-weight: 700;">🎯 Recommended Operational Action (SOP):</span> <span style="color: #ffffff;">Verify site access and contact the local supervisor for direct diagnosis.</span>
             </div>
             """, unsafe_allow_html=True)
 
