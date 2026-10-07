@@ -279,6 +279,7 @@ if (
 ):
   st.session_state.ila_tracker_df = load_ila_tracker()
 
+# Admin-ৰ বাবে আপলোড আৰু ক্লিয়াৰ অপচন
 if is_admin:
   with st.container(border=True):
     col_up1, col_up2, col_up3 = st.columns([2.5, 1, 1])
@@ -301,7 +302,9 @@ if is_admin:
         st.rerun()
     with col_up3:
       st.markdown("<br>", unsafe_allow_html=True)
-      if st.button("🔄 Refresh", type="primary", use_container_width=True):
+      if st.button("🔄 Refresh View", type="primary", use_container_width=True):
+        st.cache_data.clear()
+        st.session_state.master_tracker_df = load_excel_tracker()
         st.rerun()
 
 df_status = st.session_state.master_tracker_df
