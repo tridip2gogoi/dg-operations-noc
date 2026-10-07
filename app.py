@@ -154,25 +154,30 @@ def process_dataframe(df_status):
   for col in df_status.columns:
     df_status[col] = df_status[col].astype(object)
 
-  ac_col_name = None
+  # Auto-detect Col AC (FSR CM link) and Col AD (FSR PM link)
+  ac_col_name, ad_col_name = None, None
   for idx, col in enumerate(df_status.columns):
     c_str = str(col).strip().upper()
-    if (
-        "AC" in c_str
-        or "PDF" in c_str
-        or "LINK" in c_str
-        or "FSR" in c_str
-        or idx == 28
-    ):
+    if "FSR PM" in c_str or "AD" in c_str or idx == 29:
+      ad_col_name = col
+    elif "FSR CM" in c_str or "AC" in c_str or idx == 28:
       ac_col_name = col
-      break
+
   if ac_col_name:
-    df_status["Col AC (FSR PDF link)"] = df_status[ac_col_name].apply(
+    df_status["Col AC (FSR CM link)"] = df_status[ac_col_name].apply(
         lambda x: "" if pd.isna(x) else str(x).strip()
     )
   else:
-    if "Col AC (FSR PDF link)" not in df_status.columns:
-      df_status["Col AC (FSR PDF link)"] = ""
+    if "Col AC (FSR CM link)" not in df_status.columns:
+      df_status["Col AC (FSR CM link)"] = ""
+
+  if ad_col_name:
+    df_status["Col AD (FSR PM link)"] = df_status[ad_col_name].apply(
+        lambda x: "" if pd.isna(x) else str(x).strip()
+    )
+  else:
+    if "Col AD (FSR PM link)" not in df_status.columns:
+      df_status["Col AD (FSR PM link)"] = ""
 
   if "SAIP ID" in df_status.columns:
     df_status = df_status[df_status["SAIP ID"].notna()]
@@ -1454,7 +1459,7 @@ elif page == "🔍 AI Site Diagnostics":
       diag_t1, diag_t2, diag_t3 = st.tabs([
           "📋 Technical Asset Specifications",
           "⚡ Master Tracker (Live) Telemetry",
-          "⏳ Resolution History & Previous Dockets (Col Y to AB)",
+          "⏳ FSR CM & PM Links (Col AC & AD)",
       ])
 
       with diag_t1:
@@ -1534,85 +1539,56 @@ elif page == "🔍 AI Site Diagnostics":
 
       with diag_t3:
         with st.container(border=True):
-          st.markdown(
-              f"<span style='color: #facc15; font-weight: 700;'>Previous"
-              f" Docket No (Col AA):</span> <span style='color: #ffffff;"
-              f" font-weight: 800;'>`{site_row.get('Previous Docket No.', 'None')}`</span>",
-              unsafe_allow_html=True,
-          )
-          st.markdown(
-              "<span style='color: #facc15; font-weight: 700;'>Previous"
-              " Remarks (Col Z):</span>",
-              unsafe_allow_html=True,
-          )
-          st.markdown(
-              f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>',
-              unsafe_allow_html=True,
-          )
+          cm_link = site_row.get("Col AC (FSR CM link)", "")
+          pm_link = site_row.get("Col AD (FSR PM link)", "")
 
-          pdf_link_val = ""
-          for col_key in [
-              "Col AC (FSR PDF link)",
-              "Col AC",
-              "FSR PDF link",
-              "PDF Link",
-              "Google Drive Link",
-              "Link",
+          st.markdown(
+              "#### 📄 FSR CM Link (Col AC)"
+          )
+          if cm_link and str(cm_link).lower() not in [
+              "",
+              "nan",
+              "none",
+              "0",
+              "0.0",
+              "nat",
           ]:
-            if col_key in site_row and pd.notna(site_row[col_key]):
-              val_str = str(site_row[col_key]).strip()
-              if (
-                  val_str
-                  and val_str.lower()
-                  not in ["", "nan", "none", "0", "0.0", "nat"]
-                  and not ("00:00:00" in val_str)
-              ):
-                pdf_link_val = val_str
-                break
-          if not pdf_link_val:
-            for idx, val in enumerate(site_row.values):
-              if idx in [27, 28, 29] and pd.notna(val):
-                v_str = str(val).strip()
-                if (
-                    v_str
-                    and v_str.lower()
-                    not in ["", "nan", "none", "0", "0.0", "nat"]
-                    and not ("00:00:00" in v_str)
-                ):
-                  pdf_link_val = v_str
-                  break
-
-          if pdf_link_val:
-            st.markdown(
-                f"""
-                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.9); border: 1px solid #38bdf8; padding: 12px; border-radius: 6px;">
-                            <b style="color: #38bdf8;">📄 Col AC (FSR PDF Link / Google Drive):</b><br>
-                            <span style="color: #ffffff; font-size: 13px; font-weight: 700;">{pdf_link_val}</span>
-                        </div>
-                        """,
-                unsafe_allow_html=True,
-            )
-
-            target_url = (
-                pdf_link_val
-                if pdf_link_val.startswith(("http://", "https://"))
+            st.markdown(f"`{cm_link}`")
+            cm_url = (
+                cm_link
+                if cm_link.startswith(("http://", "https://"))
                 else (
-                    f"https://{pdf_link_val}"
-                    if pdf_link_val.startswith("www.")
-                    else f"https://drive.google.com/drive/u/0/search?q={pdf_link_val}"
+                    f"https://{cm_link}"
+                    if cm_link.startswith("www.")
+                    else f"https://drive.google.com/drive/u/0/search?q={cm_link}"
                 )
             )
-            st.link_button(
-                "🌐 Open FSR PDF / Google Drive Link",
-                target_url,
-                use_container_width=True,
-            )
+            st.link_button("🌐 Open FSR CM Link", cm_url, use_container_width=True)
           else:
-            st.markdown(
-                """
-                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
-                            ℹ️ No FSR PDF or Google Drive link attached in Col AC for this site. (You can update this record in the "In-Portal Master Tracker Editor").
-                        </div>
-                        """,
-                unsafe_allow_html=True,
+            st.info("No FSR CM link available in Col AC.")
+
+          st.markdown("<hr>", unsafe_allow_html=True)
+          st.markdown(
+              "#### 📄 FSR PM Link (Col AD)"
+          )
+          if pm_link and str(pm_link).lower() not in [
+              "",
+              "nan",
+              "none",
+              "0",
+              "0.0",
+              "nat",
+          ]:
+            st.markdown(f"`{pm_link}`")
+            pm_url = (
+                pm_link
+                if pm_link.startswith(("http://", "https://"))
+                else (
+                    f"https://{pm_link}"
+                    if pm_link.startswith("www.")
+                    else f"https://drive.google.com/drive/u/0/search?q={pm_link}"
+                )
             )
+            st.link_button("🌐 Open FSR PM Link", pm_url, use_container_width=True)
+          else:
+            st.info("No FSR PM link available in Col AD.")
