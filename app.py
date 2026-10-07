@@ -112,14 +112,41 @@ def load_google_sheet_tracker():
     err_msg = ""
     success = False
 
-    # Attempt 1: Gviz CSV endpoint (Most reliable for public Google Sheets without 400 errors)
-    try:
-        csv_url = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
-        df_status = pd.read_csv(csv_url)
-        if df_status is not None and not df_status.empty:
-            success = True
-    except Exception as e1:
-        err_msg = f"CSV Live Error: {str(e1)}"
+    # Check if user wants to skip Google Sheet live load
+    skip_live = st.session_state.get('sidebar_master_upload', None) is not None or os.environ.get('SKIP_GSHEET', 'false') == 'true'
+    
+    if not skip_live:
+        # Attempt 1: Gviz CSV endpoint
+        try:
+            csv_url = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
+            df_status = pd.read_csv(csv_url)
+            if df_status is not None and not df_status.empty:
+                success = True
+        except Exception as e1:
+            err_msg = f"CSV Live Error: {str(e1)}"
+
+        # Attempt 2: Publish XLSX endpoint
+        if not success:
+            try:
+                xls_dg = pd.ExcelFile("https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/pub?output=xlsx")
+                sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
+                df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
+                if df_status is not None and not df_status.empty:
+                    success = True
+            except Exception as e2:
+                err_msg += f" | Pub Error: {str(e2)}"
+
+    if not success:
+        source_status = "Local File (Backup)"
+        if os.path.exists(DEFAULT_EXCEL):
+            try:
+                xls_local = pd.ExcelFile(DEFAULT_EXCEL)
+                s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
+                df_status = pd.read_excel(xls_local, sheet_name=s_name)
+                if df_status is not None and not df_status.empty:
+                    success = True
+            except Exception as e3:
+                err_msg += f" | Local Error: {str(e3)}"
 
     # Attempt 2: Publish XLSX endpoint
     if not success:
@@ -205,6 +232,7 @@ if not st.session_state.authenticated:
 # Direct File Uploader to bypass Google Sheet restrictions if any
 with st.sidebar:
     st.markdown("### ⚙️ Portal Data Manager")
+    skip_gsheet = st.checkbox("🚫 Skip Google Sheet Live Load", value=False, help="Bypass live Google Sheet sync and use uploaded/local Excel tracker directly.")
     up_file = st.file_uploader("Upload Master Tracker (.xlsx)", type=["xlsx", "xls"], key="sidebar_master_upload")
     if up_file is not None:
         try:
