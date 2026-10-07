@@ -1362,28 +1362,52 @@ elif page == "🔍 AI Site Diagnostics":
       active_bucket = site_row.get("Bucket", "IPMS")
       aging_val = site_row.get("Aging (Day's)", 62)
 
-      fuel_tel = "Ok"
+      # --- Fuel Sensor Status, Docket & Open Date ---
+      fuel_status_val = "Ok"
       for f_key in ["Fuel Sensor Status", "Fuel Sensor", "Fuel Status"]:
         if f_key in site_row and pd.notna(site_row[f_key]):
           val_s = str(site_row[f_key]).strip()
           if val_s and val_s.lower() not in ["nan", "none", "", "0", "nat"]:
-            fuel_tel = val_s
+            fuel_status_val = val_s
             break
 
-      fuel_date = clean_date_str(site_row.get("Fuel Sensor Faulty Date", ""))
-      fuel_docket = str(site_row.get("Fuel Sensor Docket No.", "")).strip()
-      if fuel_docket.lower() in ["nan", "none", "", "0", "0.0", "nat"]:
-        fuel_docket = ""
+      fuel_docket = ""
+      for d_key in [
+          "Fuel Sensor Docket No.",
+          "Fuel Docket No.",
+          "Fuel Sensor Docket",
+          "Docket No.",
+      ]:
+        if d_key in site_row and pd.notna(site_row[d_key]):
+          val_d = str(site_row[d_key]).strip()
+          if val_d and val_d.lower() not in ["nan", "none", "", "0", "0.0", "nat"]:
+            fuel_docket = val_d
+            break
 
-      fuel_status_display = fuel_tel
-      if fuel_date or fuel_docket:
-        extra_info = []
-        if fuel_date:
-          extra_info.append(f"Date: {fuel_date}")
-        if fuel_docket:
-          extra_info.append(f"Docket: {fuel_docket}")
-        fuel_status_display += f" ({' | '.join(extra_info)})"
+      fuel_open_date = ""
+      for dt_key in [
+          "Fuel Sensor Open Date",
+          "Fuel Sensor Faulty Date",
+          "Open Date",
+          "Faulty Date",
+      ]:
+        if dt_key in site_row and pd.notna(site_row[dt_key]):
+          val_dt = clean_date_str(site_row[dt_key])
+          if val_dt:
+            fuel_open_date = val_dt
+            break
 
+      fuel_extra = []
+      if fuel_docket:
+        fuel_extra.append(f"Docket: {fuel_docket}")
+      if fuel_open_date:
+        fuel_extra.append(f"Open Date: {fuel_open_date}")
+
+      fuel_display_str = fuel_status_val
+      if fuel_extra:
+        fuel_display_str += f" ({' | '.join(fuel_extra)})"
+
+      # --- Present Remarks, Present Docket No & Present Docket raise Date ---
       present_remarks = "No remarks recorded."
       for r_key in ["Present Remarks", "Remarks", "Current Remarks"]:
         if r_key in site_row and pd.notna(site_row[r_key]):
@@ -1392,19 +1416,23 @@ elif page == "🔍 AI Site Diagnostics":
             present_remarks = val_r
             break
 
-      rem_date = clean_date_str(site_row.get("Present Remarks Faulty Date", ""))
-      rem_docket = str(site_row.get("Present Remarks Docket No.", "")).strip()
-      if rem_docket.lower() in ["nan", "none", "", "0", "0.0", "nat"]:
-        rem_docket = ""
+      pres_docket = str(site_row.get("Present Docket No.", "")).strip()
+      if pres_docket.lower() in ["nan", "none", "", "0", "0.0", "nat"]:
+        pres_docket = ""
 
-      remarks_display = present_remarks
-      if rem_date or rem_docket:
-        extra_rem = []
-        if rem_date:
-          extra_rem.append(f"Date: {rem_date}")
-        if rem_docket:
-          extra_rem.append(f"Docket: {rem_docket}")
-        remarks_display += f"\n\n{' | '.join(extra_rem)}"
+      pres_raise_date = clean_date_str(
+          site_row.get("Present Docket raise Date", "")
+      )
+
+      remarks_extra = []
+      if pres_docket:
+        remarks_extra.append(f"Docket No: {pres_docket}")
+      if pres_raise_date:
+        remarks_extra.append(f"Raise Date: {pres_raise_date}")
+
+      remarks_display_str = present_remarks
+      if remarks_extra:
+        remarks_display_str += f"\n\n{' | '.join(remarks_extra)}"
 
       sup_name = site_row.get("Supervisor Name", "Mojib Kumar Saikia")
       trt_person = site_row.get("TRT Personnel", "Manseng Marak")
@@ -1475,7 +1503,7 @@ elif page == "🔍 AI Site Diagnostics":
             f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                     <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Fuel Telemetry</h4>
-                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_tel}</span><br>
+                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_status_val}</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Sensor Health</span>
                 </div>
                 """,
@@ -1564,7 +1592,7 @@ elif page == "🔍 AI Site Diagnostics":
           st.markdown(
               f"<span style='color: #facc15; font-weight: 700;'>Fuel Sensor"
               f" Status:</span> <span style='color: #ffffff; font-weight:"
-              f" 800;'>`{fuel_status_display}`</span>",
+              f" 800;'>`{fuel_display_str}`</span>",
               unsafe_allow_html=True,
           )
           st.markdown(
@@ -1573,7 +1601,7 @@ elif page == "🔍 AI Site Diagnostics":
               unsafe_allow_html=True,
           )
           st.markdown(
-              f'<div class="previous-remarks-box">{remarks_display}</div>',
+              f'<div class="previous-remarks-box">{remarks_display_str}</div>',
               unsafe_allow_html=True,
           )
 
