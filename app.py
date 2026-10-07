@@ -20,8 +20,9 @@ st.set_page_config(
 )
 
 # Custom Corporate Professional NOC Styling
-st.markdown("""
-<style>
+st.markdown(
+    """
+    <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
@@ -49,16 +50,4 @@ st.markdown("""
     div[data-testid="stExpander"] summary span,
     div[data-testid="stExpander"] summary {
         color: #facc15 !important;
-        font-weight: 800 !important;
-        font-size: 14px !important;
-    }
-
-    div[data-testid="stRadio"] label,
-    div[data-testid="stRadio"] div[role="radiogroup"] label,
-    div[data-testid="stRadio"] div[role="radiogroup"] label div p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label span {
-        color: #facc15 !important;
-        font-weight: 700 !important;
-        font-size: 13px !important;
-        text-shadow: 0 1px 3px rgba(0, 0, 0,
+        font-weight
