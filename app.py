@@ -600,7 +600,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     else: st.info("ILA Tracker not loaded.")
 
 elif page == "✏️ In-Portal Master Tracker Editor":
-    st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
+    st.markdown("## ✏️ In-Portal Master Tracker Editor")
     edited_grid = st.data_editor(df_status, use_container_width=True, height=500, disabled=is_viewer)
     if not is_viewer and st.button("Save Grid Changes", type="primary"):
         st.session_state.master_tracker_df = edited_grid
@@ -755,7 +755,7 @@ elif page == "🔍 AI Site Diagnostics":
                     for col_key in ['Col AC (FSR PDF link)', 'Col AC', 'FSR PDF link', 'PDF Link', 'Google Drive Link', 'Link']:
                         if col_key in site_row and pd.notna(site_row[col_key]):
                             val_str = str(site_row[col_key]).strip()
-                            if val_str and val_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat']:
+                            if val_str and val_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in val_str):
                                 pdf_link_val = val_str
                                 break
                     if not pdf_link_val:
@@ -763,7 +763,7 @@ elif page == "🔍 AI Site Diagnostics":
                         for idx, val in enumerate(site_row.values):
                             if idx in [27, 28, 29] and pd.notna(val):
                                 v_str = str(val).strip()
-                                if v_str and v_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat']:
+                                if v_str and v_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v_str):
                                     pdf_link_val = v_str
                                     break
 
@@ -775,7 +775,7 @@ elif page == "🔍 AI Site Diagnostics":
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        target_url = pdf_link_val if pdf_link_val.startswith(('http://', 'https://')) else (f"https://{pdf_link_val}" if pdf_link_val.startswith('www.') else f"https://drive.google.com/search?q={pdf_link_val}")
+                        target_url = pdf_link_val if pdf_link_val.startswith(('http://', 'https://')) else (f"https://{pdf_link_val}" if pdf_link_val.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={pdf_link_val}")
                         st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
                     else:
                         st.markdown("""
