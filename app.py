@@ -131,9 +131,14 @@ PASSWORD_CREDENTIALS = {
         "access": ["all"],
     },
     hashlib.sha256("Rintu@2026".encode()).hexdigest(): {
-        "role": "NOC Viewer",
+        "role": "OEM Viewer",
         "name": "PTPL Operations Desk",
-        "access": ["all"],
+        "access": ["View Only"],
+    },
+ hashlib.sha256("NIPL@2026".encode()).hexdigest(): {
+        "role": "Fill Team Viewer",
+        "name": "NIPL Operations Desk",
+        "access": ["View Only"],
     },
 }
 
