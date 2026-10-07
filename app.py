@@ -68,6 +68,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
+GOOGLE_SHEET_PUB = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/pub?output=xlsx"
+GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
@@ -103,43 +105,82 @@ def verify_login(username, password):
             return USER_CREDENTIALS[username]
     return None
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=5)
 def load_google_sheet_tracker():
-    df_status = pd.DataFrame()
-    try:
-        xls_dg = pd.ExcelFile(GOOGLE_SHEET_URL)
-        sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
-        df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
-        for col in df_status.columns: df_status[col] = df_status[col].astype(object)
-        
-        ac_col_name = None
-        for idx, col in enumerate(df_status.columns):
-            c_str = str(col).strip().upper()
-            if 'AC' in c_str or 'PDF' in c_str or 'LINK' in c_str or 'FSR' in c_str or idx == 28:
-                ac_col_name = col
-                break
-        if ac_col_name:
-            df_status['Col AC (FSR PDF link)'] = df_status[ac_col_name].apply(lambda x: "" if pd.isna(x) else str(x).strip())
-        else:
-            if 'Col AC (FSR PDF link)' not in df_status.columns: df_status['Col AC (FSR PDF link)'] = ""
+    if 'persistent_master_df' in st.session_state and st.session_state.persistent_master_df is not None and not st.session_state.persistent_master_df.empty:
+        st.session_state['data_source_mode'] = "Uploaded Excel File"
+        return st.session_state.persistent_master_df
 
-        if 'SAIP ID' in df_status.columns:
-            df_status = df_status[df_status['SAIP ID'].notna()]
-            df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
-            df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
-        if 'DG Make' in df_status.columns:
-            df_status = df_status[df_status['DG Make'].notna()]
-            df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
-        if 'JC' in df_status.columns: df_status['JC'] = df_status['JC'].astype(str).str.strip()
-        if 'State' in df_status.columns: df_status['State'] = df_status['State'].astype(str).str.strip()
-        if 'Bucket' in df_status.columns:
-            df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
-            df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
-    except Exception:
+    df_status = pd.DataFrame()
+    source_status = "Google Sheet Live"
+    err_msg = ""
+    success = False
+
+    # Check if user wants to skip Google Sheet live load
+    skip_live = st.session_state.get('sidebar_master_upload', None) is not None or os.environ.get('SKIP_GSHEET', 'false') == 'true'
+    
+    if not skip_live:
+        # Attempt 1: Gviz CSV endpoint
+        try:
+            csv_url = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
+            df_status = pd.read_csv(csv_url)
+            if df_status is not None and not df_status.empty:
+                success = True
+        except Exception as e1:
+            err_msg = f"CSV Live Error: {str(e1)}"
+
+        # Attempt 2: Publish XLSX endpoint
+        if not success:
+            try:
+                xls_dg = pd.ExcelFile("https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/pub?output=xlsx")
+                sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
+                df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
+                if df_status is not None and not df_status.empty:
+                    success = True
+            except Exception as e2:
+                err_msg += f" | Pub Error: {str(e2)}"
+
+    if not success:
+        source_status = "Local File (Backup)"
         if os.path.exists(DEFAULT_EXCEL):
-            try: df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
-            except: pass
-    return df_status
+            try:
+                xls_local = pd.ExcelFile(DEFAULT_EXCEL)
+                s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
+                df_status = pd.read_excel(xls_local, sheet_name=s_name)
+                if df_status is not None and not df_status.empty:
+                    success = True
+            except Exception as e3:
+                err_msg += f" | Local Error: {str(e3)}"
+
+    # Attempt 2: Publish XLSX endpoint
+    if not success:
+        try:
+            xls_dg = pd.ExcelFile("https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/pub?output=xlsx")
+            sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
+            df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
+            if df_status is not None and not df_status.empty:
+                success = True
+        except Exception as e2:
+            err_msg += f" | Pub Error: {str(e2)}"
+
+    # Attempt 3: Local Backup File
+    if not success:
+        source_status = "Local File (Backup)"
+        if os.path.exists(DEFAULT_EXCEL):
+            try:
+                xls_local = pd.ExcelFile(DEFAULT_EXCEL)
+                s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
+                df_status = pd.read_excel(xls_local, sheet_name=s_name)
+                if df_status is not None and not df_status.empty:
+                    success = True
+            except Exception as e3:
+                err_msg += f" | Local Error: {str(e3)}"
+
+    if df_status is None or df_status.empty:
+        df_status = pd.DataFrame()
+    else:
+        for col in df_status.columns:
+            df_status[col] = df_status[col].astype(object)
 
 def load_ila_tracker():
     df_ila = pd.DataFrame()
@@ -191,22 +232,59 @@ if not st.session_state.authenticated:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
+
+# Direct File Uploader to bypass Google Sheet restrictions if any
+# 📂 Excel / Master Tracker Local Upload Manager
+with st.sidebar:
+    st.markdown("### ⚙️ Portal Data Manager")
+    st.markdown("Upload your Master Tracker (`.xlsx`) to instantly view data and bypass any live sheet sync errors.")
+    up_file = st.file_uploader("Upload Master Tracker (.xlsx)", type=["xlsx", "xls"], key="sidebar_master_upload")
+    if up_file is not None:
+        try:
+            df_up = pd.read_excel(up_file, sheet_name=0)
+            for col in df_up.columns: df_up[col] = df_up[col].astype(object)
+            st.session_state['persistent_master_df'] = df_up
+            st.session_state.master_tracker_df = df_up
+            st.session_state['data_source_mode'] = "Uploaded Excel File"
+            st.success("Master Tracker uploaded successfully!")
+            st.rerun()
+        except Exception as e_up:
+            st.error(f"Upload error: {e_up}")
+    
+    if 'persistent_master_df' in st.session_state and st.session_state['persistent_master_df'] is not None:
+        if st.button("🗑️ Clear Uploaded Excel", use_container_width=True):
+            st.session_state['persistent_master_df'] = None
+            if "master_tracker_df" in st.session_state: del st.session_state.master_tracker_df
+            st.cache_data.clear()
+            st.success("Cleared!")
+            st.rerun()
+    st.markdown("---")
+
+
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
 is_viewer = ("read_only" in user_data.get("access", ["all"]))
 
-if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
-    st.session_state.master_tracker_df = load_google_sheet_tracker()
-if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
-    st.session_state.ila_tracker_df = load_ila_tracker()
+if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df is None or getattr(st.session_state.master_tracker_df, 'empty', True):
+    res_df = load_google_sheet_tracker()
+    st.session_state.master_tracker_df = res_df if res_df is not None else pd.DataFrame()
+
+if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df is None or getattr(st.session_state.ila_tracker_df, 'empty', True):
+    res_ila = load_ila_tracker()
+    st.session_state.ila_tracker_df = res_ila if res_ila is not None else pd.DataFrame()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
 with st.container(border=True):
     top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1.2])
-    with top_c1: st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** `Google Drive Live`")
+    with top_c1: 
+        curr_mode = st.session_state.get('data_source_mode', 'Google Sheet Live')
+        mode_badge = f"`{curr_mode}`" if "Live" in curr_mode else f"⚠️ `{curr_mode}`"
+        st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** {mode_badge}")
+        if 'data_source_err' in st.session_state and "Local" in curr_mode:
+            st.caption(f"⚠️ Live Sheet Sync Error: {st.session_state['data_source_err'][:90]}")
     with top_c2:
         if st.button("🔄 Force Refresh & Sync", type="primary", use_container_width=True):
             st.cache_data.clear()
@@ -750,36 +828,39 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Remarks (Col Z):</span>", unsafe_allow_html=True)
                     st.markdown(f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>', unsafe_allow_html=True)
                     
-                    # Robust check for Col AC or any link column
-                    pdf_link_val = ""
-                    for col_key in ['Col AC (FSR PDF link)', 'Col AC', 'FSR PDF link', 'PDF Link', 'Google Drive Link', 'Link']:
-                        if col_key in site_row and pd.notna(site_row[col_key]):
-                            val_str = str(site_row[col_key]).strip()
-                            if val_str and val_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in val_str):
-                                pdf_link_val = val_str
-                                break
-                    if not pdf_link_val:
-                        # Fallback: check 28th index or similar columns
-                        for idx, val in enumerate(site_row.values):
-                            if idx in [27, 28, 29] and pd.notna(val):
-                                v_str = str(val).strip()
-                                if v_str and v_str.lower() not in ['', 'nan', 'none', '0', '0.0', 'nat'] and not ('00:00:00' in v_str):
-                                    pdf_link_val = v_str
-                                    break
+                    st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
+                    st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
+                    
+                    # Strictly separate CM (Col AC) and PM (Col AD) links
+                    cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
+                    pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
 
-                    if pdf_link_val:
-                        st.markdown(f"""
-                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.9); border: 1px solid #38bdf8; padding: 12px; border-radius: 6px;">
-                            <b style="color: #38bdf8;">📄 Col AC (FSR PDF Link / Google Drive):</b><br>
-                            <span style="color: #ffffff; font-size: 13px; font-weight: 700;">{pdf_link_val}</span>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        target_url = pdf_link_val if pdf_link_val.startswith(('http://', 'https://')) else (f"https://{pdf_link_val}" if pdf_link_val.startswith('www.') else f"https://drive.google.com/drive/u/0/search?q={pdf_link_val}")
-                        st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
-                    else:
-                        st.markdown("""
-                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.6); border: 1px solid #64748b; padding: 10px; border-radius: 6px; color: #94a3b8; font-size: 13px;">
-                            ℹ️ No FSR PDF or Google Drive link attached in Col AC for this site. (You can update this record in the "In-Portal Master Tracker Editor").
-                        </div>
-                        """, unsafe_allow_html=True)
+                    if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
+                    if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
+
+                    f_col1, f_col2 = st.columns(2)
+                    with f_col1:
+                        st.markdown("##### 📄 Google Drive Link CM (Col AC)")
+                        # Check if a valid URL is present
+                        if cm_link and (cm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in cm_link):
+                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else f"https://{cm_link}"
+                            st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
+                                🚫 No CM FSR Link Available (Col AC)
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                    with f_col2:
+                        st.markdown("##### 📄 Google Drive Link PM (Col AD)")
+                        # Check if a valid URL is present
+                        if pm_link and (pm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in pm_link):
+                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else f"https://{pm_link}"
+                            st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #10b981; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
+                                🚫 No PM FSR Link Available (Col AD)
+                            </div>
+                            """, unsafe_allow_html=True) 
