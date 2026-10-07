@@ -512,7 +512,7 @@ if page == "🔍 AI Site Diagnostics":
       if remarks_extra:
         remarks_display_str += f"\n\n{' | '.join(remarks_extra)}"
 
-      # --- Previous Remarks (Col Z), Raise Date (Col O) & Closed Date (Col P) ---
+      # --- Previous Remarks (Col Z), Docket Raise Date (Col AA / index 26) & Closed Date (Col AB / index 27) ---
       prev_remarks = "No previous remarks."
       for pr_key in ["Previous Remarks", "Prev Remarks"]:
         if pr_key in site_row and pd.notna(site_row[pr_key]):
@@ -523,10 +523,10 @@ if page == "🔍 AI Site Diagnostics":
 
       prev_raise_date = ""
       try:
-        if len(site_row.index) > 14:
-          col_o_val = site_row.iloc[14]  # Column O is index 14
-          if pd.notna(col_o_val):
-            prev_raise_date = clean_date_str(col_o_val)
+        if len(site_row.index) > 26:
+          col_aa_val = site_row.iloc[26]  # Column AA is index 26
+          if pd.notna(col_aa_val):
+            prev_raise_date = clean_date_str(col_aa_val)
       except:
         pass
 
@@ -544,10 +544,10 @@ if page == "🔍 AI Site Diagnostics":
 
       prev_closed_date = ""
       try:
-        if len(site_row.index) > 15:
-          col_p_val = site_row.iloc[15]  # Column P is index 15
-          if pd.notna(col_p_val):
-            prev_closed_date = clean_date_str(col_p_val)
+        if len(site_row.index) > 27:
+          col_ab_val = site_row.iloc[27]  # Column AB is index 27
+          if pd.notna(col_ab_val):
+            prev_closed_date = clean_date_str(col_ab_val)
       except:
         pass
 
