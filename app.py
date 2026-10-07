@@ -74,17 +74,6 @@ st.markdown(
 
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 
-DEFAULT_ILA = None
-if os.path.exists("."):
-  for f in os.listdir("."):
-    if (
-        "ILA" in f.upper()
-        and f.endswith((".xlsx", ".xls"))
-        and not f.startswith("~$")
-    ):
-      DEFAULT_ILA = f
-      break
-
 BUCKET_LIST = [
     "GCU",
     "Fuel Sensor",
@@ -211,24 +200,34 @@ def load_excel_tracker(uploaded_file=None):
   return df_status
 
 
-def load_ila_tracker():
+def load_ila_tracker(uploaded_file=None):
   df_ila = pd.DataFrame()
-  if DEFAULT_ILA and os.path.exists(DEFAULT_ILA):
-    try:
-      xls_ila = pd.ExcelFile(DEFAULT_ILA)
-      ila_sheet = (
-          "IPMS Site Automation Status"
-          if "IPMS Site Automation Status" in xls_ila.sheet_names
-          else xls_ila.sheet_names[0]
-      )
-      df_ila = pd.read_excel(xls_ila, sheet_name=ila_sheet)
+  try:
+    xl_file = None
+    if uploaded_file is not None:
+      xl_file = pd.ExcelFile(uploaded_file)
+    elif os.path.exists(DEFAULT_EXCEL):
+      xl_file = pd.ExcelFile(DEFAULT_EXCEL)
+
+    if xl_file:
+      target_sheet = None
+      for sheet in xl_file.sheet_names:
+        if "ipms site automation status" in sheet.lower():
+          target_sheet = sheet
+          break
+      if not target_sheet and len(xl_file.sheet_names) > 1:
+        target_sheet = xl_file.sheet_names[1]
+      elif not target_sheet:
+        target_sheet = xl_file.sheet_names[0]
+
+      df_ila = pd.read_excel(xl_file, sheet_name=target_sheet)
       for col in df_ila.columns:
         df_ila[col] = df_ila[col].astype(object)
       if "Sap ID" in df_ila.columns:
         df_ila = df_ila[df_ila["Sap ID"].notna()]
         df_ila["Sap ID"] = df_ila["Sap ID"].astype(str).str.strip()
-    except:
-      pass
+  except Exception as e:
+    pass
   return df_ila
 
 
@@ -279,7 +278,7 @@ if (
 ):
   st.session_state.ila_tracker_df = load_ila_tracker()
 
-# Admin-ৰ বাবে আপলোড আৰু ক্লিয়াৰ অপচন
+# Admin-ৰ বাবে আপলোড আৰু ক্লিয়াৰ অপচন
 if is_admin:
   with st.container(border=True):
     col_up1, col_up2 = st.columns([3, 1])
@@ -290,21 +289,26 @@ if is_admin:
       )
       if uploaded_file is not None:
         st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
-        st.success("✅ Tracker updated and saved to server!")
+        st.session_state.ila_tracker_df = load_ila_tracker(uploaded_file)
+        st.success(
+            "✅ Tracker & IPMS Automation Status updated and saved to server!"
+        )
     with col_up2:
       st.markdown("<br>", unsafe_allow_html=True)
       if st.button("🗑️ Clear File", use_container_width=True):
         if os.path.exists(DEFAULT_EXCEL):
           st.session_state.master_tracker_df = load_excel_tracker(DEFAULT_EXCEL)
+          st.session_state.ila_tracker_df = load_ila_tracker(DEFAULT_EXCEL)
         else:
           st.session_state.master_tracker_df = pd.DataFrame()
+          st.session_state.ila_tracker_df = pd.DataFrame()
         st.success("Cleared!")
         st.rerun()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
-# Operator info, Download report aru Refresh View (সবেৰ বাবে এনাবল কৰা হৈছে)
+# Operator info, Download report aru Refresh View
 with st.container(border=True):
   top_c1, top_c2, top_c3 = st.columns([2, 1.5, 1.5])
   with top_c1:
@@ -315,6 +319,7 @@ with st.container(border=True):
     if st.button("🔄 Refresh View", type="primary", use_container_width=True):
       st.cache_data.clear()
       st.session_state.master_tracker_df = load_excel_tracker()
+      st.session_state.ila_tracker_df = load_ila_tracker()
       st.rerun()
   with top_c3:
     if not df_status.empty:
@@ -1287,7 +1292,10 @@ elif page == "📈 ILA-AG1 Operations Tracker":
   if not df_ila.empty:
     st.dataframe(df_ila, use_container_width=True)
   else:
-    st.info("ILA Tracker not loaded.")
+    st.info(
+        "ILA Tracker sheet ('IPMS Site Automation Status') not found or not"
+        " loaded."
+    )
 
 elif page == "✏️ In-Portal Master Tracker Editor":
   st.markdown("## ✏️ In-Portal Master Tracker Editor")
