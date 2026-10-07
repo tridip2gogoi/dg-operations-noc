@@ -28,6 +28,15 @@ st.markdown(
         background-size: cover; background-position: center; background-attachment: fixed;
     }
     .block-container { padding-top: 0.4rem !important; padding-bottom: 0.5rem !important; }
+    
+    /* Login Box Text Fixes */
+    div[data-testid="stForm"] label p, div[data-testid="stForm"] label span, div[data-testid="stForm"] h2, div[data-testid="stForm"] p {
+        color: #0f172a !important; font-weight: 700 !important;
+    }
+    div[data-testid="stForm"] input {
+        color: #0f172a !important; background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important;
+    }
+
     div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
         color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
     }
@@ -114,29 +123,14 @@ def clean_date_str(val):
 
 
 PASSWORD_CREDENTIALS = {
-    hashlib.sha256("Gogoi&6095".encode()).hexdigest(): {
+    hashlib.sha256("Gogoi@6095".encode()).hexdigest(): {
         "role": "Super Admin",
         "name": "Tridip Gogoi",
-        "is_admin": True,
-    },
-     hashlib.sha256("Sukanta@2026".encode()).hexdigest(): {
-        "role": "Super Admin",
-        "name": "SME Operations Desk",
         "is_admin": True,
     },
     hashlib.sha256("Rintu@2026".encode()).hexdigest(): {
         "role": "NOC Viewer",
         "name": "PTPL Operations Desk",
-        "is_admin": False,
-    },
-     hashlib.sha256("SHQ@2026".encode()).hexdigest(): {
-        "role": "NOC Viewer",
-        "name": "SHQ Operations Desk",
-        "is_admin": False,
-    },
-     hashlib.sha256("Nipl@2026".encode()).hexdigest(): {
-        "role": "NOC Viewer",
-        "name": "Fild Operations Desk",
         "is_admin": False,
     },
 }
