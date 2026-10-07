@@ -67,7 +67,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
+GOOGLE_SHEET_XLSX = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
+GOOGLE_SHEET_PUB = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/pub?output=xlsx"
+GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
@@ -857,4 +859,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True) 
+                            """, unsafe_allow_html=True)   
