@@ -198,6 +198,8 @@ def load_excel_tracker(uploaded_file=None):
   df_status = pd.DataFrame()
   try:
     if uploaded_file is not None:
+      with open(DEFAULT_EXCEL, "wb") as f:
+        f.write(uploaded_file.getbuffer())
       df_status = pd.read_excel(uploaded_file, sheet_name="Automation Status")
     elif os.path.exists(DEFAULT_EXCEL):
       df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
@@ -287,7 +289,7 @@ if is_admin:
       )
       if uploaded_file is not None:
         st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
-        st.success("✅ Tracker updated!")
+        st.success("✅ Tracker updated and saved to server!")
     with col_up2:
       st.markdown("<br>", unsafe_allow_html=True)
       if st.button("🗑️ Clear File", use_container_width=True):
