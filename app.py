@@ -29,12 +29,12 @@ st.markdown(
     }
     .block-container { padding-top: 0.4rem !important; padding-bottom: 0.5rem !important; }
     
-    /* Login Box Text Fixes */
+    /* Login Box Text & Input Yellow Styling */
     div[data-testid="stForm"] label p, div[data-testid="stForm"] label span, div[data-testid="stForm"] h2, div[data-testid="stForm"] p {
-        color: #0f172a !important; font-weight: 700 !important;
+        color: #facc15 !important; font-weight: 800 !important;
     }
     div[data-testid="stForm"] input {
-        color: #0f172a !important; background-color: #f8fafc !important; border: 1px solid #cbd5e1 !important;
+        color: #ffffff !important; background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 6px !important;
     }
 
     div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
@@ -249,10 +249,10 @@ if not st.session_state.authenticated:
   with col1:
     st.markdown(
         """
-        <div style="background: rgba(255, 255, 255, 0.96); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); border: 1px solid rgba(226, 232, 240, 0.8); margin: 3.5rem auto;">
+        <div style="background: rgba(15, 23, 42, 0.92); padding: 2.2rem 2rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7); border: 2px solid #facc15; margin: 3.5rem auto;">
             <div style="text-align: center; margin-bottom: 1.5rem;">
-                <h2 style="color: #0f172a; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ DG NOC Portal</h2>
-                <p style="color: #64748b; font-size: 0.9rem;">North East Circle Operations Gateway</p>
+                <h2 style="color: #facc15 !important; font-weight: 800; font-size: 1.6rem; margin-bottom: 0.25rem;">⚡ DG NOC Portal</h2>
+                <p style="color: #cbd5e1 !important; font-size: 0.9rem;">North East Circle Operations Gateway</p>
             </div>
         """,
         unsafe_allow_html=True,
@@ -1664,39 +1664,3 @@ elif page == "⏳ Daily Fault Summary":
       ):
         st.dataframe(
             pd.crosstab(
-                filtered_date_df["JC"],
-                filtered_date_df["Bucket"],
-                margins=True,
-                margins_name="Total",
-            ),
-            use_container_width=True,
-        )
-      else:
-        st.info("No records matching current filters.")
-
-    with st.container(border=True):
-      st.markdown(
-          "<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px"
-          " solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults"
-          " Registry</h4>",
-          unsafe_allow_html=True,
-      )
-      st.dataframe(filtered_date_df, use_container_width=True)
-  else:
-    st.info("No data available.")
-
-elif page == "📈 ILA-AG1 Operations Tracker":
-  st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
-  if not df_ila.empty:
-    st.dataframe(df_ila, use_container_width=True)
-  else:
-    st.info("ILA Tracker sheet not loaded.")
-
-elif page == "✏️ In-Portal Master Tracker Editor":
-  st.markdown("## ✏️ In-Portal Master Tracker Editor")
-  edited_grid = st.data_editor(
-      df_status, use_container_width=True, height=500, disabled=not is_admin
-  )
-  if is_admin and st.button("Save Grid Changes", type="primary"):
-    st.session_state.master_tracker_df = edited_grid
-    st.success("Changes saved for current session!")
