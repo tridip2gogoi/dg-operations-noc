@@ -1613,7 +1613,7 @@ elif page == "🔍 AI Site Diagnostics":
                     })
                     st.dataframe(master_telemetry_df, use_container_width=True, hide_index=True)
 
-            with diag_t3:
+           with diag_t3:
                 with st.container(border=True):
                     target_closed_col_name = 'Last Closed date'
                     for col_c in site_row.index:
@@ -1637,7 +1637,7 @@ elif page == "🔍 AI Site Diagnostics":
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # --- COL AC (FSR PDF LINK) FULL INTEGRATION WITH CLICKABLE LINK OR BUTTON ---
+                    # --- COL AC (FSR PDF LINK) CLEAN URL FIX ---
                     pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', site_row.get('FSR PDF Link', 'None'))).strip()
                     if pdf_link_val and pdf_link_val.lower() not in ['', 'nan', 'none', '0', '0.0']:
                         st.markdown(f"""
@@ -1647,14 +1647,14 @@ elif page == "🔍 AI Site Diagnostics":
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Check if it's a URL (Google Drive or http/https)
+                        # যদি ভেল্যু টোত পোনপটীয়াকৈ 'http' বা 'drive.google.com' নাথাকে, কিন্তু আপুনি গুগল ড্ৰাইভৰ লিংক ৰাখিব বিচাৰে
                         if pdf_link_val.startswith(('http://', 'https://', 'www.')):
                             target_url = pdf_link_val if pdf_link_val.startswith('http') else f"https://{pdf_link_val}"
-                            st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_control_width=True if hasattr(st, "link_button") else False)
+                            st.link_button("🌐 Open Google Drive FSR PDF Link", target_url, use_container_width=True)
+                        elif "drive.google.com" in pdf_link_val or "http" in pdf_link_val:
+                            # যদি টেক্সটৰ মাজত লিংক সোমাই থাকে
+                            st.markdown(f'<div style="margin-top: 6px;"><a href="{pdf_link_val}" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">🔗 Click here to Open Google Drive FSR Document</a></div>', unsafe_allow_html=True)
                         else:
-                            # Render a clickable anchor tag if it contains text or link reference
-                            st.markdown(f"""
-                            <div style="margin-top: 6px;">
-                                <a href="{pdf_link_val}" target="_blank" style="color: #38bdf8; font-weight: bold; text-decoration: underline;">🔗 Click here to Open FSR Document / Link</a>
-                            </div>
-                            """, unsafe_allow_html=True)
+                            # যদি এক্সেলত কেৱল ID বা নম্বৰ থাকে, তেন্তে ইয়াক পোনপটীয়াকৈ Google Drive search বা viewer লিংক লগত জোৰা দিব পাৰি
+                            drive_search_url = f"https://drive.google.com/drive/search?q={pdf_link_val}"
+                            st.link_button("🌐 Search & Open in Google Drive", drive_search_url, use_container_width=True)
