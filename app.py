@@ -6,6 +6,8 @@ from datetime import datetime, date, timezone, timedelta
 import os
 import hashlib
 from io import BytesIO
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1uwOZ9HRC833CfC-hO8Aj1davBQ8qDyXa2f7L0-uu7QQ/export?format=xlsx"
+GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1uwOZ9HRC833CfC-hO8Aj1davBQ8qDyXa2f7L0-uu7QQ/gviz/tq?tqx=out:csv"
 
 # --- TIMEZONE CONFIGURATION FOR IST (UTC+5:30) ---
 IST = timezone(timedelta(hours=5, minutes=30))
