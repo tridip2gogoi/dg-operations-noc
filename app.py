@@ -43,16 +43,17 @@ st.markdown(
         color: #ffffff !important; background-color: #1e293b !important; border: 2px solid #facc15 !important; border-radius: 6px !important;
     }
 
-    /* Metric Card Label / Header Yellow Color Fix */
     div[data-testid="stMetric"] label {
         color: #facc15 !important; font-weight: 800 !important;
     }
 
-    div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
+    /* Radio Button Labels Yellow Color Fix */
+    div[data-testid="stRadio"] label p, div[data-testid="stRadio"] div[role="radiogroup"] label span {
         color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
     }
-    div[data-testid="stRadio"] label, div[data-testid="stRadio"] div[role="radiogroup"] label {
-        color: #facc15 !important; font-weight: 700 !important; font-size: 13px !important;
+
+    div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
+        color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
     }
     h1, h2, h3, h4, h5, h6 { color: #facc15 !important; font-weight: 800 !important; }
     .previous-remarks-box { background-color: rgba(15, 23, 42, 0.85) !important; border: 1px solid #facc15 !important; border-radius: 8px !important; padding: 10px 14px !important; color: #ffffff !important; font-size: 14px !important; font-weight: 600 !important; }
