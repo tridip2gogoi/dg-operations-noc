@@ -1456,10 +1456,11 @@ elif page == "🔍 AI Site Diagnostics":
           unsafe_allow_html=True,
       )
 
-      diag_t1, diag_t2, diag_t3 = st.tabs([
+      diag_t1, diag_t2, diag_t3, diag_t4 = st.tabs([
           "📋 Technical Asset Specifications",
           "⚡ Master Tracker (Live) Telemetry",
-          "⏳ FSR CM & PM Links (Col AC & AD)",
+          "⏳ Resolution History & Previous Dockets (Col Y to AB)",
+          "🔗 FSR CM & PM Links (Col AC & AD)",
       ])
 
       with diag_t1:
@@ -1539,12 +1540,28 @@ elif page == "🔍 AI Site Diagnostics":
 
       with diag_t3:
         with st.container(border=True):
+          st.markdown(
+              f"<span style='color: #facc15; font-weight: 700;'>Previous"
+              f" Docket No (Col AA):</span> <span style='color: #ffffff;"
+              f" font-weight: 800;'>`{site_row.get('Previous Docket No.', 'None')}`</span>",
+              unsafe_allow_html=True,
+          )
+          st.markdown(
+              "<span style='color: #facc15; font-weight: 700;'>Previous"
+              " Remarks (Col Z):</span>",
+              unsafe_allow_html=True,
+          )
+          st.markdown(
+              f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>',
+              unsafe_allow_html=True,
+          )
+
+      with diag_t4:
+        with st.container(border=True):
           cm_link = site_row.get("Col AC (FSR CM link)", "")
           pm_link = site_row.get("Col AD (FSR PM link)", "")
 
-          st.markdown(
-              "#### 📄 FSR CM Link (Col AC)"
-          )
+          st.markdown("#### 📄 FSR CM Link (Col AC)")
           if cm_link and str(cm_link).lower() not in [
               "",
               "nan",
@@ -1568,9 +1585,7 @@ elif page == "🔍 AI Site Diagnostics":
             st.info("No FSR CM link available in Col AC.")
 
           st.markdown("<hr>", unsafe_allow_html=True)
-          st.markdown(
-              "#### 📄 FSR PM Link (Col AD)"
-          )
+          st.markdown("#### 📄 FSR PM Link (Col AD)")
           if pm_link and str(pm_link).lower() not in [
               "",
               "nan",
