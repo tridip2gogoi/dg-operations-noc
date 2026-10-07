@@ -75,9 +75,7 @@ st.markdown(
 )
 
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
-GOOGLE_SHEET_NAME = (
-    "DG Auto-Update Automation Tracker 26"  # Google Sheet ৰ আচল নামটো ইয়াত দিয়ক
-)
+GOOGLE_SHEET_NAME = "DG Auto-Update Automation Tracker 26"
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
@@ -211,7 +209,8 @@ def load_google_sheet_tracker():
       df_status["Bucket"] = df_status["Bucket"].apply(
           lambda x: None if str(x).lower() in ["nan", "none", "", "nat"] else x
       )
-  except Exception:
+  except Exception as e:
+    st.error(f"Google Sheet Error: {e}")
     if os.path.exists(DEFAULT_EXCEL):
       try:
         df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
@@ -241,7 +240,6 @@ def load_ila_tracker():
   return df_ila
 
 
-# Google Sheet-ত পোনপটীয়াকৈ লাইভ আপডেট কৰাৰ ফাংচন
 def update_google_sheet_live(df_to_save):
   try:
     if os.path.exists("credentials.json"):
@@ -256,7 +254,6 @@ def update_google_sheet_live(df_to_save):
       spreadsheet = gc.open(GOOGLE_SHEET_NAME)
       sheet = spreadsheet.worksheet("Automation Status")
 
-      # Sheet Clear কৰি নতুন ডাটা বহুওৱা
       sheet.clear()
       sheet.update(
           [df_to_save.columns.values.tolist()] + df_to_save.values.tolist()
@@ -273,7 +270,6 @@ def save_master_to_disk():
         "master_tracker_df" in st.session_state
         and not st.session_state.master_tracker_df.empty
     ):
-      # ১. লোকেল এক্সেলত সেভ কৰা
       with pd.ExcelWriter(DEFAULT_EXCEL, engine="openpyxl") as writer:
         st.session_state.master_tracker_df.to_excel(
             writer, sheet_name="Automation Status", index=False
@@ -286,7 +282,6 @@ def save_master_to_disk():
               writer, sheet_name="IPMS Site Automation Status", index=False
           )
 
-      # ২. Google Sheet-তো লাইভ আপডেট কৰা
       update_google_sheet_live(st.session_state.master_tracker_df)
   except:
     pass
