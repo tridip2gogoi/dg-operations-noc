@@ -126,19 +126,14 @@ def clean_date_str(val):
 
 PASSWORD_CREDENTIALS = {
     hashlib.sha256("Gogoi@6095".encode()).hexdigest(): {
-        "role": "Super Admin / Operations Head",
+        "role": "Super Admin",
         "name": "Tridip Gogoi",
-        "access": ["all"],
+        "is_admin": True,
     },
     hashlib.sha256("Rintu@2026".encode()).hexdigest(): {
-        "role": "OEM Viewer",
+        "role": "NOC Viewer",
         "name": "PTPL Operations Desk",
-        "access": ["View Only"],
-    },
- hashlib.sha256("NIPL@2026".encode()).hexdigest(): {
-        "role": "Fill Team Viewer",
-        "name": "NIPL Operations Desk",
-        "access": ["View Only"],
+        "is_admin": False,
     },
 }
 
@@ -268,7 +263,7 @@ if not st.session_state.authenticated:
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
-is_viewer = False  # Download report enabled for everyone now
+is_admin = user_data["is_admin"]
 
 if (
     "master_tracker_df" not in st.session_state
@@ -282,28 +277,31 @@ if (
 ):
   st.session_state.ila_tracker_df = load_ila_tracker()
 
-with st.container(border=True):
-  col_up1, col_up2, col_up3 = st.columns([2.5, 1, 1])
-  with col_up1:
-    uploaded_file = st.file_uploader(
-        "📤 Upload Master Tracker (.xlsx)", type=["xlsx", "xls"]
-    )
-    if uploaded_file is not None:
-      st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
-      st.success("✅ Tracker updated!")
-  with col_up2:
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🗑️ Clear File", use_container_width=True):
-      if os.path.exists(DEFAULT_EXCEL):
-        st.session_state.master_tracker_df = load_excel_tracker(DEFAULT_EXCEL)
-      else:
-        st.session_state.master_tracker_df = pd.DataFrame()
-      st.success("Cleared!")
-      st.rerun()
-  with col_up3:
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 Refresh", type="primary", use_container_width=True):
-      st.rerun()
+# Admin-এ হে ফাইল আপলোড আৰু ক্লিয়ার কৰিব পাৰিব
+if is_admin:
+  with st.container(border=True):
+    col_up1, col_up2, col_up3 = st.columns([2.5, 1, 1])
+    with col_up1:
+      uploaded_file = st.file_uploader(
+          "📤 Upload Master Tracker (.xlsx) [Admin Only]",
+          type=["xlsx", "xls"],
+      )
+      if uploaded_file is not None:
+        st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
+        st.success("✅ Tracker updated!")
+    with col_up2:
+      st.markdown("<br>", unsafe_allow_html=True)
+      if st.button("🗑️ Clear File", use_container_width=True):
+        if os.path.exists(DEFAULT_EXCEL):
+          st.session_state.master_tracker_df = load_excel_tracker(DEFAULT_EXCEL)
+        else:
+          st.session_state.master_tracker_df = pd.DataFrame()
+        st.success("Cleared!")
+        st.rerun()
+    with col_up3:
+      st.markdown("<br>", unsafe_allow_html=True)
+      if st.button("🔄 Refresh", type="primary", use_container_width=True):
+        st.rerun()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
@@ -312,8 +310,7 @@ with st.container(border=True):
   top_c1, top_c2 = st.columns([2, 2])
   with top_c1:
     st.markdown(
-        f"🛡️ **Operator:** `{admin_name}` | 📂 **Source:** `Persistent Session"
-        " Storage`"
+        f"🛡️ **Operator:** `{admin_name}` | 🔑 **Role:** `{admin_role}`"
     )
   with top_c2:
     if not df_status.empty:
@@ -1290,10 +1287,11 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
 elif page == "✏️ In-Portal Master Tracker Editor":
   st.markdown("## ✏️ In-Portal Master Tracker Editor")
+  # Viewer-ৰ বাবে এডিটাৰটো Read-only কৰি দিয়া হৈছে যাতে সলনি কৰিব নোৱাৰে
   edited_grid = st.data_editor(
-      df_status, use_container_width=True, height=500, disabled=False
+      df_status, use_container_width=True, height=500, disabled=not is_admin
   )
-  if st.button("Save Grid Changes", type="primary"):
+  if is_admin and st.button("Save Grid Changes", type="primary"):
     st.session_state.master_tracker_df = edited_grid
     st.success("Changes saved for current session!")
 
