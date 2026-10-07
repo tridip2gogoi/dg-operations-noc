@@ -512,7 +512,7 @@ if page == "🔍 AI Site Diagnostics":
       if remarks_extra:
         remarks_display_str += f"\n\n{' | '.join(remarks_extra)}"
 
-      # --- Previous Remarks (Col Z), Raise Date & Closed Date ---
+      # --- Previous Remarks (Col Z), Raise Date (Col O) & Closed Date (Col P) ---
       prev_remarks = "No previous remarks."
       for pr_key in ["Previous Remarks", "Prev Remarks"]:
         if pr_key in site_row and pd.notna(site_row[pr_key]):
@@ -522,34 +522,50 @@ if page == "🔍 AI Site Diagnostics":
             break
 
       prev_raise_date = ""
-      for prd_key in [
-          "Previous Docket raise Date",
-          "Previous Raise Date",
-          "Prev Raise Date",
-          "Docket Raise Date",
-      ]:
-        if prd_key in site_row and pd.notna(site_row[prd_key]):
-          val_prd = clean_date_str(site_row[prd_key])
-          if val_prd:
-            prev_raise_date = val_prd
-            break
+      try:
+        if len(site_row.index) > 14:
+          col_o_val = site_row.iloc[14]  # Column O is index 14
+          if pd.notna(col_o_val):
+            prev_raise_date = clean_date_str(col_o_val)
+      except:
+        pass
+
+      if not prev_raise_date:
+        for prd_key in [
+            "Previous Docket raise Date",
+            "Previous Raise Date",
+            "Prev Raise Date",
+        ]:
+          if prd_key in site_row and pd.notna(site_row[prd_key]):
+            val_prd = clean_date_str(site_row[prd_key])
+            if val_prd:
+              prev_raise_date = val_prd
+              break
 
       prev_closed_date = ""
-      for pcd_key in [
-          "Previous Closed Date",
-          "Prev Closed Date",
-          "Closed Date",
-          "Docket Closed Date",
-      ]:
-        if pcd_key in site_row and pd.notna(site_row[pcd_key]):
-          val_pcd = clean_date_str(site_row[pcd_key])
-          if val_pcd:
-            prev_closed_date = val_pcd
-            break
+      try:
+        if len(site_row.index) > 15:
+          col_p_val = site_row.iloc[15]  # Column P is index 15
+          if pd.notna(col_p_val):
+            prev_closed_date = clean_date_str(col_p_val)
+      except:
+        pass
+
+      if not prev_closed_date:
+        for pcd_key in [
+            "Previous Closed Date",
+            "Prev Closed Date",
+            "Closed Date",
+        ]:
+          if pcd_key in site_row and pd.notna(site_row[pcd_key]):
+            val_pcd = clean_date_str(site_row[pcd_key])
+            if val_pcd:
+              prev_closed_date = val_pcd
+              break
 
       prev_extra = []
       if prev_raise_date:
-        prev_extra.append(f"Raise Date: {prev_raise_date}")
+        prev_extra.append(f"Docket Raise Date: {prev_raise_date}")
       if prev_closed_date:
         prev_extra.append(f"Closed Date: {prev_closed_date}")
 
