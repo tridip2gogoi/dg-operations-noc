@@ -29,7 +29,6 @@ st.markdown(
     }
     .block-container { padding-top: 0.4rem !important; padding-bottom: 0.5rem !important; }
     
-    /* Login Box Container & Text Visibility Fix */
     div[data-testid="stForm"] {
         background: rgba(15, 23, 42, 0.95) !important;
         border: 2px solid #facc15 !important;
@@ -513,6 +512,51 @@ if page == "🔍 AI Site Diagnostics":
       if remarks_extra:
         remarks_display_str += f"\n\n{' | '.join(remarks_extra)}"
 
+      # --- Previous Remarks (Col Z), Raise Date & Closed Date ---
+      prev_remarks = "No previous remarks."
+      for pr_key in ["Previous Remarks", "Prev Remarks"]:
+        if pr_key in site_row and pd.notna(site_row[pr_key]):
+          val_pr = str(site_row[pr_key]).strip()
+          if val_pr and val_pr.lower() not in ["nan", "none", "", "0", "nat"]:
+            prev_remarks = val_pr
+            break
+
+      prev_raise_date = ""
+      for prd_key in [
+          "Previous Docket raise Date",
+          "Previous Raise Date",
+          "Prev Raise Date",
+          "Docket Raise Date",
+      ]:
+        if prd_key in site_row and pd.notna(site_row[prd_key]):
+          val_prd = clean_date_str(site_row[prd_key])
+          if val_prd:
+            prev_raise_date = val_prd
+            break
+
+      prev_closed_date = ""
+      for pcd_key in [
+          "Previous Closed Date",
+          "Prev Closed Date",
+          "Closed Date",
+          "Docket Closed Date",
+      ]:
+        if pcd_key in site_row and pd.notna(site_row[pcd_key]):
+          val_pcd = clean_date_str(site_row[pcd_key])
+          if val_pcd:
+            prev_closed_date = val_pcd
+            break
+
+      prev_extra = []
+      if prev_raise_date:
+        prev_extra.append(f"Raise Date: {prev_raise_date}")
+      if prev_closed_date:
+        prev_extra.append(f"Closed Date: {prev_closed_date}")
+
+      prev_remarks_display_str = prev_remarks
+      if prev_extra:
+        prev_remarks_display_str += f"\n\n{' | '.join(prev_extra)}"
+
       sup_name = site_row.get("Supervisor Name", "Mojib Kumar Saikia")
       trt_person = site_row.get("TRT Personnel", "Manseng Marak")
       contact_no = site_row.get("Contact No.", "7002843853.0")
@@ -698,7 +742,7 @@ if page == "🔍 AI Site Diagnostics":
               unsafe_allow_html=True,
           )
           st.markdown(
-              f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>',
+              f'<div class="previous-remarks-box">{prev_remarks_display_str}</div>',
               unsafe_allow_html=True,
           )
 
