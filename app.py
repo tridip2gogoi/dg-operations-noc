@@ -199,7 +199,6 @@ def process_dataframe(df_status):
   return df_status
 
 
-@st.cache_data(ttl=60)
 def load_excel_tracker(uploaded_file=None):
   df_status = pd.DataFrame()
   try:
@@ -272,6 +271,19 @@ admin_name = user_data["name"]
 admin_role = user_data["role"]
 is_viewer = "read_only" in user_data.get("access", ["all"])
 
+# Initialize Master Tracker in session state if not present
+if (
+    "master_tracker_df" not in st.session_state
+    or st.session_state.master_tracker_df.empty
+):
+  st.session_state.master_tracker_df = load_excel_tracker()
+
+if (
+    "ila_tracker_df" not in st.session_state
+    or st.session_state.ila_tracker_df.empty
+):
+  st.session_state.ila_tracker_df = load_ila_tracker()
+
 # Top Upload Section
 with st.container(border=True):
   col_up1, col_up2 = st.columns([3, 1])
@@ -281,26 +293,13 @@ with st.container(border=True):
         type=["xlsx", "xls"],
     )
     if uploaded_file is not None:
+      # Load and lock into session state so old/uploaded data persists across tabs
       st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
       st.success("✅ Tracker updated successfully from uploaded file!")
   with col_up2:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔄 Refresh View", type="primary", use_container_width=True):
-      st.cache_data.clear()
-      if "master_tracker_df" in st.session_state:
-        del st.session_state.master_tracker_df
       st.rerun()
-
-if (
-    "master_tracker_df" not in st.session_state
-    or st.session_state.master_tracker_df.empty
-):
-  st.session_state.master_tracker_df = load_excel_tracker()
-if (
-    "ila_tracker_df" not in st.session_state
-    or st.session_state.ila_tracker_df.empty
-):
-  st.session_state.ila_tracker_df = load_ila_tracker()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
