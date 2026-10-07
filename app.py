@@ -257,6 +257,24 @@ if not st.session_state.authenticated:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
+
+# Direct File Uploader to bypass Google Sheet restrictions if any
+with st.sidebar:
+    st.markdown("### ⚙️ Portal Data Manager")
+    up_file = st.file_uploader("Upload Master Tracker (.xlsx)", type=["xlsx", "xls"], key="sidebar_master_upload")
+    if up_file is not None:
+        try:
+            df_up = pd.read_excel(up_file, sheet_name=0)
+            for col in df_up.columns: df_up[col] = df_up[col].astype(object)
+            st.session_state.master_tracker_df = df_up
+            st.session_state['data_source_mode'] = "Uploaded Excel File"
+            st.success("Master Tracker uploaded successfully!")
+            st.rerun()
+        except Exception as e_up:
+            st.error(f"Upload error: {e_up}")
+    st.markdown("---")
+
+
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
@@ -859,4 +877,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)   
+                            """, unsafe_allow_html=True)     
