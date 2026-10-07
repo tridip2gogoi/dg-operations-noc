@@ -282,7 +282,7 @@ if (
 # Admin-ৰ বাবে আপলোড আৰু ক্লিয়াৰ অপচন
 if is_admin:
   with st.container(border=True):
-    col_up1, col_up2, col_up3 = st.columns([2.5, 1, 1])
+    col_up1, col_up2 = st.columns([3, 1])
     with col_up1:
       uploaded_file = st.file_uploader(
           "📤 Upload Master Tracker (.xlsx) [Admin Only]",
@@ -300,23 +300,23 @@ if is_admin:
           st.session_state.master_tracker_df = pd.DataFrame()
         st.success("Cleared!")
         st.rerun()
-    with col_up3:
-      st.markdown("<br>", unsafe_allow_html=True)
-      if st.button("🔄 Refresh View", type="primary", use_container_width=True):
-        st.cache_data.clear()
-        st.session_state.master_tracker_df = load_excel_tracker()
-        st.rerun()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
+# Operator info, Download report aru Refresh View (সবেৰ বাবে এনাবল কৰা হৈছে)
 with st.container(border=True):
-  top_c1, top_c2 = st.columns([2, 2])
+  top_c1, top_c2, top_c3 = st.columns([2, 1.5, 1.5])
   with top_c1:
     st.markdown(
         f"🛡️ **Operator:** `{admin_name}` | 🔑 **Role:** `{admin_role}`"
     )
   with top_c2:
+    if st.button("🔄 Refresh View", type="primary", use_container_width=True):
+      st.cache_data.clear()
+      st.session_state.master_tracker_df = load_excel_tracker()
+      st.rerun()
+  with top_c3:
     if not df_status.empty:
       output = BytesIO()
       with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -326,7 +326,7 @@ with st.container(border=True):
               writer, sheet_name="IPMS Site Automation Status", index=False
           )
       st.download_button(
-          label="📥 Download Report (.xlsx)",
+          label="📥 Download Report",
           data=output.getvalue(),
           file_name=f"NE_Circle_Master_Operations_Report_{datetime.now(IST).strftime('%Y%m%d')}.xlsx",
           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
