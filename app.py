@@ -29,12 +29,19 @@ st.markdown(
     }
     .block-container { padding-top: 0.4rem !important; padding-bottom: 0.5rem !important; }
     
-    /* Login Box Text & Input Yellow Styling */
+    /* Login Box Container & Text Visibility Fix */
+    div[data-testid="stForm"] {
+        background: rgba(15, 23, 42, 0.95) !important;
+        border: 2px solid #facc15 !important;
+        border-radius: 16px !important;
+        padding: 2.2rem 2rem !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+    }
     div[data-testid="stForm"] label p, div[data-testid="stForm"] label span, div[data-testid="stForm"] h2, div[data-testid="stForm"] p {
         color: #facc15 !important; font-weight: 800 !important;
     }
     div[data-testid="stForm"] input {
-        color: #ffffff !important; background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 6px !important;
+        color: #ffffff !important; background-color: #1e293b !important; border: 2px solid #facc15 !important; border-radius: 6px !important;
     }
 
     div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
@@ -1664,3 +1671,39 @@ elif page == "⏳ Daily Fault Summary":
       ):
         st.dataframe(
             pd.crosstab(
+                filtered_date_df["JC"],
+                filtered_date_df["Bucket"],
+                margins=True,
+                margins_name="Total",
+            ),
+            use_container_width=True,
+        )
+      else:
+        st.info("No records matching current filters.")
+
+    with st.container(border=True):
+      st.markdown(
+          "<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px"
+          " solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults"
+          " Registry</h4>",
+          unsafe_allow_html=True,
+      )
+      st.dataframe(filtered_date_df, use_container_width=True)
+  else:
+    st.info("No data available.")
+
+elif page == "📈 ILA-AG1 Operations Tracker":
+  st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
+  if not df_ila.empty:
+    st.dataframe(df_ila, use_container_width=True)
+  else:
+    st.info("ILA Tracker sheet not loaded.")
+
+elif page == "✏️ In-Portal Master Tracker Editor":
+  st.markdown("## ✏️ In-Portal Master Tracker Editor")
+  edited_grid = st.data_editor(
+      df_status, use_container_width=True, height=500, disabled=not is_admin
+  )
+  if is_admin and st.button("Save Grid Changes", type="primary"):
+    st.session_state.master_tracker_df = edited_grid
+    st.success("Changes saved for current session!")
