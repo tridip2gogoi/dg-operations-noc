@@ -43,6 +43,11 @@ st.markdown(
         color: #ffffff !important; background-color: #1e293b !important; border: 2px solid #facc15 !important; border-radius: 6px !important;
     }
 
+    /* Metric Card Label / Header Yellow Color Fix */
+    div[data-testid="stMetric"] label {
+        color: #facc15 !important; font-weight: 800 !important;
+    }
+
     div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
         color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
     }
