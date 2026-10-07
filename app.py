@@ -271,7 +271,6 @@ admin_name = user_data["name"]
 admin_role = user_data["role"]
 is_viewer = "read_only" in user_data.get("access", ["all"])
 
-# Initialize Master Tracker in session state if not present
 if (
     "master_tracker_df" not in st.session_state
     or st.session_state.master_tracker_df.empty
@@ -284,7 +283,6 @@ if (
 ):
   st.session_state.ila_tracker_df = load_ila_tracker()
 
-# Top Upload Section
 with st.container(border=True):
   col_up1, col_up2 = st.columns([3, 1])
   with col_up1:
@@ -293,7 +291,6 @@ with st.container(border=True):
         type=["xlsx", "xls"],
     )
     if uploaded_file is not None:
-      # Load and lock into session state so old/uploaded data persists across tabs
       st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
       st.success("✅ Tracker updated successfully from uploaded file!")
   with col_up2:
@@ -1364,7 +1361,50 @@ elif page == "🔍 AI Site Diagnostics":
       dg_rating = site_row.get("DG Rating", "N/A")
       active_bucket = site_row.get("Bucket", "IPMS")
       aging_val = site_row.get("Aging (Day's)", 62)
-      fuel_tel = site_row.get("Fuel Sensor Status", "nan")
+
+      fuel_tel = "Ok"
+      for f_key in ["Fuel Sensor Status", "Fuel Sensor", "Fuel Status"]:
+        if f_key in site_row and pd.notna(site_row[f_key]):
+          val_s = str(site_row[f_key]).strip()
+          if val_s and val_s.lower() not in ["nan", "none", "", "0", "nat"]:
+            fuel_tel = val_s
+            break
+
+      fuel_date = clean_date_str(site_row.get("Fuel Sensor Faulty Date", ""))
+      fuel_docket = str(site_row.get("Fuel Sensor Docket No.", "")).strip()
+      if fuel_docket.lower() in ["nan", "none", "", "0", "0.0", "nat"]:
+        fuel_docket = ""
+
+      fuel_status_display = fuel_tel
+      if fuel_date or fuel_docket:
+        extra_info = []
+        if fuel_date:
+          extra_info.append(f"Date: {fuel_date}")
+        if fuel_docket:
+          extra_info.append(f"Docket: {fuel_docket}")
+        fuel_status_display += f" ({' | '.join(extra_info)})"
+
+      present_remarks = "No remarks recorded."
+      for r_key in ["Present Remarks", "Remarks", "Current Remarks"]:
+        if r_key in site_row and pd.notna(site_row[r_key]):
+          val_r = str(site_row[r_key]).strip()
+          if val_r and val_r.lower() not in ["nan", "none", "", "0", "nat"]:
+            present_remarks = val_r
+            break
+
+      rem_date = clean_date_str(site_row.get("Present Remarks Faulty Date", ""))
+      rem_docket = str(site_row.get("Present Remarks Docket No.", "")).strip()
+      if rem_docket.lower() in ["nan", "none", "", "0", "0.0", "nat"]:
+        rem_docket = ""
+
+      remarks_display = present_remarks
+      if rem_date or rem_docket:
+        extra_rem = []
+        if rem_date:
+          extra_rem.append(f"Date: {rem_date}")
+        if rem_docket:
+          extra_rem.append(f"Docket: {rem_docket}")
+        remarks_display += f"\n\n{' | '.join(extra_rem)}"
 
       sup_name = site_row.get("Supervisor Name", "Mojib Kumar Saikia")
       trt_person = site_row.get("TRT Personnel", "Manseng Marak")
@@ -1436,7 +1476,7 @@ elif page == "🔍 AI Site Diagnostics":
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
                     <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Fuel Telemetry</h4>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_tel}</span><br>
-                    <span style="color: #ef4444; font-size: 12px; font-weight: 700;">↓ Sensor Health</span>
+                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Sensor Health</span>
                 </div>
                 """,
             unsafe_allow_html=True,
@@ -1524,13 +1564,16 @@ elif page == "🔍 AI Site Diagnostics":
           st.markdown(
               f"<span style='color: #facc15; font-weight: 700;'>Fuel Sensor"
               f" Status:</span> <span style='color: #ffffff; font-weight:"
-              f" 800;'>`{fuel_tel}`</span>",
+              f" 800;'>`{fuel_status_display}`</span>",
               unsafe_allow_html=True,
           )
           st.markdown(
               f"<span style='color: #facc15; font-weight: 700;'>Present"
-              f" Remarks:</span> <span style='color: #ffffff; font-weight:"
-              f" 800;'>`{site_row.get('Present Remarks', 'None')}`</span>",
+              f" Remarks:</span>",
+              unsafe_allow_html=True,
+          )
+          st.markdown(
+              f'<div class="previous-remarks-box">{remarks_display}</div>',
               unsafe_allow_html=True,
           )
 
