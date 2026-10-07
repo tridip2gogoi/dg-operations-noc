@@ -263,7 +263,7 @@ if not st.session_state.authenticated:
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
-is_admin = user_data["is_admin"]
+is_admin = user_data.get("is_admin", False)
 
 if (
     "master_tracker_df" not in st.session_state
@@ -277,7 +277,6 @@ if (
 ):
   st.session_state.ila_tracker_df = load_ila_tracker()
 
-# Admin-এ হে ফাইল আপলোড আৰু ক্লিয়ার কৰিব পাৰিব
 if is_admin:
   with st.container(border=True):
     col_up1, col_up2, col_up3 = st.columns([2.5, 1, 1])
@@ -1287,7 +1286,6 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
 elif page == "✏️ In-Portal Master Tracker Editor":
   st.markdown("## ✏️ In-Portal Master Tracker Editor")
-  # Viewer-ৰ বাবে এডিটাৰটো Read-only কৰি দিয়া হৈছে যাতে সলনি কৰিব নোৱাৰে
   edited_grid = st.data_editor(
       df_status, use_container_width=True, height=500, disabled=not is_admin
   )
