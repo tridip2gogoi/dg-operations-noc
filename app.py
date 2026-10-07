@@ -154,30 +154,28 @@ def process_dataframe(df_status):
   for col in df_status.columns:
     df_status[col] = df_status[col].astype(object)
 
-  # Auto-detect Col AC (FSR CM link) and Col AD (FSR PM link)
-  ac_col_name, ad_col_name = None, None
-  for idx, col in enumerate(df_status.columns):
-    c_str = str(col).strip().upper()
-    if "FSR PM" in c_str or "AD" in c_str or idx == 29:
-      ad_col_name = col
-    elif "FSR CM" in c_str or "AC" in c_str or idx == 28:
-      ac_col_name = col
-
-  if ac_col_name:
-    df_status["Col AC (FSR CM link)"] = df_status[ac_col_name].apply(
-        lambda x: "" if pd.isna(x) else str(x).strip()
-    )
-  else:
-    if "Col AC (FSR CM link)" not in df_status.columns:
+  # Index 28 (Col AC) -> FSR CM link, Index 29 (Col AD) -> FSR PM link
+  try:
+    if len(df_status.columns) > 28:
+      col_ac_name = df_status.columns[28]
+      df_status["Col AC (FSR CM link)"] = df_status[col_ac_name].apply(
+          lambda x: "" if pd.isna(x) else str(x).strip()
+      )
+    else:
       df_status["Col AC (FSR CM link)"] = ""
+  except:
+    df_status["Col AC (FSR CM link)"] = ""
 
-  if ad_col_name:
-    df_status["Col AD (FSR PM link)"] = df_status[ad_col_name].apply(
-        lambda x: "" if pd.isna(x) else str(x).strip()
-    )
-  else:
-    if "Col AD (FSR PM link)" not in df_status.columns:
+  try:
+    if len(df_status.columns) > 29:
+      col_ad_name = df_status.columns[29]
+      df_status["Col AD (FSR PM link)"] = df_status[col_ad_name].apply(
+          lambda x: "" if pd.isna(x) else str(x).strip()
+      )
+    else:
       df_status["Col AD (FSR PM link)"] = ""
+  except:
+    df_status["Col AD (FSR PM link)"] = ""
 
   if "SAIP ID" in df_status.columns:
     df_status = df_status[df_status["SAIP ID"].notna()]
