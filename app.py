@@ -154,7 +154,6 @@ def process_dataframe(df_status):
   for col in df_status.columns:
     df_status[col] = df_status[col].astype(object)
 
-  # Index 28 (Col AC) -> FSR CM link, Index 29 (Col AD) -> FSR PM link
   try:
     if len(df_status.columns) > 28:
       col_ac_name = df_status.columns[28]
@@ -1559,49 +1558,55 @@ elif page == "🔍 AI Site Diagnostics":
           cm_link = site_row.get("Col AC (FSR CM link)", "")
           pm_link = site_row.get("Col AD (FSR PM link)", "")
 
-          st.markdown("#### 📄 FSR CM Link (Col AC)")
-          if cm_link and str(cm_link).lower() not in [
-              "",
-              "nan",
-              "none",
-              "0",
-              "0.0",
-              "nat",
-          ]:
-            st.markdown(f"`{cm_link}`")
-            cm_url = (
-                cm_link
-                if cm_link.startswith(("http://", "https://"))
-                else (
-                    f"https://{cm_link}"
-                    if cm_link.startswith("www.")
-                    else f"https://drive.google.com/drive/u/0/search?q={cm_link}"
-                )
-            )
-            st.link_button("🌐 Open FSR CM Link", cm_url, use_container_width=True)
-          else:
-            st.info("No FSR CM link available in Col AC.")
+          col_l1, col_l2 = st.columns(2)
+          with col_l1:
+            st.markdown("#### 📄 FSR CM Link (Col AC)")
+            if cm_link and str(cm_link).lower() not in [
+                "",
+                "nan",
+                "none",
+                "0",
+                "0.0",
+                "nat",
+            ]:
+              st.markdown(f"`{cm_link}`")
+              cm_url = (
+                  cm_link
+                  if cm_link.startswith(("http://", "https://"))
+                  else (
+                      f"https://{cm_link}"
+                      if cm_link.startswith("www.")
+                      else f"https://drive.google.com/drive/u/0/search?q={cm_link}"
+                  )
+              )
+              st.link_button(
+                  "🌐 Open FSR CM Link", cm_url, use_container_width=True
+              )
+            else:
+              st.info("No FSR CM link available in Col AC.")
 
-          st.markdown("<hr>", unsafe_allow_html=True)
-          st.markdown("#### 📄 FSR PM Link (Col AD)")
-          if pm_link and str(pm_link).lower() not in [
-              "",
-              "nan",
-              "none",
-              "0",
-              "0.0",
-              "nat",
-          ]:
-            st.markdown(f"`{pm_link}`")
-            pm_url = (
-                pm_link
-                if pm_link.startswith(("http://", "https://"))
-                else (
-                    f"https://{pm_link}"
-                    if pm_link.startswith("www.")
-                    else f"https://drive.google.com/drive/u/0/search?q={pm_link}"
-                )
-            )
-            st.link_button("🌐 Open FSR PM Link", pm_url, use_container_width=True)
-          else:
-            st.info("No FSR PM link available in Col AD.")
+          with col_l2:
+            st.markdown("#### 📄 FSR PM Link (Col AD)")
+            if pm_link and str(pm_link).lower() not in [
+                "",
+                "nan",
+                "none",
+                "0",
+                "0.0",
+                "nat",
+            ]:
+              st.markdown(f"`{pm_link}`")
+              pm_url = (
+                  pm_link
+                  if pm_link.startswith(("http://", "https://"))
+                  else (
+                      f"https://{pm_link}"
+                      if pm_link.startswith("www.")
+                      else f"https://drive.google.com/drive/u/0/search?q={pm_link}"
+                  )
+              )
+              st.link_button(
+                  "🌐 Open FSR PM Link", pm_url, use_container_width=True
+              )
+            else:
+              st.info("No FSR PM link available in Col AD.")
