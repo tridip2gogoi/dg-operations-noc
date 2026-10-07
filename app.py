@@ -257,10 +257,13 @@ admin_name = user_data["name"]
 admin_role = user_data["role"]
 is_viewer = ("read_only" in user_data.get("access", ["all"]))
 
-if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
-    st.session_state.master_tracker_df = load_google_sheet_tracker()
-if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
-    st.session_state.ila_tracker_df = load_ila_tracker()
+if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df is None or getattr(st.session_state.master_tracker_df, 'empty', True):
+    res_df = load_google_sheet_tracker()
+    st.session_state.master_tracker_df = res_df if res_df is not None else pd.DataFrame()
+
+if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df is None or getattr(st.session_state.ila_tracker_df, 'empty', True):
+    res_ila = load_ila_tracker()
+    st.session_state.ila_tracker_df = res_ila if res_ila is not None else pd.DataFrame()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
@@ -851,4 +854,4 @@ elif page == "🔍 AI Site Diagnostics":
                             <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
                                 🚫 No PM FSR Link Available (Col AD)
                             </div>
-                            """, unsafe_allow_html=True)     
+                            """, unsafe_allow_html=True) 
