@@ -284,16 +284,24 @@ if (
   st.session_state.ila_tracker_df = load_ila_tracker()
 
 with st.container(border=True):
-  col_up1, col_up2 = st.columns([3, 1])
+  col_up1, col_up2, col_up3 = st.columns([2.5, 1, 1])
   with col_up1:
     uploaded_file = st.file_uploader(
-        "📤 Upload Updated Master Tracker Excel File (.xlsx)",
-        type=["xlsx", "xls"],
+        "📤 Upload Master Tracker (.xlsx)", type=["xlsx", "xls"]
     )
     if uploaded_file is not None:
       st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
-      st.success("✅ Tracker updated successfully from uploaded file!")
+      st.success("✅ Tracker updated!")
   with col_up2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🗑️ Clear Uploaded File", use_container_width=True):
+      if os.path.exists(DEFAULT_EXCEL):
+        st.session_state.master_tracker_df = load_excel_tracker(DEFAULT_EXCEL)
+      else:
+        st.session_state.master_tracker_df = pd.DataFrame()
+      st.success("Cleared!")
+      st.rerun()
+  with col_up3:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔄 Refresh View", type="primary", use_container_width=True):
       st.rerun()
@@ -305,8 +313,8 @@ with st.container(border=True):
   top_c1, top_c2 = st.columns([2, 2])
   with top_c1:
     st.markdown(
-        f"🛡️ **Operator:** `{admin_name}` | 📂 **Source:** `Web Portal Direct"
-        " Upload`"
+        f"🛡️ **Operator:** `{admin_name}` | 📂 **Source:** `Persistent Session"
+        " Storage`"
     )
   with top_c2:
     if not df_status.empty:
@@ -1362,7 +1370,6 @@ elif page == "🔍 AI Site Diagnostics":
       active_bucket = site_row.get("Bucket", "IPMS")
       aging_val = site_row.get("Aging (Day's)", 62)
 
-      # --- Fuel Sensor Status, Docket & Open Date ---
       fuel_status_val = "Ok"
       for f_key in ["Fuel Sensor Status", "Fuel Sensor", "Fuel Status"]:
         if f_key in site_row and pd.notna(site_row[f_key]):
@@ -1399,7 +1406,7 @@ elif page == "🔍 AI Site Diagnostics":
 
       fuel_extra = []
       if fuel_docket:
-        fuel_extra.append(f"Docket: {fuel_docket}")
+        fuel_extra.append(f"Docket No: {fuel_docket}")
       if fuel_open_date:
         fuel_extra.append(f"Open Date: {fuel_open_date}")
 
@@ -1407,7 +1414,6 @@ elif page == "🔍 AI Site Diagnostics":
       if fuel_extra:
         fuel_display_str += f" ({' | '.join(fuel_extra)})"
 
-      # --- Present Remarks, Present Docket No & Present Docket raise Date ---
       present_remarks = "No remarks recorded."
       for r_key in ["Present Remarks", "Remarks", "Current Remarks"]:
         if r_key in site_row and pd.notna(site_row[r_key]):
@@ -1426,9 +1432,9 @@ elif page == "🔍 AI Site Diagnostics":
 
       remarks_extra = []
       if pres_docket:
-        remarks_extra.append(f"Docket No: {pres_docket}")
+        remarks_extra.append(f"Present Docket No: {pres_docket}")
       if pres_raise_date:
-        remarks_extra.append(f"Raise Date: {pres_raise_date}")
+        remarks_extra.append(f"Present Docket raise Date: {pres_raise_date}")
 
       remarks_display_str = present_remarks
       if remarks_extra:
