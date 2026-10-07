@@ -28,13 +28,12 @@ st.markdown("""
     div[data-testid="stRadio"] label, div[data-testid="stRadio"] div[role="radiogroup"] label {
         color: #facc15 !important; font-weight: 700 !important; font-size: 13px !important;
     }
-    h1, h2, h3, h4, h5, h6 { color: #facc15 !important; font-weight: 800 !important; }
+    h1, h2, h3, h4, h5, h6 { color: #ffffff !important; font-weight: 800 !important; }
     .previous-remarks-box { background-color: rgba(15, 23, 42, 0.85) !important; border: 1px solid #facc15 !important; border-radius: 8px !important; padding: 10px 14px !important; color: #ffffff !important; font-size: 14px !important; font-weight: 600 !important; }
     .custom-header-banner { background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 8px !important; padding: 14px 20px !important; margin-top: 6px !important; margin-bottom: 8px !important; }
     .yellow-success-msg { background-color: #1e293b; color: #facc15 !important; border: 1px solid #facc15; padding: 10px 15px; border-radius: 6px; font-weight: 800; margin-top: 10px; margin-bottom: 10px; }
     .status-badge { padding: 4px 10px; border-radius: 9999px; font-weight: 800; font-size: 12px; text-transform: uppercase; display: inline-block; }
-    .badge-ok { background-color: #10b981; color: #ffffff; }
-    .badge-warn { background-color: #f59e0b; color: #ffffff; }
+    .badge-ok { background-color: #0284c7; color: #ffffff; }
     .badge-crit { background-color: #dc2626; color: #ffffff; }
 
     /* Streamlit tabs yellow theme styling */
@@ -52,24 +51,21 @@ st.markdown("""
     div[data-testid="stTabs"] button[aria-selected="true"] {
         border-bottom-color: #facc15 !important;
     }
-    div[data-testid="stTabs"] button:hover p {
-        color: #fef08a !important;
-    }
 
     /* Force all markdown text, paragraphs, and spans to be bright white by default against dark background */
     .stApp p, .stApp span, .stApp div, .stApp label, .stMarkdownContainer p, .element-container p {
         color: #ffffff !important;
     }
-    /* Keep headings and count headlines golden yellow */
-    h1, h2, h3, h4, h5, h6, .stMarkdownContainer h1, .stMarkdownContainer h2, .stMarkdownContainer h3, .stMarkdownContainer h4 {
+    /* Keep headings and highlights golden yellow */
+    h1, h2, h3, h4, h5, h6, .stMarkdownContainer h1, .stMarkdownContainer h2, .stMarkdownContainer h3 {
         color: #facc15 !important;
     }
 </style>
+
+
 """, unsafe_allow_html=True)
 
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/export?format=xlsx"
-GOOGLE_SHEET_PUB = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/pub?output=xlsx"
-GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1PpvvP217epyaIYojWTe79UQCYZDCuCHf/gviz/tq?tqx=out:csv"
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
@@ -105,61 +101,43 @@ def verify_login(username, password):
             return USER_CREDENTIALS[username]
     return None
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=60)
 def load_google_sheet_tracker():
     df_status = pd.DataFrame()
-    source_status = "Google Sheet Live"
-    err_msg = ""
-    success = False
-
-    # Attempt 1: Publish URL
     try:
-        xls_dg = pd.ExcelFile(GOOGLE_SHEET_PUB)
+        xls_dg = pd.ExcelFile(GOOGLE_SHEET_URL)
         sheet_target = "Automation Status" if "Automation Status" in xls_dg.sheet_names else xls_dg.sheet_names[0]
         df_status = pd.read_excel(xls_dg, sheet_name=sheet_target)
-        if df_status is not None and not df_status.empty:
-            success = True
-    except Exception as e1:
-        err_msg = f"Pub Error: {str(e1)}"
+        for col in df_status.columns: df_status[col] = df_status[col].astype(object)
+        
+        ac_col_name = None
+        for idx, col in enumerate(df_status.columns):
+            c_str = str(col).strip().upper()
+            if 'AC' in c_str or 'PDF' in c_str or idx == 28:
+                ac_col_name = col
+                break
+        if ac_col_name:
+            df_status['Col AC (FSR PDF link)'] = df_status[ac_col_name].apply(lambda x: "" if pd.isna(x) else str(x).strip())
+        else:
+            if 'Col AC (FSR PDF link)' not in df_status.columns: df_status['Col AC (FSR PDF link)'] = ""
 
-    # Attempt 2: Gviz CSV endpoint
-    if not success:
-        try:
-            df_status = pd.read_csv(GOOGLE_SHEET_CSV)
-            if df_status is not None and not df_status.empty:
-                success = True
-        except Exception as e2:
-            err_msg += f" | CSV Error: {str(e2)}"
-
-    # Attempt 3: Direct export URL
-    if not success:
-        try:
-            xls_dg2 = pd.ExcelFile(GOOGLE_SHEET_URL)
-            sheet_target = "Automation Status" if "Automation Status" in xls_dg2.sheet_names else xls_dg2.sheet_names[0]
-            df_status = pd.read_excel(xls_dg2, sheet_name=sheet_target)
-            if df_status is not None and not df_status.empty:
-                success = True
-        except Exception as e3:
-            err_msg += f" | XLSX Error: {str(e3)}"
-
-    # Attempt 4: Local backup file
-    if not success:
-        source_status = "Local File (Backup)"
+        if 'SAIP ID' in df_status.columns:
+            df_status = df_status[df_status['SAIP ID'].notna()]
+            df_status['SAIP ID'] = df_status['SAIP ID'].astype(str).str.strip()
+            df_status = df_status[~df_status['SAIP ID'].str.lower().isin(['', 'nan', 'none', 'total', '0', 'null'])]
+        if 'DG Make' in df_status.columns:
+            df_status = df_status[df_status['DG Make'].notna()]
+            df_status['DG Make'] = df_status['DG Make'].astype(str).str.strip()
+        if 'JC' in df_status.columns: df_status['JC'] = df_status['JC'].astype(str).str.strip()
+        if 'State' in df_status.columns: df_status['State'] = df_status['State'].astype(str).str.strip()
+        if 'Bucket' in df_status.columns:
+            df_status['Bucket'] = df_status['Bucket'].astype(str).str.strip()
+            df_status['Bucket'] = df_status['Bucket'].apply(lambda x: None if str(x).lower() in ['nan', 'none', '', 'nat'] else x)
+    except Exception:
         if os.path.exists(DEFAULT_EXCEL):
-            try:
-                xls_local = pd.ExcelFile(DEFAULT_EXCEL)
-                s_name = "Automation Status" if "Automation Status" in xls_local.sheet_names else xls_local.sheet_names[0]
-                df_status = pd.read_excel(xls_local, sheet_name=s_name)
-                if df_status is not None and not df_status.empty:
-                    success = True
-            except Exception as e4:
-                err_msg += f" | Local Error: {str(e4)}"
-
-    if df_status is None or df_status.empty:
-        df_status = pd.DataFrame()
-    else:
-        for col in df_status.columns:
-            df_status[col] = df_status[col].astype(object)
+            try: df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
+            except: pass
+    return df_status
 
 def load_ila_tracker():
     df_ila = pd.DataFrame()
@@ -211,48 +189,22 @@ if not st.session_state.authenticated:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-
-# Direct File Uploader to bypass Google Sheet restrictions if any
-with st.sidebar:
-    st.markdown("### ⚙️ Portal Data Manager")
-    up_file = st.file_uploader("Upload Master Tracker (.xlsx)", type=["xlsx", "xls"], key="sidebar_master_upload")
-    if up_file is not None:
-        try:
-            df_up = pd.read_excel(up_file, sheet_name=0)
-            for col in df_up.columns: df_up[col] = df_up[col].astype(object)
-            st.session_state.master_tracker_df = df_up
-            st.session_state['data_source_mode'] = "Uploaded Excel File"
-            st.success("Master Tracker uploaded successfully!")
-            st.rerun()
-        except Exception as e_up:
-            st.error(f"Upload error: {e_up}")
-    st.markdown("---")
-
-
 user_data = st.session_state.user_info
 admin_name = user_data["name"]
 admin_role = user_data["role"]
 is_viewer = ("read_only" in user_data.get("access", ["all"]))
 
-if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df is None or getattr(st.session_state.master_tracker_df, 'empty', True):
-    res_df = load_google_sheet_tracker()
-    st.session_state.master_tracker_df = res_df if res_df is not None else pd.DataFrame()
-
-if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df is None or getattr(st.session_state.ila_tracker_df, 'empty', True):
-    res_ila = load_ila_tracker()
-    st.session_state.ila_tracker_df = res_ila if res_ila is not None else pd.DataFrame()
+if "master_tracker_df" not in st.session_state or st.session_state.master_tracker_df.empty:
+    st.session_state.master_tracker_df = load_google_sheet_tracker()
+if "ila_tracker_df" not in st.session_state or st.session_state.ila_tracker_df.empty:
+    st.session_state.ila_tracker_df = load_ila_tracker()
 
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
 with st.container(border=True):
     top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1.2])
-    with top_c1: 
-        curr_mode = st.session_state.get('data_source_mode', 'Google Sheet Live')
-        mode_badge = f"`{curr_mode}`" if "Live" in curr_mode else f"⚠️ `{curr_mode}`"
-        st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** {mode_badge}")
-        if 'data_source_err' in st.session_state and "Local" in curr_mode:
-            st.caption(f"⚠️ Live Sheet Sync Error: {st.session_state['data_source_err'][:90]}")
+    with top_c1: st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** `Google Drive Live`")
     with top_c2:
         if st.button("🔄 Force Refresh & Sync", type="primary", use_container_width=True):
             st.cache_data.clear()
@@ -499,28 +451,28 @@ elif page == "⛽ Fuel Sensor Telemetry":
         with c1:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Active Faulty Sensors (Master)</h4>
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Active Faulty Sensors (Master)</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_faults}</span>
             </div>
             """, unsafe_allow_html=True)
         with c2:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Most Affected JC</h4>
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Most Affected JC</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aff_jc}</span>
             </div>
             """, unsafe_allow_html=True)
         with c3:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Primary Fault Make</h4>
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Make</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_make}</span>
             </div>
             """, unsafe_allow_html=True)
         with c4:
             st.markdown(f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 18px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Primary Fault Rating</h4>
+                <span style="color: #fde047; font-size: 13px; font-weight: 700; text-transform: uppercase;">Primary Fault Rating</span><br>
                 <span style="color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_rat}</span>
             </div>
             """, unsafe_allow_html=True)
@@ -579,63 +531,58 @@ elif page == "⏳ Daily Fault Summary":
         m1, m2, m3, m4, m5, m6 = st.columns(6)
         with m1:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Filtered Faults</h4>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Filtered Faults</span><br>
                 <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{len(filtered_date_df):,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Date: {selected_date_filter}</span>
+                <span style="color: #94a3b8; font-size: 11px;">Date: {selected_date_filter}</span>
             </div>
             """, unsafe_allow_html=True)
         with m2:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Fuel Sensor Faults</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_fuel_sensor:,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Active Faults</span>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Fuel Sensor Faults</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_fuel_sensor:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m3:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">DG Battery</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_battery:,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Battery Issues</span>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">DG Battery</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_battery:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m4:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">GCU Faults</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_gcu:,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Controller Faults</span>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">GCU Faults</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_gcu:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m5:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">OEM Spare Parts</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Spares Required</span>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">OEM Spare Parts</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_oem:,}</span>
             </div>
             """, unsafe_allow_html=True)
         with m6:
             st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Total Master Base</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Circle Base</span>
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 12px 14px; border-radius: 8px;">
+                <span style="color: #fde047; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Master Base</span><br>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown("---")
         with st.container(border=True):
-            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='margin:0 0 10px 0; color: #facc15;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>", unsafe_allow_html=True)
             if 'JC' in filtered_date_df.columns and 'Bucket' in filtered_date_df.columns and not filtered_date_df.empty:
                 st.dataframe(pd.crosstab(filtered_date_df['JC'], filtered_date_df['Bucket'], margins=True, margins_name="Total"), use_container_width=True)
             else:
                 st.info("No records matching current filters.")
 
         with st.container(border=True):
-            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>📋 Detailed Filtered Faults Registry</h4>", unsafe_allow_html=True)
             st.dataframe(filtered_date_df, use_container_width=True)
     else:
         st.info("No data available.")
@@ -646,7 +593,7 @@ elif page == "📈 ILA-AG1 Operations Tracker":
     else: st.info("ILA Tracker not loaded.")
 
 elif page == "✏️ In-Portal Master Tracker Editor":
-    st.markdown("## ✏️ In-Portal Master Tracker Editor")
+    st.markdown("## ✏️ In-Portal Master Tracker Live Editor")
     edited_grid = st.data_editor(df_status, use_container_width=True, height=500, disabled=is_viewer)
     if not is_viewer and st.button("Save Grid Changes", type="primary"):
         st.session_state.master_tracker_df = edited_grid
@@ -674,18 +621,8 @@ elif page == "🔍 AI Site Diagnostics":
             selected_matches = matches[matches['SAIP ID'].astype(str) == str(chosen_site_id)]
             site_row = selected_matches.iloc[0] if not selected_matches.empty else matches.iloc[0]
             selected_site = site_row['SAIP ID']
-            status_val = str(site_row.get('DG Automation Status', 'Automation Ok')).strip()
+            status_val = str(site_row.get('DG Automation Status', 'Automation Ok'))
             
-            s_lower = status_val.lower()
-            if 'ok' in s_lower:
-                badge_bg = "#10b981"
-            elif 'manual' in s_lower:
-                badge_bg = "#f59e0b"
-            elif 'breakdown' in s_lower or 'ber' in s_lower:
-                badge_bg = "#dc2626"
-            else:
-                badge_bg = "#f59e0b"
-
             jc_val = site_row.get('JC', 'N/A')
             state_val = site_row.get('State', 'N/A')
             site_type_val = site_row.get('Site Type', 'P1')
@@ -711,7 +648,7 @@ elif page == "🔍 AI Site Diagnostics":
                         <span style="color: #f97316; font-size: 22px; font-weight: 800;">⚡ {selected_site}</span>
                     </div>
                     <div>
-                        <span style="background-color: {badge_bg}; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;">{status_val}</span>
+                        <span style="background-color: #f59e0b; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;">{status_val}</span>
                     </div>
                 </div>
                 <div style="margin-top: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">
@@ -727,7 +664,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc1:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">DG Manufacturer</h4>
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">DG Manufacturer</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{dg_make}</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ {dg_rating}</span>
                 </div>
@@ -735,7 +672,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc2:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Active Problem Bucket</h4>
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Active Problem Bucket</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{active_bucket}</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Root-Cause</span>
                 </div>
@@ -743,7 +680,7 @@ elif page == "🔍 AI Site Diagnostics":
             with mc3:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Incident Aging</h4>
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Incident Aging</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aging_val} Days</span><br>
                     <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Delay Bracket</span>
                 </div>
@@ -751,16 +688,16 @@ elif page == "🔍 AI Site Diagnostics":
             with mc4:
                 st.markdown(f"""
                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Fuel Telemetry</h4>
+                    <span style="color: #fde047; font-size: 11px; font-weight: 700; text-transform: uppercase;">Fuel Telemetry</span><br>
                     <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_tel}</span><br>
                     <span style="color: #ef4444; font-size: 12px; font-weight: 700;">↓ Sensor Health</span>
                 </div>
                 """, unsafe_allow_html=True)
 
             st.markdown(f"""
-            <div style="background-color: #1e293b; border: 2px solid #facc15; padding: 14px 18px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #ffffff; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                <span style="color: #facc15; font-weight: 800; font-size: 14px;">🧠 AI Diagnostic Inference:</span> <span style="color: #f8fafc;">⚠️ <b>Attention Required:</b> Status active (`{status_val}`). Problem classified under `{active_bucket}`.</span><br>
-                <span style="color: #38bdf8; font-weight: 700;">🎯 Recommended Operational Action (SOP):</span> <span style="color: #ffffff;">Verify site access and contact the local supervisor for direct diagnosis.</span>
+            <div style="background: rgba(240, 246, 255, 0.98); border: 1px solid #38bdf8; padding: 12px 16px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #0f172a; font-size: 13px; font-weight: 600;">
+                🧠 <b>AI Diagnostic Inference:</b> ⚠️ **Attention Required:** Manual mode active. Problem classified under `{active_bucket}`.<br>
+                🎯 <b>Recommended Operational Action (SOP):</b> Verify site access and contact the local supervisor for direct diagnosis.
             </div>
             """, unsafe_allow_html=True)
 
@@ -796,39 +733,19 @@ elif page == "🔍 AI Site Diagnostics":
                     st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Remarks (Col Z):</span>", unsafe_allow_html=True)
                     st.markdown(f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>', unsafe_allow_html=True)
                     
-                    st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
-                    st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
-                    
-                    # Strictly separate CM (Col AC) and PM (Col AD) links
-                    cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
-                    pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
-
-                    if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
-                    if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
-
-                    f_col1, f_col2 = st.columns(2)
-                    with f_col1:
-                        st.markdown("##### 📄 Google Drive Link CM (Col AC)")
-                        # Check if a valid URL is present
-                        if cm_link and (cm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in cm_link):
-                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else f"https://{cm_link}"
-                            st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
+                    pdf_link_val = str(site_row.get('Col AC (FSR PDF link)', '')).strip()
+                    if pdf_link_val and pdf_link.lower() not in ['', 'nan', 'none', '0', '0.0']:
+                        st.markdown(f"""
+                        <div style="margin-top: 10px; background-color: rgba(30, 41, 59, 0.9); border: 1px solid #38bdf8; padding: 12px; border-radius: 6px;">
+                            <b style="color: #38bdf8;">📄 Col AC (FSR PDF Link / Google Drive):</b><br>
+                            <span style="color: #ffffff; font-size: 13px;">{pdf_link_val}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        if pdf_link_val.startswith(('http://', 'https://', 'www.')):
+                            target_url = pdf_link_val if pdf_link_val.startswith('http') else f"https://{pdf_link_val}"
+                            st.link_button("🌐 Open FSR PDF / Google Drive Link", target_url, use_container_width=True)
                         else:
-                            st.markdown("""
-                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
-                                🚫 No CM FSR Link Available (Col AC)
-                            </div>
-                            """, unsafe_allow_html=True)
-
-                    with f_col2:
-                        st.markdown("##### 📄 Google Drive Link PM (Col AD)")
-                        # Check if a valid URL is present
-                        if pm_link and (pm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in pm_link):
-                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else f"https://{pm_link}"
-                            st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #10b981; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
-                        else:
-                            st.markdown("""
-                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
-                                🚫 No PM FSR Link Available (Col AD)
-                            </div>
-                            """, unsafe_allow_html=True)     
+                            st.info(f"Col AC Record: {pdf_link_val}")
+                    else:
+                        st.info("No FSR PDF or Google Drive link attached in Col AC for this site.")
