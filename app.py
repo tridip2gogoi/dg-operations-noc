@@ -47,7 +47,6 @@ st.markdown(
         color: #facc15 !important; font-weight: 800 !important;
     }
 
-    /* Radio Button Navigation Options Yellow Color Fix */
     div[data-testid="stRadio"] label p, div[data-testid="stRadio"] div[role="radiogroup"] label span {
         color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
         text-shadow: 0 1px 2px rgba(0,0,0,0.6);
@@ -300,7 +299,6 @@ if (
 ):
   st.session_state.ila_tracker_df = load_ila_tracker()
 
-# Admin-ৰ বাবে আপলোড আৰু ক্লিয়াৰ অপচন
 if is_admin:
   with st.container(border=True):
     col_up1, col_up2 = st.columns([3, 1])
@@ -330,7 +328,6 @@ if is_admin:
 df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
-# Operator info, Download report aru Refresh View
 with st.container(border=True):
   top_c1, top_c2, top_c3 = st.columns([2, 1.5, 1.5])
   with top_c1:
@@ -519,7 +516,6 @@ if page == "🔍 AI Site Diagnostics":
       if remarks_extra:
         remarks_display_str += f"\n\n{' | '.join(remarks_extra)}"
 
-      # --- Previous Remarks (Col Z), Docket Raise Date (Col AA / index 26) & Closed Date (Col AB / index 27) ---
       prev_remarks = "No previous remarks."
       for pr_key in ["Previous Remarks", "Prev Remarks"]:
         if pr_key in site_row and pd.notna(site_row[pr_key]):
@@ -531,7 +527,7 @@ if page == "🔍 AI Site Diagnostics":
       prev_raise_date = ""
       try:
         if len(site_row.index) > 26:
-          col_aa_val = site_row.iloc[26]  # Column AA is index 26
+          col_aa_val = site_row.iloc[26]
           if pd.notna(col_aa_val):
             prev_raise_date = clean_date_str(col_aa_val)
       except:
@@ -552,7 +548,7 @@ if page == "🔍 AI Site Diagnostics":
       prev_closed_date = ""
       try:
         if len(site_row.index) > 27:
-          col_ab_val = site_row.iloc[27]  # Column AB is index 27
+          col_ab_val = site_row.iloc[27]
           if pd.notna(col_ab_val):
             prev_closed_date = clean_date_str(col_ab_val)
       except:
@@ -678,72 +674,51 @@ if page == "🔍 AI Site Diagnostics":
           sc1, sc2 = st.columns(2)
           with sc1:
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>DG"
-                f" Make:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{dg_make}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>DG Make:</span> <span style='color: #ffffff; font-weight: 800;'>`{dg_make}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>DG"
-                f" Rating:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{dg_rating}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>DG Rating:</span> <span style='color: #ffffff; font-weight: 800;'>`{dg_rating}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>OEM"
-                f" Vendor:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{oem_vendor}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>OEM Vendor:</span> <span style='color: #ffffff; font-weight: 800;'>`{oem_vendor}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>EB Grid"
-                f" Connection:</span> <span style='color: #ffffff;"
-                f" font-weight: 800;'>`{grid_conn}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>EB Grid Connection:</span> <span style='color: #ffffff; font-weight: 800;'>`{grid_conn}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>Battery"
-                f" Backup (Min):</span> <span style='color: #ffffff;"
-                f" font-weight: 800;'>`{battery_backup}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>Battery Backup (Min):</span> <span style='color: #ffffff; font-weight: 800;'>`{battery_backup}`</span>",
                 unsafe_allow_html=True,
             )
           with sc2:
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>Supervisor"
-                f" Name:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{sup_name}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>Supervisor Name:</span> <span style='color: #ffffff; font-weight: 800;'>`{sup_name}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>TRT"
-                f" Personnel:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{trt_person}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>TRT Personnel:</span> <span style='color: #ffffff; font-weight: 800;'>`{trt_person}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>Contact"
-                f" Number:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{contact_no}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>Contact Number:</span> <span style='color: #ffffff; font-weight: 800;'>`{contact_no}`</span>",
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"<span style='color: #facc15; font-weight: 700;'>Dependent"
-                f" Sites:</span> <span style='color: #ffffff; font-weight:"
-                f" 800;'>`{dep_sites}`</span>",
+                f"<span style='color: #facc15; font-weight: 700;'>Dependent Sites:</span> <span style='color: #ffffff; font-weight: 800;'>`{dep_sites}`</span>",
                 unsafe_allow_html=True,
             )
 
       with diag_t2:
         with st.container(border=True):
           st.markdown(
-              f"<span style='color: #facc15; font-weight: 700;'>Fuel Sensor"
-              f" Status:</span> <span style='color: #ffffff; font-weight:"
-              f" 800;'>`{fuel_display_str}`</span>",
+              f"<span style='color: #facc15; font-weight: 700;'>Fuel Sensor Status:</span> <span style='color: #ffffff; font-weight: 800;'>`{fuel_display_str}`</span>",
               unsafe_allow_html=True,
           )
           st.markdown(
-              f"<span style='color: #facc15; font-weight: 700;'>Present"
-              f" Remarks:</span>",
+              "<span style='color: #facc15; font-weight: 700;'>Present Remarks:</span>",
               unsafe_allow_html=True,
           )
           st.markdown(
@@ -754,14 +729,11 @@ if page == "🔍 AI Site Diagnostics":
       with diag_t3:
         with st.container(border=True):
           st.markdown(
-              f"<span style='color: #facc15; font-weight: 700;'>Previous"
-              f" Docket No (Col AA):</span> <span style='color: #ffffff;"
-              f" font-weight: 800;'>`{site_row.get('Previous Docket No.', 'None')}`</span>",
+              f"<span style='color: #facc15; font-weight: 700;'>Previous Docket No (Col AA):</span> <span style='color: #ffffff; font-weight: 800;'>`{site_row.get('Previous Docket No.', 'None')}`</span>",
               unsafe_allow_html=True,
           )
           st.markdown(
-              "<span style='color: #facc15; font-weight: 700;'>Previous"
-              " Remarks (Col Z):</span>",
+              "<span style='color: #facc15; font-weight: 700;'>Previous Remarks (Col Z):</span>",
               unsafe_allow_html=True,
           )
           st.markdown(
@@ -919,8 +891,7 @@ elif page == "📊 Executive Control Center":
       with c1:
         with st.container(border=True):
           st.markdown(
-              "<h4 style='margin:0 0 10px 0; color: #facc15;'>JC / State Wise"
-              " Automation Health</h4>",
+              "<h4 style='margin:0 0 10px 0; color: #facc15;'>JC / State Wise Automation Health</h4>",
               unsafe_allow_html=True,
           )
           if (
@@ -944,8 +915,7 @@ elif page == "📊 Executive Control Center":
       with c2:
         with st.container(border=True):
           st.markdown(
-              "<h4 style='margin:0 0 10px 0; color: #facc15;'>DG Make Fleet"
-              " Allocation</h4>",
+              "<h4 style='margin:0 0 10px 0; color: #facc15;'>DG Make Fleet Allocation</h4>",
               unsafe_allow_html=True,
           )
           if "DG Make" in state_filtered_df.columns:
@@ -1019,8 +989,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with col1:
       with st.container(border=True):
         st.markdown(
-            f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Status Summary"
-            f" ({selected_fleet_jc})</h4>",
+            f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Status Summary ({selected_fleet_jc})</h4>",
             unsafe_allow_html=True,
         )
         if "DG Automation Status" in filtered_status.columns:
@@ -1034,8 +1003,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with col2:
       with st.container(border=True):
         st.markdown(
-            f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket"
-            f" Distribution ({selected_fleet_jc})</h4>",
+            f"<h4 style='margin:0 0 10px 0; color: #facc15;'>Bucket Distribution ({selected_fleet_jc})</h4>",
             unsafe_allow_html=True,
         )
         if not valid_bucket.empty:
@@ -1071,8 +1039,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with t1:
       with st.container(border=True):
         st.markdown(
-            "<h4 style='color: #facc15;'>JC vs DG Automation Status"
-            " Cross-Tabulation</h4>",
+            "<h4 style='color: #facc15;'>JC vs DG Automation Status Cross-Tabulation</h4>",
             unsafe_allow_html=True,
         )
         if (
@@ -1091,8 +1058,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with t2:
       with st.container(border=True):
         st.markdown(
-            "<h4 style='color: #facc15;'>JC vs Root-Cause Bucket"
-            " Cross-Tabulation</h4>",
+            "<h4 style='color: #facc15;'>JC vs Root-Cause Bucket Cross-Tabulation</h4>",
             unsafe_allow_html=True,
         )
         if "JC" in df_status.columns and "Bucket" in df_status.columns:
@@ -1115,8 +1081,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with t3:
       with st.container(border=True):
         st.markdown(
-            "<h4 style='color: #facc15;'>GCU Sites: JC vs DG Make & KVA"
-            " Breakdown</h4>",
+            "<h4 style='color: #facc15;'>GCU Sites: JC vs DG Make & KVA Breakdown</h4>",
             unsafe_allow_html=True,
         )
         if "Bucket" in df_status.columns:
@@ -1140,8 +1105,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with t4:
       with st.container(border=True):
         st.markdown(
-            "<h4 style='color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU,"
-            " OEM, Breakdown)</h4>",
+            "<h4 style='color: #facc15;'>JC-Wise: DG Breakdown & Manual (GCU, OEM, Breakdown)</h4>",
             unsafe_allow_html=True,
         )
         bm_f1, bm_f2, bm_f3, bm_f4 = st.columns(4)
@@ -1256,8 +1220,7 @@ elif page == "⚙️ Fleet Analytics & Problem Buckets":
     with t5:
       with st.container(border=True):
         st.markdown(
-            "<h4 style='color: #facc15;'>JC-Wise Docket Received & Pending"
-            " Summary (DG Breakdown, GCU, OEM Spare part)</h4>",
+            "<h4 style='color: #facc15;'>JC-Wise Docket Received & Pending Summary (DG Breakdown, GCU, OEM Spare part)</h4>",
             unsafe_allow_html=True,
         )
         st.caption(
@@ -1490,8 +1453,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
 
     with st.container(border=True):
       st.markdown(
-          "<h4 style='color: #facc15;'>DG Make Wise & KVA Rating Fault"
-          " Telemetry</h4>",
+          "<h4 style='color: #facc15;'>DG Make Wise & KVA Rating Fault Telemetry</h4>",
           unsafe_allow_html=True,
       )
       if (
@@ -1510,8 +1472,7 @@ elif page == "⛽ Fuel Sensor Telemetry":
 
     with st.container(border=True):
       st.markdown(
-          "<h4 style='color: #facc15;'>Active Fuel Sensor Fault Site"
-          " Registry</h4>",
+          "<h4 style='color: #facc15;'>Active Fuel Sensor Fault Site Registry</h4>",
           unsafe_allow_html=True,
       )
       st.dataframe(auto_df_fuel_filtered, use_container_width=True)
@@ -1726,9 +1687,7 @@ elif page == "⏳ Daily Fault Summary":
     st.markdown("---")
     with st.container(border=True):
       st.markdown(
-          f"<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px"
-          f" solid #facc15; padding-bottom: 6px;'>📊 JC-Wise vs Problem Bucket"
-          f" Count Breakdown (Date: {selected_date_filter})</h4>",
+          f"<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>",
           unsafe_allow_html=True,
       )
       if (
@@ -1750,9 +1709,7 @@ elif page == "⏳ Daily Fault Summary":
 
     with st.container(border=True):
       st.markdown(
-          "<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px"
-          " solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults"
-          " Registry</h4>",
+          "<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults Registry</h4>",
           unsafe_allow_html=True,
       )
       st.dataframe(filtered_date_df, use_container_width=True)
