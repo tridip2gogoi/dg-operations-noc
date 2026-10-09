@@ -47,15 +47,16 @@ st.markdown(
         color: #facc15 !important; font-weight: 800 !important;
     }
 
-    /* Radio Button Labels Yellow Color Fix */
+    /* Radio Button Navigation Options Yellow Color Fix */
     div[data-testid="stRadio"] label p, div[data-testid="stRadio"] div[role="radiogroup"] label span {
         color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.6);
     }
 
     div[data-testid="stExpander"] summary p, div[data-testid="stExpander"] summary span, div[data-testid="stExpander"] summary {
         color: #facc15 !important; font-weight: 800 !important; font-size: 14px !important;
     }
-    h1, h2, h3, h4, h5, h6 { color: #facc15 !important; font-weight: 800 !important; }
+    h1, h2, h3, h4, h5, h6 { color: #facc15 !important; font-weight: 800 !important; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
     .previous-remarks-box { background-color: rgba(15, 23, 42, 0.85) !important; border: 1px solid #facc15 !important; border-radius: 8px !important; padding: 10px 14px !important; color: #ffffff !important; font-size: 14px !important; font-weight: 600 !important; }
     .custom-header-banner { background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 8px !important; padding: 14px 20px !important; margin-top: 6px !important; margin-bottom: 8px !important; }
     .yellow-success-msg { background-color: #1e293b; color: #facc15 !important; border: 1px solid #facc15; padding: 10px 15px; border-radius: 6px; font-weight: 800; margin-top: 10px; margin-bottom: 10px; }
