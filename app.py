@@ -136,29 +136,14 @@ def clean_date_str(val):
 
 
 PASSWORD_CREDENTIALS = {
-    hashlib.sha256("Gogoi&6095".encode()).hexdigest(): {
+    hashlib.sha256("Gogoi@6095".encode()).hexdigest(): {
         "role": "Super Admin",
         "name": "Tridip Gogoi",
-        "is_admin": True,
-    },
-     hashlib.sha256("Sukanta@2026".encode()).hexdigest(): {
-        "role": "Super Admin",
-        "name": "SME Operations Desk",
         "is_admin": True,
     },
     hashlib.sha256("Rintu@2026".encode()).hexdigest(): {
         "role": "NOC Viewer",
         "name": "PTPL Operations Desk",
-        "is_admin": False,
-    },
-     hashlib.sha256("SHQ@2026".encode()).hexdigest(): {
-        "role": "NOC Viewer",
-        "name": "SHQ Operations Desk",
-        "is_admin": False,
-    },
-     hashlib.sha256("Nipl@2026".encode()).hexdigest(): {
-        "role": "NOC Viewer",
-        "name": "Fild Operations Desk",
         "is_admin": False,
     },
 }
