@@ -97,7 +97,6 @@ st.markdown(
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1uwOZ9HRC833CfC-hO8Aj1davBQ8qDyXa2f7L0-uu7QQ/export?format=xlsx"
 GOOGLE_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1uwOZ9HRC833CfC-hO8Aj1davBQ8qDyXa2f7L0-uu7QQ/gviz/tq?tqx=out:csv"
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
-DEFAULT_CM_TRACKER = "CM Tracker Jio.xlsx"
 
 DEFAULT_ILA = None
 if os.path.exists('.'):
@@ -125,7 +124,7 @@ def clean_date_str(val):
         return ""
     try:
         dt = pd.to_datetime(val)
-        return dt.strftime('%Y-%m-%d')
+        return dt.strftime('%d-%b-%Y')
     except:
         return val_str.split(' ')[0] if ' ' in val_str else val_str
 
@@ -150,7 +149,7 @@ def extract_link(val):
     if 'http://' in s or 'https://' in s:
         for part in s.split():
             if part.startswith('http://') or part.startswith('https://'):
-                return part.strip("'")
+                return part.strip("'\"")
     if 'drive.google.com' in s:
         return s if s.startswith('http') else f"https://{s}"
     digits = s.replace('.0', '').replace('-', '').replace(' ', '')
@@ -327,11 +326,11 @@ df_status = st.session_state.master_tracker_df
 df_ila = st.session_state.ila_tracker_df
 
 with st.container(border=True):
-    top_c1, top_c2, top_c3 = st.columns([2, 1.2, 1.2])
+    top_c1, top_c2, top_c3 = st.columns([2, 1.5, 1.5])
     with top_c1: 
         curr_mode = st.session_state.get('data_source_mode', 'Google Sheet Live')
         mode_badge = f"`{curr_mode}`" if "Live" in curr_mode else f"📁 `{curr_mode}`"
-        st.markdown(f"🛡️ **Operator:** `{admin_name}` | ☁️ **Source:** {mode_badge}")
+        st.markdown(f"🛡️ **Operator:** `{admin_name}` | 🔑 **Role:** `{admin_role}` | ☁️ **Source:** {mode_badge}")
     with top_c2:
         if st.button("🔄 Force Refresh & Sync", type="primary", use_container_width=True):
             st.cache_data.clear()
@@ -727,188 +726,8 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
 elif page == "✏️ In-Portal Master Tracker Editor":
     st.markdown("## ✏️ In-Portal Master Tracker Editor")
-    edited_grid = st.data_editor(df_status, use_container_width=True, height=500, disabled=is_viewer)
-    if not is_viewer and st.button("Save Grid Changes", type="primary"):
+    edited_grid = st.data_editor(df_status, use_container_width=True, height=500, disabled=not is_admin)
+    if is_admin and st.button("Save Grid Changes", type="primary"):
         st.session_state.master_tracker_df = edited_grid
         save_master_to_disk()
-        st.success("Saved successfully!")
-        st.rerun()
-
-elif page == "🔍 AI Site Diagnostics":
-    st.markdown("## 🔍 AI Telemetry & Site Diagnostics Console")
-    st.caption("Circle-wide deep diagnostics, equipment specs, telemetry mapping, and field intervention radar.")
-    
-    with st.container(border=True):
-        st.markdown("<h4 style='margin:0 0 10px 0; color: #facc15;'>🎯 Targeted Site Telemetry Search</h4>", unsafe_allow_html=True)
-        sq = st.text_input("Search Network Site:", placeholder="Enter SAIP ID (e.g. 9011)...", label_visibility="collapsed").strip().upper()
-
-    if sq and not df_status.empty and 'SAIP ID' in df_status.columns:
-        matches = df_status[df_status['SAIP ID'].astype(str).str.contains(sq, case=False, na=False)]
-        if matches.empty:
-            st.error(f"❌ No network records found matching `{sq}`.")
-        else:
-            site_options_list = matches['SAIP ID'].tolist()
-            st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Multiple Sites Found ({len(site_options_list)}):</span>", unsafe_allow_html=True)
-            chosen_site_id = st.selectbox("Select Site ID:", site_options_list, label_visibility="collapsed")
-            
-            selected_matches = matches[matches['SAIP ID'].astype(str) == str(chosen_site_id)]
-            site_row = selected_matches.iloc[0] if not selected_matches.empty else matches.iloc[0]
-            selected_site = site_row['SAIP ID']
-            status_val = str(site_row.get('DG Automation Status', 'Automation Ok')).strip()
-            
-            s_lower = status_val.lower()
-            if 'ok' in s_lower:
-                badge_bg = "#10b981"
-            elif 'manual' in s_lower:
-                badge_bg = "#f59e0b"
-            elif 'breakdown' in s_lower or 'ber' in s_lower:
-                badge_bg = "#dc2626"
-            else:
-                badge_bg = "#f59e0b"
-
-            jc_val = site_row.get('JC', 'N/A')
-            state_val = site_row.get('State', 'N/A')
-            site_type_val = site_row.get('Site Type', 'P1')
-            facility_5g = site_row.get('5G Facility', 'NO')
-            dg_make = site_row.get('DG Make', 'N/A')
-            dg_rating = site_row.get('DG Rating', 'N/A')
-            active_bucket = site_row.get('Bucket', 'IPMS')
-            aging_val = site_row.get("Aging (Day's)", 62)
-            fuel_tel = site_row.get('Fuel Sensor Status', 'nan')
-            
-            sup_name = site_row.get('Supervisor Name', 'Mojib Kumar Saikia')
-            trt_person = site_row.get('TRT Personnel', 'Manseng Marak')
-            contact_no = site_row.get('Contact No.', '7002843853.0')
-            dep_sites = site_row.get('Dependent Site', 'nan')
-            oem_vendor = site_row.get('OEM Vendor', 'Pratap')
-            grid_conn = site_row.get('EB Grid Connection', 'EB + DG')
-            battery_backup = site_row.get('F.Battery Backup (Min)', '120')
-
-            st.markdown(f"""
-            <div style="background-color: #0f172a; border: 2px solid #facc15; border-radius: 10px; padding: 18px 22px; margin-top: 10px; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.25);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span style="color: #f97316; font-size: 22px; font-weight: 800;">⚡ {selected_site}</span>
-                    </div>
-                    <div>
-                        <span style="background-color: {badge_bg}; color: #ffffff; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;">{status_val}</span>
-                    </div>
-                </div>
-                <div style="margin-top: 10px; color: #94a3b8; font-size: 13px; font-weight: 600;">
-                    Territory: <span style="color: #ffffff;">{jc_val}</span> &nbsp;|&nbsp; 
-                    State: <span style="color: #ffffff;">{state_val}</span> &nbsp;|&nbsp; 
-                    Site Type: <span style="color: #ffffff;">{site_type_val}</span> &nbsp;|&nbsp; 
-                    5G Facility: <span style="color: #ffffff;">{facility_5g}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            mc1, mc2, mc3, mc4 = st.columns(4)
-            with mc1:
-                st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">DG Manufacturer</h4>
-                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{dg_make}</span><br>
-                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ {dg_rating}</span>
-                </div>
-                """, unsafe_allow_html=True)
-            with mc2:
-                st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Active Problem Bucket</h4>
-                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{active_bucket}</span><br>
-                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Root-Cause</span>
-                </div>
-                """, unsafe_allow_html=True)
-            with mc3:
-                st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Incident Aging</h4>
-                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{aging_val} Days</span><br>
-                    <span style="color: #10b981; font-size: 12px; font-weight: 700;">↑ Delay Bracket</span>
-                </div>
-                """, unsafe_allow_html=True)
-            with mc4:
-                st.markdown(f"""
-                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                    <h4 style="color: #facc15 !important; font-size: 11px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Fuel Telemetry</h4>
-                    <span style="color: #ffffff; font-size: 26px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{fuel_tel}</span><br>
-                    <span style="color: #ef4444; font-size: 12px; font-weight: 700;">↓ Sensor Health</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-            st.markdown(f"""
-            <div style="background-color: #1e293b; border: 2px solid #facc15; padding: 14px 18px; border-radius: 8px; margin-top: 12px; margin-bottom: 14px; color: #ffffff; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                <span style="color: #facc15; font-weight: 800; font-size: 14px;">🧠 AI Diagnostic Inference:</span> <span style="color: #f8fafc;">⚠️ <b>Attention Required:</b> Status active (`{status_val}`). Problem classified under `{active_bucket}`.</span><br>
-                <span style="color: #38bdf8; font-weight: 700;">🎯 Recommended Operational Action (SOP):</span> <span style="color: #ffffff;">Verify site access and contact the local supervisor for direct diagnosis.</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-            diag_t1, diag_t2, diag_t3 = st.tabs([
-                "📋 Technical Asset Specifications",
-                "⚡ Master Tracker (Live) Telemetry",
-                "⏳ Resolution History & Previous Dockets (Col Y to AB)"
-            ])
-
-            with diag_t1:
-                with st.container(border=True):
-                    sc1, sc2 = st.columns(2)
-                    with sc1:
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>DG Make:</span> <span style='color: #ffffff; font-weight: 800;'>`{dg_make}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>DG Rating:</span> <span style='color: #ffffff; font-weight: 800;'>`{dg_rating}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>OEM Vendor:</span> <span style='color: #ffffff; font-weight: 800;'>`{oem_vendor}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>EB Grid Connection:</span> <span style='color: #ffffff; font-weight: 800;'>`{grid_conn}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Battery Backup (Min):</span> <span style='color: #ffffff; font-weight: 800;'>`{battery_backup}`</span>", unsafe_allow_html=True)
-                    with sc2:
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Supervisor Name:</span> <span style='color: #ffffff; font-weight: 800;'>`{sup_name}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>TRT Personnel:</span> <span style='color: #ffffff; font-weight: 800;'>`{trt_person}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Contact Number:</span> <span style='color: #ffffff; font-weight: 800;'>`{contact_no}`</span>", unsafe_allow_html=True)
-                        st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Dependent Sites:</span> <span style='color: #ffffff; font-weight: 800;'>`{dep_sites}`</span>", unsafe_allow_html=True)
-
-            with diag_t2:
-                with st.container(border=True):
-                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Fuel Sensor Status:</span> <span style='color: #ffffff; font-weight: 800;'>`{fuel_tel}`</span>", unsafe_allow_html=True)
-                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Present Remarks:</span> <span style='color: #ffffff; font-weight: 800;'>`{site_row.get('Present Remarks', 'None')}`</span>", unsafe_allow_html=True)
-
-            with diag_t3:
-                with st.container(border=True):
-                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Docket No (Col AA):</span> <span style='color: #ffffff; font-weight: 800;'>`{site_row.get('Previous Docket No.', 'None')}`</span>", unsafe_allow_html=True)
-                    st.markdown(f"<span style='color: #facc15; font-weight: 700;'>Previous Remarks (Col Z):</span>", unsafe_allow_html=True)
-                    st.markdown(f'<div class="previous-remarks-box">{site_row.get("Previous Remarks", "No previous remarks.")}</div>', unsafe_allow_html=True)
-                    
-                    st.markdown("<hr style='margin: 12px 0; border-color: rgba(250,204,21,0.3);'>", unsafe_allow_html=True)
-                    st.markdown("<h5 style='color: #facc15; margin-bottom: 8px;'>🔗 FSR Links (CM & PM)</h5>", unsafe_allow_html=True)
-                    
-                    # Strictly separate CM (Col AC) and PM (Col AD) links
-                    cm_link = str(site_row.get('Google Drive Link CM', '')).strip()
-                    pm_link = str(site_row.get('Google Drive Link PM', '')).strip()
-
-                    if cm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: cm_link = ""
-                    if pm_link.lower() in ['nan', 'none', '0', '0.0', 'nat', 'null']: pm_link = ""
-
-                    f_col1, f_col2 = st.columns(2)
-                    with f_col1:
-                        st.markdown("##### 📄 Google Drive Link CM (Col AC)")
-                        # Check if a valid URL is present
-                        if cm_link and (cm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in cm_link):
-                            cm_url = cm_link if cm_link.startswith(('http://', 'https://')) else f"https://{cm_link}"
-                            st.markdown(f'<a href="{cm_url}" target="_blank" style="display: block; text-align: center; background-color: #2563eb; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(37,99,235,0.3);">🌐 Open CM FSR Link</a>', unsafe_allow_html=True)
-                        else:
-                            st.markdown("""
-                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
-                                🚫 No CM FSR Link Available (Col AC)
-                            </div>
-                            """, unsafe_allow_html=True)
-
-                    with f_col2:
-                        st.markdown("##### 📄 Google Drive Link PM (Col AD)")
-                        # Check if a valid URL is present
-                        if pm_link and (pm_link.startswith(('http://', 'https://', 'www.')) or 'drive.google.com' in pm_link):
-                            pm_url = pm_link if pm_link.startswith(('http://', 'https://')) else f"https://{pm_link}"
-                            st.markdown(f'<a href="{pm_url}" target="_blank" style="display: block; text-align: center; background-color: #10b981; color: #ffffff; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; margin-top: 10px; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">🌐 Open PM FSR Link</a>', unsafe_allow_html=True)
-                        else:
-                            st.markdown("""
-                            <div style="background-color: rgba(30, 41, 59, 0.5); border: 1px dashed #64748b; padding: 12px 16px; border-radius: 8px; color: #94a3b8; font-size: 13px; font-weight: 600; text-align: center; margin-top: 10px;">
-                                🚫 No PM FSR Link Available (Col AD)
-                            </div>
-                            """, unsafe_allow_html=True)
+        st.success("Changes saved for current session!")
