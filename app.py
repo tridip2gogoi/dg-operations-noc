@@ -59,11 +59,7 @@ st.markdown(
     .previous-remarks-box { background-color: rgba(15, 23, 42, 0.85) !important; border: 1px solid #facc15 !important; border-radius: 8px !important; padding: 10px 14px !important; color: #ffffff !important; font-size: 14px !important; font-weight: 600 !important; }
     .custom-header-banner { background-color: #0f172a !important; border: 2px solid #facc15 !important; border-radius: 8px !important; padding: 14px 20px !important; margin-top: 6px !important; margin-bottom: 8px !important; }
     .yellow-success-msg { background-color: #1e293b; color: #facc15 !important; border: 1px solid #facc15; padding: 10px 15px; border-radius: 6px; font-weight: 800; margin-top: 10px; margin-bottom: 10px; }
-    .status-badge { padding: 4px 10px; border-radius: 9999px; font-weight: 800; font-size: 12px; text-transform: uppercase; display: inline-block; }
-    .badge-ok { background-color: #10b981; color: #ffffff; }
-    .badge-warn { background-color: #f59e0b; color: #ffffff; }
-    .badge-crit { background-color: #dc2626; color: #ffffff; }
-
+    
     div[data-testid="stTabs"] button p {
         color: #facc15 !important;
         font-weight: 800 !important;
@@ -171,10 +167,10 @@ def verify_login(password):
 
 
 def process_dataframe(df_status):
-  for col in df_status.columns:
-    df_status[col] = df_status[col].astype(object)
-
   try:
+    for col in df_status.columns:
+      df_status[col] = df_status[col].astype(object)
+
     if len(df_status.columns) > 28:
       col_ac_name = df_status.columns[28]
       df_status["Col AC (FSR CM link)"] = df_status[col_ac_name].apply(
@@ -182,10 +178,7 @@ def process_dataframe(df_status):
       )
     else:
       df_status["Col AC (FSR CM link)"] = ""
-  except:
-    df_status["Col AC (FSR CM link)"] = ""
 
-  try:
     if len(df_status.columns) > 29:
       col_ad_name = df_status.columns[29]
       df_status["Col AD (FSR PM link)"] = df_status[col_ad_name].apply(
@@ -193,29 +186,28 @@ def process_dataframe(df_status):
       )
     else:
       df_status["Col AD (FSR PM link)"] = ""
-  except:
-    df_status["Col AD (FSR PM link)"] = ""
 
-  if "SAIP ID" in df_status.columns:
-    df_status = df_status[df_status["SAIP ID"].notna()]
-    df_status["SAIP ID"] = df_status["SAIP ID"].astype(str).str.strip()
-    df_status = df_status[
-        ~df_status["SAIP ID"].str.lower().isin(
-            ["", "nan", "none", "total", "0", "null"]
-        )
-    ]
-  if "DG Make" in df_status.columns:
-    df_status = df_status[df_status["DG Make"].notna()]
-    df_status["DG Make"] = df_status["DG Make"].astype(str).str.strip()
-  if "JC" in df_status.columns:
-    df_status["JC"] = df_status["JC"].astype(str).str.strip()
-  if "State" in df_status.columns:
-    df_status["State"] = df_status["State"].astype(str).str.strip()
-  if "Bucket" in df_status.columns:
-    df_status["Bucket"] = df_status["Bucket"].astype(str).str.strip()
-    df_status["Bucket"] = df_status["Bucket"].apply(
-        lambda x: None if str(x).lower() in ["nan", "none", "", "nat"] else x
-    )
+    if "SAIP ID" in df_status.columns:
+      df_status = df_status[df_status["SAIP ID"].notna()].copy()
+      df_status["SAIP ID"] = df_status["SAIP ID"].astype(str).str.strip()
+      df_status = df_status[
+          ~df_status["SAIP ID"].str.lower().isin(
+              ["", "nan", "none", "total", "0", "null"]
+          )
+      ]
+    if "DG Make" in df_status.columns:
+      df_status["DG Make"] = df_status["DG Make"].astype(str).str.strip()
+    if "JC" in df_status.columns:
+      df_status["JC"] = df_status["JC"].astype(str).str.strip()
+    if "State" in df_status.columns:
+      df_status["State"] = df_status["State"].astype(str).str.strip()
+    if "Bucket" in df_status.columns:
+      df_status["Bucket"] = df_status["Bucket"].astype(str).str.strip()
+      df_status["Bucket"] = df_status["Bucket"].apply(
+          lambda x: None if str(x).lower() in ["nan", "none", "", "nat"] else x
+      )
+  except Exception as e:
+    st.error(f"Data Processing Warning: {e}")
   return df_status
 
 
@@ -1740,9 +1732,21 @@ elif page == "📈 ILA-AG1 Operations Tracker":
 
 elif page == "✏️ In-Portal Master Tracker Editor":
   st.markdown("## ✏️ In-Portal Master Tracker Editor")
+  st.caption("Edit master telemetry data directly below. Changes are securely cached and synchronized to session state.")
+  
+  # Securely bind the data editor with a session state key to prevent post-edit crashes and loss
   edited_grid = st.data_editor(
-      df_status, use_container_width=True, height=500, disabled=not is_admin
+      st.session_state.master_tracker_df,
+      key="master_editor_grid",
+      use_container_width=True,
+      height=500,
+      disabled=not is_admin
   )
-  if is_admin and st.button("Save Grid Changes", type="primary"):
-    st.session_state.master_tracker_df = edited_grid
-    st.success("Changes saved for current session!")
+  
+  if is_admin:
+    col_save1, col_save2 = st.columns([1, 4])
+    with col_save1:
+      if st.button("💾 Save Grid Changes", type="primary", use_container_width=True):
+        st.session_state.master_tracker_df = process_dataframe(edited_grid)
+        st.success("✅ Changes successfully saved and synced across session state!")
+        st.rerurn()
