@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta, timezone
 from io import BytesIO
 import hashlib
 import os
+import shutil
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -90,6 +91,7 @@ st.markdown(
 )
 
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
+BACKUP_DIR = "backups"
 
 BUCKET_LIST = [
     "GCU",
@@ -117,6 +119,24 @@ STATUS_CHOICES = [
 FUEL_STATUS_CHOICES = ["Ok", "Fuel Sensor faulty"]
 
 
+def create_tracker_backup(source_file_path=DEFAULT_EXCEL):
+  """টেৰাকাৰ ফাইলটোৰ তাৰিখ আৰু সময়যুক্ত বেকআপ ফাইল তৈয়াৰ কৰে।"""
+  try:
+    if os.path.exists(source_file_path):
+      if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+      
+      timestamp = datetime.now(IST).strftime("%Y%m%d_%H%M%S")
+      backup_filename = f"Tracker_Backup_{timestamp}.xlsx"
+      backup_path = os.path.join(BACKUP_DIR, backup_filename)
+      
+      shutil.copy2(source_file_path, backup_path)
+      return True
+  except Exception as e:
+    print(f"Backup creation failed: {e}")
+  return False
+
+
 def clean_date_str(val):
   if pd.isna(val) or val is None:
     return ""
@@ -136,7 +156,7 @@ PASSWORD_CREDENTIALS = {
         "name": "Tridip Gogoi",
         "is_admin": True,
     },
-     hashlib.sha256("Sukanta@2026".encode()).hexdigest(): {
+    hashlib.sha256("Sukanta@2026".encode()).hexdigest(): {
         "role": "Super Admin",
         "name": "SME Operations Desk",
         "is_admin": True,
@@ -146,12 +166,12 @@ PASSWORD_CREDENTIALS = {
         "name": "PTPL Operations Desk",
         "is_admin": False,
     },
-     hashlib.sha256("SHQ@2026".encode()).hexdigest(): {
+    hashlib.sha256("SHQ@2026".encode()).hexdigest(): {
         "role": "NOC Viewer",
         "name": "SHQ Operations Desk",
         "is_admin": False,
     },
-     hashlib.sha256("Nipl@2026".encode()).hexdigest(): {
+    hashlib.sha256("Nipl@2026".encode()).hexdigest(): {
         "role": "NOC Viewer",
         "name": "Fild Operations Desk",
         "is_admin": False,
@@ -315,10 +335,16 @@ if is_admin:
           type=["xlsx", "xls"],
       )
       if uploaded_file is not None:
+        with open(DEFAULT_EXCEL, "wb") as f:
+          f.write(uploaded_file.getbuffer())
+        
+        # স্বয়ংক্ৰিয়ভাৱে বেকআপ তৈয়াৰ কৰিব
+        create_tracker_backup(DEFAULT_EXCEL)
+
         st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
         st.session_state.ila_tracker_df = load_ila_tracker(uploaded_file)
         st.success(
-            "✅ Tracker & IPMS Automation Status updated and saved to server!"
+            "✅ Tracker & IPMS Automation Status updated, backed up, and saved!"
         )
     with col_up2:
       st.markdown("<br>", unsafe_allow_html=True)
@@ -1734,7 +1760,6 @@ elif page == "✏️ In-Portal Master Tracker Editor":
   st.markdown("## ✏️ In-Portal Master Tracker Editor")
   st.caption("Edit master telemetry data directly below. Changes are securely cached and synchronized to session state.")
   
-  # Securely bind the data editor with a session state key to prevent post-edit crashes and loss
   edited_grid = st.data_editor(
       st.session_state.master_tracker_df,
       key="master_editor_grid",
@@ -1747,6 +1772,14 @@ elif page == "✏️ In-Portal Master Tracker Editor":
     col_save1, col_save2 = st.columns([1, 4])
     with col_save1:
       if st.button("💾 Save Grid Changes", type="primary", use_container_width=True):
+        with pd.ExcelWriter(DEFAULT_EXCEL, engine="openpyxl") as writer:
+          edited_grid.to_excel(writer, sheet_name="Automation Status", index=False)
+          if not df_ila.empty:
+            df_ila.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
+        
+        # এডিট কৰি ছেভ কৰাৰ পিছত স্বয়ংক্ৰিয়ভাৱে বেকআপ ল’ব
+        create_tracker_backup(DEFAULT_EXCEL)
+
         st.session_state.master_tracker_df = process_dataframe(edited_grid)
-        st.success("✅ Changes successfully saved and synced across session state!")
-        st.rerurn()
+        st.success("✅ Changes successfully saved, backed up, and synced!")
+        st.rerun()
