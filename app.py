@@ -1580,28 +1580,18 @@ elif page == "⏳ Daily Fault Summary":
             filtered_date_df["JC"].astype(str).str.strip() == chosen_summary_jc
         ]
 
-    # DG Breakdown কাউণ্ট গণনা কৰা হৈছে (Bucket বা Status ত 'DG Breakdown' থকা ছাইটসমূহ)
-    p_dg_breakdown = (
+    p_moh_required = (
         len(
             filtered_date_df[
-                (
-                    filtered_date_df["Bucket"]
-                    .astype(str)
-                    .str.strip()
-                    .str.lower()
-                    == "dg breakdown"
-                )
-                | (
-                    filtered_date_df["DG Automation Status"]
-                    .astype(str)
-                    .str.strip()
-                    .str.lower()
-                    == "dg breakdown"
-                )
+                filtered_date_df["Bucket"]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .isin(["dg breakdown", "gcu", "oem spare parts"])
             ]
         )
         if not filtered_date_df.empty and "Bucket" in filtered_date_df.columns
-        else 0
+        else len(filtered_date_df)
     )
 
     p_fuel_sensor = (
@@ -1669,12 +1659,11 @@ elif page == "⏳ Daily Fault Summary":
 
     m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
-      # প্ৰথম বক্সটোত 'DG BREAKDOWN' কাউণ্ট দেখুওৱা হৈছে
       st.markdown(
           f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">DG Breakdown</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_breakdown:,}</span><br>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">MOH Required</h4>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_moh_required:,}</span><br>
                 <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Date: {selected_date_filter}</span>
             </div>
             """,
