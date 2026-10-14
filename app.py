@@ -120,16 +120,13 @@ FUEL_STATUS_CHOICES = ["Ok", "Fuel Sensor faulty"]
 
 
 def create_tracker_backup(source_file_path=DEFAULT_EXCEL):
-  """টেৰাকাৰ ফাইলটোৰ তাৰিখ আৰু সময়যুক্ত বেকআপ ফাইল তৈয়াৰ কৰে।"""
   try:
     if os.path.exists(source_file_path):
       if not os.path.exists(BACKUP_DIR):
         os.makedirs(BACKUP_DIR)
-      
       timestamp = datetime.now(IST).strftime("%Y%m%d_%H%M%S")
       backup_filename = f"Tracker_Backup_{timestamp}.xlsx"
       backup_path = os.path.join(BACKUP_DIR, backup_filename)
-      
       shutil.copy2(source_file_path, backup_path)
       return True
   except Exception as e:
@@ -337,10 +334,7 @@ if is_admin:
       if uploaded_file is not None:
         with open(DEFAULT_EXCEL, "wb") as f:
           f.write(uploaded_file.getbuffer())
-        
-        # স্বয়ংক্ৰিয়ভাৱে বেকআপ তৈয়াৰ কৰিব
         create_tracker_backup(DEFAULT_EXCEL)
-
         st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
         st.session_state.ila_tracker_df = load_ila_tracker(uploaded_file)
         st.success(
@@ -1586,6 +1580,30 @@ elif page == "⏳ Daily Fault Summary":
             filtered_date_df["JC"].astype(str).str.strip() == chosen_summary_jc
         ]
 
+    # DG Breakdown কাউণ্ট গণনা কৰা হৈছে (Bucket বা Status ত 'DG Breakdown' থকা ছাইটসমূহ)
+    p_dg_breakdown = (
+        len(
+            filtered_date_df[
+                (
+                    filtered_date_df["Bucket"]
+                    .astype(str)
+                    .str.strip()
+                    .str.lower()
+                    == "dg breakdown"
+                )
+                | (
+                    filtered_date_df["DG Automation Status"]
+                    .astype(str)
+                    .str.strip()
+                    .str.lower()
+                    == "dg breakdown"
+                )
+            ]
+        )
+        if not filtered_date_df.empty and "Bucket" in filtered_date_df.columns
+        else 0
+    )
+
     p_fuel_sensor = (
         len(
             filtered_date_df[
@@ -1651,11 +1669,12 @@ elif page == "⏳ Daily Fault Summary":
 
     m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
+      # প্ৰথম বক্সটোত 'DG BREAKDOWN' কাউণ্ট দেখুওৱা হৈছে
       st.markdown(
           f"""
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Filtered Faults</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{len(filtered_date_df):,}</span><br>
+                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">DG Breakdown</h4>
+                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{p_dg_breakdown:,}</span><br>
                 <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Date: {selected_date_filter}</span>
             </div>
             """,
@@ -1776,10 +1795,7 @@ elif page == "✏️ In-Portal Master Tracker Editor":
           edited_grid.to_excel(writer, sheet_name="Automation Status", index=False)
           if not df_ila.empty:
             df_ila.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
-        
-        # এডিট কৰি ছেভ কৰাৰ পিছত স্বয়ংক্ৰিয়ভাৱে বেকআপ ল’ব
         create_tracker_backup(DEFAULT_EXCEL)
-
         st.session_state.master_tracker_df = process_dataframe(edited_grid)
         st.success("✅ Changes successfully saved, backed up, and synced!")
         st.rerun()
