@@ -1,9 +1,7 @@
 streamlit
 pandas
-plotly
 openpyxl
+plotly
+PyGithub
 gspread
-google-auth
 Plaintext
-PyGithub
-PyGithub
