@@ -8,6 +8,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from github import Github
+import gspread
+from google.oauth2.service_account import Credentials
 
 IST = timezone(timedelta(hours=5, minutes=30))
 st.set_page_config(
@@ -93,6 +95,27 @@ st.markdown(
 
 DEFAULT_EXCEL = "DG Auto-Update Automation Tracker 26.xlsx"
 BACKUP_DIR = "backups"
+
+# -------------------------------------------------------------
+# Google Sheets Connection Setup
+# -------------------------------------------------------------
+@st.cache_resource
+def init_google_sheets():
+    try:
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        client = gspread.authorize(creds)
+        # আপোনাৰ গুগল শ্বীটখনৰ নাম ইয়াত দিব
+        sheet = client.open("DG Operations NOC Database").worksheet("Automation Status")
+        return sheet
+    except Exception as e:
+        return None
+
+gsheet = init_google_sheets()
 
 BUCKET_LIST = [
     "GCU",
@@ -259,6 +282,7 @@ def process_dataframe(df_status):
   return df_status
 
 
+@st.cache_data(ttl=60)
 def load_excel_tracker(uploaded_file=None):
   df_status = pd.DataFrame()
   try:
@@ -266,13 +290,18 @@ def load_excel_tracker(uploaded_file=None):
       with open(DEFAULT_EXCEL, "wb") as f:
         f.write(uploaded_file.getbuffer())
       df_status = pd.read_excel(uploaded_file, sheet_name="Automation Status")
+    elif gsheet is not None:
+      # গুগল শ্বীটৰ পৰা ডাটা লোড কৰা
+      data = gsheet.get_all_records()
+      df_status = pd.DataFrame(data)
+      df_status.to_excel(DEFAULT_EXCEL, sheet_name="Automation Status", index=False)
     elif os.path.exists(DEFAULT_EXCEL):
       df_status = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
     else:
       return df_status
     df_status = process_dataframe(df_status)
   except Exception as e:
-    st.error(f"Excel Load Error: {e}")
+    st.error(f"Excel / Google Sheets Load Error: {e}")
   return df_status
 
 
@@ -367,10 +396,17 @@ if is_admin:
           f.write(uploaded_file.getbuffer())
         create_tracker_backup(DEFAULT_EXCEL)
         save_tracker_to_github(DEFAULT_EXCEL, "Upload new Master Tracker file")
+        
+        # Google Sheet আপডেট কৰা
+        if gsheet is not None:
+          temp_df = pd.read_excel(DEFAULT_EXCEL, sheet_name="Automation Status")
+          gsheet.clear()
+          gsheet.update([temp_df.columns.values.tolist()] + temp_df.astype(str).values.tolist())
+
         st.session_state.master_tracker_df = load_excel_tracker(uploaded_file)
         st.session_state.ila_tracker_df = load_ila_tracker(uploaded_file)
         st.success(
-            "✅ Tracker updated, backed up, and synced to GitHub!"
+            "✅ Tracker updated, backed up, and synced to GitHub & Google Sheets!"
         )
     with col_up2:
       st.markdown("<br>", unsafe_allow_html=True)
@@ -1748,76 +1784,4 @@ elif page == "⏳ Daily Fault Summary":
     with m6:
       st.markdown(
           f"""
-            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250, 204, 21, 0.3); padding: 14px 16px; border-radius: 8px;">
-                <h4 style="color: #facc15 !important; font-size: 13px; font-weight: 700; text-transform: uppercase; margin: 0 0 6px 0;">Total Master Base</h4>
-                <span style="color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{tot_master_base:,}</span><br>
-                <span style="color: #10b981; font-size: 11px; font-weight: 700;">↑ Circle Base</span>
-            </div>
-            """,
-          unsafe_allow_html=True,
-      )
-
-    st.markdown("---")
-    with st.container(border=True):
-      st.markdown(
-          f"<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📊 JC-Wise vs Problem Bucket Count Breakdown (Date: {selected_date_filter})</h4>",
-          unsafe_allow_html=True,
-      )
-      if (
-          "JC" in filtered_date_df.columns
-          and "Bucket" in filtered_date_df.columns
-          and not filtered_date_df.empty
-      ):
-        st.dataframe(
-            pd.crosstab(
-                filtered_date_df["JC"],
-                filtered_date_df["Bucket"],
-                margins=True,
-                margins_name="Total",
-            ),
-            use_container_width=True,
-        )
-      else:
-        st.info("No records matching current filters.")
-
-    with st.container(border=True):
-      st.markdown(
-          "<h4 style='margin:0 0 10px 0; color: #facc15; border-bottom: 2px solid #facc15; padding-bottom: 6px;'>📋 Detailed Filtered Faults Registry</h4>",
-          unsafe_allow_html=True,
-      )
-      st.dataframe(filtered_date_df, use_container_width=True)
-  else:
-    st.info("No data available.")
-
-elif page == "📈 ILA-AG1 Operations Tracker":
-  st.markdown("## 📈 ILA-AG1 Operations Tracker & Telemetry")
-  if not df_ila.empty:
-    st.dataframe(df_ila, use_container_width=True)
-  else:
-    st.info("ILA Tracker sheet not loaded.")
-
-elif page == "✏️ In-Portal Master Tracker Editor":
-  st.markdown("## ✏️ In-Portal Master Tracker Editor")
-  st.caption("Edit master telemetry data directly below. Changes are securely cached and synchronized to session state.")
-  
-  edited_grid = st.data_editor(
-      st.session_state.master_tracker_df,
-      key="master_editor_grid",
-      use_container_width=True,
-      height=500,
-      disabled=not is_admin
-  )
-  
-  if is_admin:
-    col_save1, col_save2 = st.columns([1, 4])
-    with col_save1:
-      if st.button("💾 Save Grid Changes", type="primary", use_container_width=True):
-        with pd.ExcelWriter(DEFAULT_EXCEL, engine="openpyxl") as writer:
-          edited_grid.to_excel(writer, sheet_name="Automation Status", index=False)
-          if not df_ila.empty:
-            df_ila.to_excel(writer, sheet_name="IPMS Site Automation Status", index=False)
-        create_tracker_backup(DEFAULT_EXCEL)
-        save_tracker_to_github(DEFAULT_EXCEL, "Update via In-Portal Master Tracker Editor")
-        st.session_state.master_tracker_df = process_dataframe(edited_grid)
-        st.success("✅ Changes successfully saved, backed up, and synced to GitHub!")
-        st.rerun()
+            <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(250,
