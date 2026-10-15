@@ -207,9 +207,9 @@ PASSWORD_CREDENTIALS = {
         "is_admin": True,
     },
     hashlib.sha256("Sukanta@2026".encode()).hexdigest(): {
-        "role": "Super Admin",
+        "role": "NOC Viewer",
         "name": "SME Operations Desk",
-        "is_admin": True,
+        "is_admin": False,
     },
     hashlib.sha256("Rintu@2026".encode()).hexdigest(): {
         "role": "NOC Viewer",
